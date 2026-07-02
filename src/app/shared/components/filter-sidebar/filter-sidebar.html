@@ -4,97 +4,52 @@
     <h2>Filtros</h2>
   </div>
 
-  <p class="filter-sidebar__required-note">
-    <span>*</span> Campos obligatorios
-  </p>
-
-  <form
-    class="filter-sidebar__form"
-    #filterForm
-    (submit)="$event.preventDefault(); onApplyFilters(category.value, price.value, location.value, status.value)"
-  >
+  <form class="filter-sidebar__form"
+    (submit)="$event.preventDefault(); onApplyFilters(category.value, price.value, location.value, status.value)">
     <div class="filter-group">
-      <label for="filter-category">
-        Categoría <span class="required-star">*</span>
-      </label>
-
-      <select
-        id="filter-category"
-        class="form-control"
-        #category
-        [value]="selectedCategoryId"
-      >
-        <option value="0">Selecciona una categoría</option>
-
+      <label for="filter-category">Categoría</label>
+      <select id="filter-category" class="form-control" #category [value]="selectedCategoryId">
+        <option value="0">Todas las categorías</option>
         @for (categoryItem of categories; track categoryItem.id_categories) {
-          @if (categoryItem.id_categories !== 0) {
-            <option [value]="categoryItem.id_categories">
-              {{ categoryItem.name }}
-            </option>
-          }
+        @if (categoryItem.id_categories !== 0) {
+        <option [value]="categoryItem.id_categories">
+          {{ categoryItem.name }}
+        </option>
+        }
         }
       </select>
     </div>
 
     <div class="filter-group">
-      <label for="filter-price">
-        Precio máximo <span class="required-star">*</span>
-      </label>
-
-      <input
-        id="filter-price"
-        class="form-control"
-        type="number"
-        min="1"
-        placeholder="Ej. 30 €"
-        #price
-      />
+      <label for="filter-price">Precio máximo</label>
+      <input id="filter-price" class="form-control" type="number" min="1" placeholder="Ej. 30 €" #price />
     </div>
 
     <div class="filter-group">
-      <label for="filter-location">
-        Ubicación <span class="required-star">*</span>
-      </label>
-
-      <input
-        id="filter-location"
-        class="form-control"
-        type="text"
-        placeholder="Ciudad o provincia"
-        #location
-      />
+      <label for="filter-location">Ubicación</label>
+      <select id="filter-location" class="form-control" #location>
+        <option value="">Cualquier lugar</option>
+        @for (loc of locations; track loc.value) {
+        <option [value]="loc.value">{{ loc.label }}</option>
+        }
+      </select>
     </div>
 
     <div class="filter-group">
-      <label for="filter-status">
-        Estado <span class="required-star">*</span>
-      </label>
-
+      <label for="filter-status">Estado</label>
       <select id="filter-status" class="form-control" #status>
-        <option value="">Selecciona estado</option>
-
+        <option value="">Cualquier estado</option>
         @for (state of productStates; track state.value) {
-          <option [value]="state.value">{{ state.label }}</option>
+        <option [value]="state.value">{{ state.label }}</option>
         }
       </select>
     </div>
-
-    @if (errorMessage) {
-      <p class="filter-sidebar__error">
-        {{ errorMessage }}
-      </p>
-    }
 
     <div class="filter-sidebar__actions">
       <button class="btn-toybox-secondary" type="submit">
         Aplicar filtros
       </button>
-
-      <button
-        class="filter-sidebar__clear"
-        type="reset"
-        (click)="onClearFilters()"
-      >
+      <button class="filter-sidebar__clear" type="reset" (click)="onClearFilters()">
         Limpiar filtros
       </button>
     </div>

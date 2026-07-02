@@ -7,6 +7,11 @@ interface ProductStateOption {
   value: string;
 }
 
+interface LocationOption {
+  label: string;
+  value: string;
+}
+
 @Component({
   selector: 'app-filter-sidebar',
   standalone: true,
@@ -29,6 +34,28 @@ export class FilterSidebarComponent {
     { label: 'Usado', value: 'fair' }
   ];
 
+  locations: LocationOption[] = [
+    { label: 'Andalucía', value: 'andalucia' },
+    { label: 'Aragón', value: 'aragon' },
+    { label: 'Asturias', value: 'asturias' },
+    { label: 'Islas Baleares', value: 'baleares' },
+    { label: 'Canarias', value: 'canarias' },
+    { label: 'Cantabria', value: 'cantabria' },
+    { label: 'Castilla-La Mancha', value: 'castilla_la_mancha' },
+    { label: 'Castilla y León', value: 'castilla_y_leon' },
+    { label: 'Cataluña', value: 'cataluna' },
+    { label: 'Ceuta', value: 'ceuta' },
+    { label: 'Extremadura', value: 'extremadura' },
+    { label: 'Galicia', value: 'galicia' },
+    { label: 'Madrid', value: 'madrid' },
+    { label: 'Melilla', value: 'melilla' },
+    { label: 'Región de Murcia', value: 'murcia' },
+    { label: 'Navarra', value: 'navarra' },
+    { label: 'País Vasco', value: 'pais_vasco' },
+    { label: 'La Rioja', value: 'la_rioja' },
+    { label: 'Comunidad Valenciana', value: 'valencia' },
+  ];
+
   onApplyFilters(
     categoryIdValue: string,
     maxPriceValue: string,
@@ -42,26 +69,21 @@ export class FilterSidebarComponent {
     const location = locationValue.trim();
     const status = statusValue.trim();
 
-    if (!categoryId || !maxPrice || !location || !status) {
-      this.errorMessage = 'Completa todos los campos obligatorios para aplicar los filtros.';
-      return;
+    const filters: Itemfilters = {};
+
+    if (categoryId && categoryId !== 0) {
+      const selectedCategory = this.categories.find(c => c.id_categories === categoryId);
+      if (selectedCategory) {
+        filters.category = selectedCategory.name;
+        (filters as any).categoryId = categoryId;
+      }
     }
 
-    const selectedCategory = this.categories.find(
-      category => category.id_categories === categoryId
-    );
+    if (maxPrice) filters.maxPrice = maxPrice;
+    if (location) filters.location = location;
+    if (status) (filters as any).conservation_status = status;
 
-    if (!selectedCategory) {
-      this.errorMessage = 'Selecciona una categoría válida.';
-      return;
-    }
-
-    this.filtersApplied.emit({
-      category: selectedCategory.name,
-      maxPrice,
-      location,
-      status
-    } as Itemfilters);
+    this.filtersApplied.emit(filters);
   }
 
   onClearFilters(): void {
