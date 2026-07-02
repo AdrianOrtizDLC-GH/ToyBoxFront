@@ -136,9 +136,7 @@
     }
 }
 
-/* ===========================
-   NOTIFICACIONES
-=========================== */
+
 
 .notification-item {
     position: relative;
@@ -199,4 +197,69 @@
     justify-content: center;
     padding: 0 4px;
     line-height: 1;
+}
+
+@media (max-width: 1024px) {
+    .navbar {
+        padding: 0 24px;
+    }
+
+    .navbar-actions {
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 16px;
+        height: 60px;
+    }
+
+    .logo-img {
+        height: 32px;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+
+    .navbar-actions {
+        gap: 12px;
+    }
+
+    .btn-sell {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+
+    .btn-signin,
+    .btn-register {
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 12px;
+    }
+
+    .navbar-actions {
+        gap: 8px;
+    }
+
+    .btn-sell {
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
+    .btn-signin,
+    .btn-register {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .logo-img {
+        height: 28px;
+    }
 }

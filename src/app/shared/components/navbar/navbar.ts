@@ -5,11 +5,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { UserRole } from '../../enums/user-role.enum';
+import { UserAvatarComponent } from '../user-avatar/user-avatar';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, UserAvatarComponent],
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css']
 })

@@ -100,7 +100,9 @@
         }
 
         <a class="nav-item profile-item" routerLink="/user/profile">
-            <img [src]="userAvatar || 'assets/images/avatar-placeholder.png'" alt="Mi perfil" class="avatar" />
+            <app-user-avatar [src]="userAvatar"
+                [name]="authService.currentUser()?.first_name + ' ' + authService.currentUser()?.last_name" size="tiny">
+            </app-user-avatar>
             <span>Mi perfil</span>
         </a>
 
