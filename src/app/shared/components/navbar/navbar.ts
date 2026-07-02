@@ -1,11 +1,13 @@
-import { Component, OnInit, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
+import { SocketService } from '../../../core/services/socket.service';
+import { UserAvatarComponent } from '../../components/user-avatar/user-avatar';
 import { UserRole } from '../../enums/user-role.enum';
-import { UserAvatarComponent } from '../user-avatar/user-avatar';
 
 @Component({
   selector: 'app-navbar',
@@ -14,7 +16,7 @@ import { UserAvatarComponent } from '../user-avatar/user-avatar';
   templateUrl: './navbar.html',
   styleUrls: ['./navbar.css']
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
 
   isLoggedIn: boolean = false;
   userAvatar: string = '';
@@ -25,11 +27,14 @@ export class NavbarComponent implements OnInit {
 
   unreadMessagesCount: number = 0;
 
+  private socketSub: Subscription | null = null;
+
   constructor(
     private router: Router,
     private chatService: ChatService,
     public authService: AuthService,
-    public notificationsService: NotificationsService
+    public notificationsService: NotificationsService,
+    private socketService: SocketService
   ) {
     effect(() => {
       const user = this.authService.currentUser();
@@ -42,13 +47,27 @@ export class NavbarComponent implements OnInit {
       if (this.isLoggedIn) {
         this.loadUnreadMessages();
         this.notificationsService.refreshUnreadCount();
+        this.connectSocket();
       } else {
         this.unreadMessagesCount = 0;
+        this.disconnectSocket();
       }
     });
   }
 
   ngOnInit(): void { }
+
+  connectSocket(): void {
+    this.socketService.connect();
+    this.socketSub = this.socketService.onNewMessage().subscribe(() => {
+      this.loadUnreadMessages();
+    });
+  }
+
+  disconnectSocket(): void {
+    this.socketSub?.unsubscribe();
+    this.socketSub = null;
+  }
 
   loadUnreadMessages(): void {
     this.chatService.getMyChats().subscribe({
@@ -79,5 +98,9 @@ export class NavbarComponent implements OnInit {
 
   goToDashboard(): void {
     this.router.navigate(['/admin/dashboard']);
+  }
+
+  ngOnDestroy(): void {
+    this.disconnectSocket();
   }
 }
