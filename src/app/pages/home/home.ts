@@ -1,111 +1,66 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ProductCardComponent } from '../../shared/components/product-card/product-card';
+import { SearchBarComponent } from '../../shared/components/search-bar/search-bar';
+import { FilterSidebarComponent } from '../../shared/components/filter-sidebar/filter-sidebar';
 import { ProductsService } from '../../core/services/products.service';
 import { CategoriesService } from '../../core/services/categories.service';
-import { ItemCard } from '../../shared/interfaces/item.interface';
 import { Category } from '../../shared/interfaces/category.interface';
+import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
 
-// Shape local que usa el template (track cat.id, product.photo_url)
-interface LocalProduct {
+interface HomeProduct {
   id: number;
   title: string;
-  price: number;
-  description: string | null;
-  photo_url: string;
-  isFavorite?: boolean;
-}
-
-interface LocalCategory {
-  id: number;
-  name: string;
-  icon: string;
-}
-
-interface Filters {
   category: string;
+  categoryId: number;
+  price: number;
   location: string;
-  minPrice: number;
-  maxPrice: number;
-  condition: string;
-  sortBy: string;
+  status: string;
+  image: string;
+  badge: string;
 }
 
 const CATEGORY_ICONS: Record<number, string> = {
-  1: 'assets/images/Iconos categorias/icono_munecosycoches.svg',
-  2: 'assets/images/Iconos categorias/icono_construccion.svg',
-  3: 'assets/images/Iconos categorias/icono_juegosmesa.svg',
-  4: 'assets/images/Iconos categorias/icono_educativo.svg',
-  5: 'assets/images/Iconos categorias/icono_bebes.svg',
-  6: 'assets/images/Iconos categorias/icono_airelibre.svg',
-  7: 'assets/images/Iconos categorias/icono_imaginacion.svg',
-  8: 'assets/images/Iconos categorias/icono_videojuegos.svg',
+  1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
+  2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
+  3: '/assets/images/Iconos%20categorias/icono_bebes.svg',
+  4: '/assets/images/Iconos%20categorias/icono_juegosmesa.svg',
+  5: '/assets/images/Iconos%20categorias/icono_imaginacion.svg',
+  6: '/assets/images/Iconos%20categorias/icono_educativo.svg',
+  7: '/assets/images/Iconos%20categorias/icono_munecosycoches.svg',
+  8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
-// Todas las comunidades autónomas de España
-export const SPAIN_LOCATIONS = [
-  { value: 'andalucia', label: 'Andalucía' },
-  { value: 'aragon', label: 'Aragón' },
-  { value: 'asturias', label: 'Asturias' },
-  { value: 'baleares', label: 'Islas Baleares' },
-  { value: 'canarias', label: 'Canarias' },
-  { value: 'cantabria', label: 'Cantabria' },
-  { value: 'castilla_la_mancha', label: 'Castilla-La Mancha' },
-  { value: 'castilla_y_leon', label: 'Castilla y León' },
-  { value: 'cataluna', label: 'Cataluña' },
-  { value: 'ceuta', label: 'Ceuta' },
-  { value: 'extremadura', label: 'Extremadura' },
-  { value: 'galicia', label: 'Galicia' },
-  { value: 'madrid', label: 'Madrid' },
-  { value: 'melilla', label: 'Melilla' },
-  { value: 'murcia', label: 'Región de Murcia' },
-  { value: 'navarra', label: 'Navarra' },
-  { value: 'pais_vasco', label: 'País Vasco' },
-  { value: 'la_rioja', label: 'La Rioja' },
-  { value: 'valencia', label: 'Comunidad Valenciana' },
-];
+const CONDITION_LABELS: Record<string, string> = {
+  excellent: 'Como nuevo',
+  very_good: 'Muy buen estado',
+  good: 'Buen estado',
+  fair: 'Usado',
+};
+
+const BADGE_LABELS: Record<string, string> = {
+  available: 'Disponible',
+  sold: 'Vendido',
+  paused: 'Pausado',
+  deleted: 'Eliminado',
+};
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [ProductCardComponent, SearchBarComponent, FilterSidebarComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
 export class Home implements OnInit {
-
-  searchQuery = '';
-  showFilters = false;
-  selectedCategory: number | null = null;
-  currentPage = 1;
-  hasNextPage = false;
-  pageSize = 12;
-
-  isSearching = false; // true cuando hay texto en el buscador -> oculta "Últimos" y muestra solo resultados
-
-  locations = SPAIN_LOCATIONS;
-
-  filters: Filters = {
-    category: '',
-    location: '',
-    minPrice: 0,
-    maxPrice: 1000,
-    condition: '',
-    sortBy: 'date_desc'
-  };
-
-  categories: LocalCategory[] = [];
-  featuredProduct: LocalProduct | null = null;
-  latestProducts: LocalProduct[] = [];
-  relatedProducts: LocalProduct[] = [];
-
-  private searchSubject = new Subject<string>();
+  searchTerm = '';
+  activeFilters: Itemfilters = {};
+  selectedCategoryId = 0;
+  categories: Category[] = [];
+  products: HomeProduct[] = [];
+  isLoading = false;
+  error = '';
 
   constructor(
-    private router: Router,
     private productsService: ProductsService,
     private categoriesService: CategoriesService,
     private cdr: ChangeDetectorRef
@@ -114,25 +69,15 @@ export class Home implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     this.loadProducts();
-
-    // Búsqueda en tiempo real con debounce de 400ms
-    this.searchSubject.pipe(
-      debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      this.currentPage = 1;
-      this.loadProducts();
-    });
   }
 
   loadCategories(): void {
     this.categoriesService.getAll().subscribe({
       next: (cats: Category[]) => {
-        this.categories = cats.map(c => ({
-          id: c.id_categories,
-          name: c.name,
-          icon: CATEGORY_ICONS[c.id_categories] ?? 'assets/images/Iconos categorias/icono_educativo.svg',
-        }));
+        this.categories = [
+          { id_categories: 0, name: 'Todas', description: null, icon: '' },
+          ...cats.map(c => ({ ...c, icon: CATEGORY_ICONS[c.id_categories] ?? '' })),
+        ];
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -142,92 +87,112 @@ export class Home implements OnInit {
     });
   }
 
-  /** Una sola llamada a /products con todos los filtros aplicados */
   loadProducts(): void {
-    const params: any = { limit: this.pageSize, page: this.currentPage };
+    this.isLoading = true;
+    this.error = '';
 
-    if (this.selectedCategory) params.categoryId = this.selectedCategory;
-    if (this.searchQuery.trim()) params.search = this.searchQuery.trim();
-    if (this.filters.location) params.location = this.filters.location;
-    if (this.filters.minPrice > 0) params.minPrice = this.filters.minPrice;
-    if (this.filters.maxPrice < 1000) params.maxPrice = this.filters.maxPrice;
-    if (this.filters.condition) params.conservation_status = this.filters.condition;
-    if (this.filters.sortBy) params.sortBy = this.filters.sortBy;
+    const filters = this.buildRequestFilters();
 
-    this.productsService.getAll(params).subscribe({
+    this.productsService.getAll(filters).subscribe({
       next: (res) => {
-        this.relatedProducts = res.items.map(this.toLocalProduct);
-        this.latestProducts = this.relatedProducts.slice(0, 6);
-        this.featuredProduct = this.latestProducts[0] ?? null;
-        this.hasNextPage = this.currentPage < res.totalPages;
+        let items = res.items;
+        if (this.selectedCategoryId !== 0) {
+          items = items.filter(item =>
+            Number(item.category?.id_categories) === this.selectedCategoryId
+          );
+        }
+        this.products = items.map(this.toCardProduct);
+        this.isLoading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
+        this.error = 'Error al cargar los productos. Verifica que el servidor esté activo.';
+        this.isLoading = false;
         console.error('Error cargando productos:', err);
         this.cdr.markForCheck();
       },
     });
   }
 
-  private toLocalProduct(card: ItemCard): LocalProduct {
+  private buildRequestFilters(): Itemfilters {
+    const filters = { ...this.activeFilters } as Record<string, unknown>;
+    delete filters['category'];
+
+    if (this.selectedCategoryId !== 0) {
+      filters['fk_categories_id'] = this.selectedCategoryId;
+      filters['categoryId'] = this.selectedCategoryId;
+      filters['category_id'] = this.selectedCategoryId;
+      filters['fk_category_id'] = this.selectedCategoryId;
+    }
+
+    if (this.searchTerm.trim()) {
+      filters['search'] = this.searchTerm.trim();
+    }
+
+    return filters as Itemfilters;
+  }
+
+  private toCardProduct(card: ItemCard): HomeProduct {
     return {
       id: card.id_items,
       title: card.title,
+      category: card.category?.name ?? 'Sin categoría',
+      categoryId: Number(card.category?.id_categories ?? 0),
       price: card.price,
-      description: null,
-      photo_url: card.image,
+      location: card.location,
+      status: CONDITION_LABELS[card.conservation_status] ?? card.conservation_status,
+      image: card.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
+      badge: BADGE_LABELS[card.item_status] ?? card.item_status,
     };
   }
 
-  /** Se llama en cada pulsación de tecla del input de búsqueda */
-  onSearchInput(value: string): void {
-    this.searchQuery = value;
-    this.isSearching = value.trim().length > 0;
-    this.searchSubject.next(value);
-  }
-
-  /** Mantiene el comportamiento del botón de lupa / Enter, igual que la búsqueda en tiempo real */
-  onSearch(): void {
-    this.isSearching = this.searchQuery.trim().length > 0;
-    this.currentPage = 1;
+  onSearch(term: string): void {
+    this.searchTerm = term;
     this.loadProducts();
   }
 
-  toggleFilters(): void {
-    this.showFilters = !this.showFilters;
-  }
+  onCategorySelected(categoryIdValue: number | string): void {
+    const categoryId = Number(categoryIdValue);
+    this.selectedCategoryId = categoryId;
 
-  /** Se llama al aplicar los filtros del panel (botón "Aplicar" o al cambiar cualquier select/range) */
-  applyFilters(): void {
-    this.currentPage = 1;
-    this.loadProducts();
-  }
+    const nextFilters = { ...this.activeFilters } as Record<string, unknown>;
+    delete nextFilters['category'];
+    delete nextFilters['fk_categories_id'];
+    delete nextFilters['categoryId'];
+    delete nextFilters['category_id'];
+    delete nextFilters['fk_category_id'];
 
-  selectCategory(categoryId: number): void {
-    this.selectedCategory = this.selectedCategory === categoryId ? null : categoryId;
-    this.currentPage = 1;
-    this.loadProducts();
-  }
-
-  toggleFavorite(product: LocalProduct): void {
-    product.isFavorite = !product.isFavorite;
-  }
-
-  goToProduct(productId: number): void {
-    this.router.navigate(['/product', productId]);
-  }
-
-  prevPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.loadProducts();
+    if (categoryId !== 0) {
+      nextFilters['fk_categories_id'] = categoryId;
+      nextFilters['categoryId'] = categoryId;
+      nextFilters['category_id'] = categoryId;
+      nextFilters['fk_category_id'] = categoryId;
     }
+
+    this.activeFilters = nextFilters as Itemfilters;
+    this.loadProducts();
   }
 
-  nextPage(): void {
-    if (this.hasNextPage) {
-      this.currentPage++;
-      this.loadProducts();
+  onFiltersApplied(filters: Itemfilters): void {
+    this.activeFilters = filters;
+
+    const filterRecord = filters as Record<string, unknown>;
+    const categoryId =
+      Number(filterRecord['fk_categories_id'] ?? 0) ||
+      Number(filterRecord['categoryId'] ?? 0) ||
+      Number(filterRecord['category_id'] ?? 0) ||
+      Number(filterRecord['fk_category_id'] ?? 0);
+
+    if (categoryId) {
+      this.selectedCategoryId = categoryId;
+    } else {
+      this.selectedCategoryId = 0;
     }
+
+    this.loadProducts();
+  }
+
+  get activeCategoryName(): string {
+    return this.categories.find(c => c.id_categories === this.selectedCategoryId)?.name ?? 'Todas';
   }
 }
