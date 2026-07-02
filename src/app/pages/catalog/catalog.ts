@@ -7,11 +7,11 @@ import { CategoriesService } from '../../core/services/categories.service';
 import { Category } from '../../shared/interfaces/category.interface';
 import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
 
-// Shape que usa app-product-card (@Input product: DemoProduct)
 interface CatalogProduct {
   id: number;
   title: string;
   category: string;
+  categoryId: number;
   price: number;
   location: string;
   status: string;
@@ -30,19 +30,18 @@ const CATEGORY_ICONS: Record<number, string> = {
   8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  draft:        'Borrador',
-  published:    'Publicado',
-  under_review: 'En revisión',
-  removed:      'Retirado',
-  sold:         'Vendido',
+const CONDITION_LABELS: Record<string, string> = {
+  excellent: 'Como nuevo',
+  very_good: 'Muy buen estado',
+  good: 'Buen estado',
+  fair: 'Usado',
 };
 
 const BADGE_LABELS: Record<string, string> = {
   available: 'Disponible',
-  sold:      'Vendido',
-  paused:    'Pausado',
-  deleted:   'Eliminado',
+  sold: 'Vendido',
+  paused: 'Pausado',
+  deleted: 'Eliminado',
 };
 
 @Component({
@@ -55,6 +54,8 @@ const BADGE_LABELS: Record<string, string> = {
 export class CatalogComponent implements OnInit {
   searchTerm = '';
   activeFilters: Itemfilters = {};
+
+  selectedCategoryId = 0;
 
   categories: Category[] = [];
   products: CatalogProduct[] = [];
@@ -77,9 +78,18 @@ export class CatalogComponent implements OnInit {
     this.categoriesService.getAll().subscribe({
       next: (cats: Category[]) => {
         this.categories = [
-          { id_categories: 0, name: 'Todas', description: null },
-          ...cats.map(c => ({ ...c, icon: CATEGORY_ICONS[c.id_categories] ?? '' })),
+          {
+            id_categories: 0,
+            name: 'Todas',
+            description: null,
+            icon: ''
+          },
+          ...cats.map(c => ({
+            ...c,
+            icon: CATEGORY_ICONS[c.id_categories] ?? ''
+          })),
         ];
+
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -93,12 +103,24 @@ export class CatalogComponent implements OnInit {
     this.isLoading = true;
     this.error = '';
 
-    const filters: Itemfilters = { ...this.activeFilters };
-    if (this.searchTerm.trim()) filters.search = this.searchTerm.trim();
+    const filters = this.buildRequestFilters();
 
     this.productsService.getAll(filters).subscribe({
       next: (res) => {
-        this.products = res.items.map(this.toCardProduct);
+        let items = res.items;
+
+        /**
+         * Filtro de seguridad en Front:
+         * Si el Back no filtra bien por categoría, aquí evitamos que se muestren
+         * productos de otra categoría distinta a la seleccionada.
+         */
+        if (this.selectedCategoryId !== 0) {
+          items = items.filter(item =>
+            Number(item.category?.id_categories) === this.selectedCategoryId
+          );
+        }
+
+        this.products = items.map(this.toCardProduct);
         this.isLoading = false;
         this.cdr.markForCheck();
       },
@@ -111,16 +133,47 @@ export class CatalogComponent implements OnInit {
     });
   }
 
+  private buildRequestFilters(): Itemfilters {
+    const filters = {
+      ...this.activeFilters
+    } as Record<string, unknown>;
+
+    /**
+     * Quitamos category por nombre para evitar que el Back filtre mal
+     * si espera un ID en vez de texto.
+     */
+    delete filters['category'];
+
+    if (this.selectedCategoryId !== 0) {
+      /**
+       * Enviamos varias posibilidades para adaptarnos al Back.
+       * Si el Back usa una de estas, filtrará correctamente.
+       * Si ignora alguna, no pasa nada.
+       */
+      filters['fk_categories_id'] = this.selectedCategoryId;
+      filters['categoryId'] = this.selectedCategoryId;
+      filters['category_id'] = this.selectedCategoryId;
+      filters['fk_category_id'] = this.selectedCategoryId;
+    }
+
+    if (this.searchTerm.trim()) {
+      filters['search'] = this.searchTerm.trim();
+    }
+
+    return filters as Itemfilters;
+  }
+
   private toCardProduct(card: ItemCard): CatalogProduct {
     return {
-      id:       card.id_items,
-      title:    card.title,
+      id: card.id_items,
+      title: card.title,
       category: card.category?.name ?? 'Sin categoría',
-      price:    card.price,
+      categoryId: Number(card.category?.id_categories ?? 0),
+      price: card.price,
       location: card.location,
-      status:   STATUS_LABELS[card.conservation_status] ?? card.conservation_status,
-      image:    card.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
-      badge:    BADGE_LABELS[card.item_status] ?? card.item_status,
+      status: CONDITION_LABELS[card.conservation_status] ?? card.conservation_status,
+      image: card.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
+      badge: BADGE_LABELS[card.item_status] ?? card.item_status,
     };
   }
 
@@ -129,8 +182,64 @@ export class CatalogComponent implements OnInit {
     this.loadProducts();
   }
 
+  onCategorySelected(categoryIdValue: number | string): void {
+    const categoryId = Number(categoryIdValue);
+
+    this.selectedCategoryId = categoryId;
+
+    const nextFilters = {
+      ...this.activeFilters
+    } as Record<string, unknown>;
+
+    delete nextFilters['category'];
+    delete nextFilters['fk_categories_id'];
+    delete nextFilters['categoryId'];
+    delete nextFilters['category_id'];
+    delete nextFilters['fk_category_id'];
+
+    if (categoryId !== 0) {
+      nextFilters['fk_categories_id'] = categoryId;
+      nextFilters['categoryId'] = categoryId;
+      nextFilters['category_id'] = categoryId;
+      nextFilters['fk_category_id'] = categoryId;
+    }
+
+    this.activeFilters = nextFilters as Itemfilters;
+    this.loadProducts();
+  }
+
   onFiltersApplied(filters: Itemfilters): void {
     this.activeFilters = filters;
+
+    const filterRecord = filters as Record<string, unknown>;
+
+    const categoryName = String(filterRecord['category'] ?? '');
+    const categoryId =
+      Number(filterRecord['fk_categories_id'] ?? 0) ||
+      Number(filterRecord['categoryId'] ?? 0) ||
+      Number(filterRecord['category_id'] ?? 0) ||
+      Number(filterRecord['fk_category_id'] ?? 0);
+
+    if (categoryId) {
+      this.selectedCategoryId = categoryId;
+    } else if (categoryName) {
+      const selectedCategory = this.categories.find(
+        category => category.name === categoryName
+      );
+
+      this.selectedCategoryId = selectedCategory?.id_categories ?? 0;
+    } else {
+      this.selectedCategoryId = 0;
+    }
+
     this.loadProducts();
+  }
+
+  get activeCategoryName(): string {
+    const selectedCategory = this.categories.find(
+      category => category.id_categories === this.selectedCategoryId
+    );
+
+    return selectedCategory?.name ?? 'Todas';
   }
 }
