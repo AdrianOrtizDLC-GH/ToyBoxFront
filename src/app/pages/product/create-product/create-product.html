@@ -39,44 +39,82 @@
         </div>
       </div>
 
+      <p class="required-note">
+        <span>*</span> Campos obligatorios para publicar
+      </p>
+
       <div class="form-grid">
         <div class="form-field form-field--full">
-          <label for="title">Título del producto</label>
+          <label for="title">
+            Título del producto <span class="required-star">*</span>
+          </label>
 
           <input
             id="title"
             name="title"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('title')"
             type="text"
+            maxlength="80"
             placeholder="Ej. Caja de bloques de construcción"
             [(ngModel)]="formData.title"
+            (blur)="markTouched('title')"
             required
           />
+
+          <small class="field-hint">
+            Entre 3 y 80 caracteres.
+          </small>
+
+          @if (getFieldError('title')) {
+            <small class="field-error">
+              {{ getFieldError('title') }}
+            </small>
+          }
         </div>
 
         <div class="form-field">
-          <label for="price">Precio</label>
+          <label for="price">
+            Precio <span class="required-star">*</span>
+          </label>
 
           <input
             id="price"
             name="price"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('price')"
             type="number"
             min="1"
+            max="1000"
             placeholder="Ej. 18"
             [(ngModel)]="formData.price"
+            (blur)="markTouched('price')"
             required
           />
+
+          <small class="field-hint">
+            Precio máximo: 1000 €.
+          </small>
+
+          @if (getFieldError('price')) {
+            <small class="field-error">
+              {{ getFieldError('price') }}
+            </small>
+          }
         </div>
 
         <div class="form-field">
-          <label for="state">Estado</label>
+          <label for="state">
+            Estado <span class="required-star">*</span>
+          </label>
 
           <select
             id="state"
             name="state"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('conservation_status')"
             [(ngModel)]="formData.conservation_status"
+            (blur)="markTouched('conservation_status')"
             required
           >
             <option value="">Selecciona estado</option>
@@ -85,48 +123,91 @@
               <option [value]="state.value">{{ state.label }}</option>
             }
           </select>
+
+          @if (getFieldError('conservation_status')) {
+            <small class="field-error">
+              {{ getFieldError('conservation_status') }}
+            </small>
+          }
         </div>
 
         <div class="form-field">
-          <label for="province">Provincia</label>
+          <label for="province">
+            Provincia <span class="required-star">*</span>
+          </label>
 
           <input
             id="province"
             name="province"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('province')"
             type="text"
+            maxlength="60"
             placeholder="Ej. Madrid"
             [(ngModel)]="formData.province"
+            (blur)="markTouched('province')"
             required
           />
+
+          @if (getFieldError('province')) {
+            <small class="field-error">
+              {{ getFieldError('province') }}
+            </small>
+          }
         </div>
 
         <div class="form-field">
-          <label for="city">Ciudad</label>
+          <label for="city">
+            Ciudad <span class="required-star">*</span>
+          </label>
 
           <input
             id="city"
             name="city"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('city')"
             type="text"
+            maxlength="60"
             placeholder="Ej. Madrid"
             [(ngModel)]="formData.city"
+            (blur)="markTouched('city')"
             required
           />
+
+          @if (getFieldError('city')) {
+            <small class="field-error">
+              {{ getFieldError('city') }}
+            </small>
+          }
         </div>
 
         <div class="form-field form-field--full">
-          <label for="description">Descripción</label>
+          <label for="description">
+            Descripción <span class="required-star">*</span>
+          </label>
 
           <textarea
             id="description"
             name="description"
             class="form-control"
+            [class.form-control--invalid]="isFieldInvalid('description')"
             rows="5"
+            maxlength="600"
             placeholder="Describe el juguete, su estado, piezas incluidas y cualquier detalle útil."
             [(ngModel)]="formData.description"
+            (blur)="markTouched('description')"
             required
           ></textarea>
+
+          <small class="field-hint">
+            Entre 20 y 600 caracteres.
+          </small>
+
+          @if (getFieldError('description')) {
+            <small class="field-error">
+              {{ getFieldError('description') }}
+            </small>
+          }
         </div>
       </div>
     </section>
@@ -142,6 +223,17 @@
           </p>
         </div>
       </div>
+
+      <div class="selected-category-info">
+        Categoría seleccionada:
+        <strong>{{ selectedCategoryName }}</strong>
+      </div>
+
+      @if (getFieldError('fk_categories_id')) {
+        <p class="field-error category-error">
+          {{ getFieldError('fk_categories_id') }}
+        </p>
+      }
 
       <div class="category-selector">
         @for (category of categories; track category.id_categories) {
@@ -184,17 +276,36 @@
         (change)="onImagesSelected($event)"
       />
 
-      <label class="upload-box" for="productImages">
+      <label
+        class="upload-box"
+        [class.upload-box--dragover]="isDragOver"
+        for="productImages"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
         <span class="material-symbols-outlined">cloud_upload</span>
 
-        <h3>Selecciona tus imágenes</h3>
+        <h3>Arrastra tus imágenes aquí</h3>
 
-        <p>Haz clic para elegirlas desde tu ordenador.</p>
+        <p>
+          También puedes hacer clic para elegirlas desde tu ordenador.
+        </p>
+
+        <small>
+          Máximo 5 imágenes. Peso máximo: 5 MB por imagen.
+        </small>
 
         <span class="btn-toybox-secondary upload-box__button">
           Seleccionar imágenes
         </span>
       </label>
+
+      @if (getFieldError('images')) {
+        <p class="field-error image-error">
+          {{ getFieldError('images') }}
+        </p>
+      }
 
       <div class="image-preview-grid">
         @for (image of selectedImages; track image.preview; let index = $index) {
@@ -263,7 +374,7 @@
           [disabled]="isSubmitting"
           (click)="saveDraft()"
         >
-          {{ isSubmitting ? 'Guardando...' : 'Guardar borrador' }}
+          Guardar borrador
         </button>
 
         <button

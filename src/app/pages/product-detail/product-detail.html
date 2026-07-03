@@ -49,14 +49,31 @@
         </p>
 
         <div class="product-actions">
-          <button class="btn-toybox-primary" type="button">
+          <button
+            class="btn-toybox-primary"
+            type="button"
+            [disabled]="isStartingChat"
+            (click)="contactSeller()"
+          >
             <span class="material-symbols-outlined">chat</span>
-            Contactar con vendedor
+            {{ isStartingChat ? 'Abriendo chat...' : 'Contactar con vendedor' }}
           </button>
 
-          <button class="btn-toybox-secondary" type="button">
-            <span class="material-symbols-outlined">favorite</span>
-            Añadir a favoritos
+          <button
+            class="product-favorite-button"
+            [class.product-favorite-button--active]="isFavorite"
+            type="button"
+            [disabled]="isUpdatingFavorite"
+            [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+            (click)="onToggleFavorite()"
+          >
+            <span class="material-symbols-outlined">
+              {{ isFavorite ? 'favorite' : 'favorite_border' }}
+            </span>
+
+            <span>
+              {{ isFavorite ? 'En favoritos' : 'Añadir a favoritos' }}
+            </span>
           </button>
 
           <button
@@ -69,6 +86,24 @@
           </button>
         </div>
 
+        @if (chatError) {
+          <p class="error-message product-report-message">
+            {{ chatError }}
+          </p>
+        }
+
+        @if (favoriteError) {
+          <p class="error-message product-report-message">
+            {{ favoriteError }}
+          </p>
+        }
+
+        @if (favoriteMessage) {
+          <p class="success-message product-report-message">
+            {{ favoriteMessage }}
+          </p>
+        }
+
         @if (reportSuccess) {
           <p class="success-message product-report-message">
             {{ reportSuccess }}
@@ -79,9 +114,17 @@
 
     <section class="detail-extra-layout">
       @if (product.seller) {
-        <article class="seller-card card-toybox">
+        <button
+          class="seller-card seller-card--clickable card-toybox"
+          type="button"
+          (click)="goToSellerProfile()"
+        >
           <div class="seller-card__avatar">
-            {{ product.seller.name.charAt(0) }}
+            @if (product.seller.profile_picture) {
+              <img [src]="product.seller.profile_picture" [alt]="product.seller.name" />
+            } @else {
+              {{ product.seller.name.charAt(0) }}
+            }
           </div>
 
           <div>
@@ -90,11 +133,12 @@
             <h2>{{ product.seller.name }}</h2>
 
             <p>
-              {{ product.seller.city }} · {{ product.seller.rating }} ★
+              {{ product.seller.city || 'Sin ubicación' }}
+              · {{ product.seller.rating }} ★
               · {{ product.seller.reviews }} valoraciones
             </p>
           </div>
-        </article>
+        </button>
       }
 
       <article class="safe-card card-toybox">
@@ -122,22 +166,7 @@
 
       <div class="related-grid">
         @for (item of relatedProducts; track item.id) {
-          <article class="related-card card-toybox">
-            <div class="related-card__image">
-              <img [src]="item.image" [alt]="item.title" />
-            </div>
-
-            <div class="related-card__content">
-              <span>{{ item.category }}</span>
-
-              <h3>{{ item.title }}</h3>
-
-              <div class="related-card__footer">
-                <strong>{{ item.price }} €</strong>
-                <small>{{ item.location }}</small>
-              </div>
-            </div>
-          </article>
+          <app-product-card [product]="item"></app-product-card>
         }
       </div>
     </section>

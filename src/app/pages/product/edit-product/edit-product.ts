@@ -22,6 +22,16 @@ interface CurrentImage {
   label?: string;
 }
 
+type EditProductField =
+  | 'title'
+  | 'price'
+  | 'conservation_status'
+  | 'province'
+  | 'city'
+  | 'description'
+  | 'fk_categories_id'
+  | 'images';
+
 @Component({
   selector: 'app-edit-product',
   standalone: true,
@@ -108,18 +118,35 @@ export class EditProductComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSubmitting = false;
   isWithdrawing = false;
+  isDragOver = false;
+  showValidationErrors = false;
 
   showWithdrawModal = false;
 
   successMessage = '';
   errorMessage = '';
 
-constructor(
-  private route: ActivatedRoute,
-  private router: Router,
-  private productsService: ProductsService,
-  private cdr: ChangeDetectorRef
-) {}
+  private readonly MAX_IMAGES = 5;
+  private readonly MAX_IMAGE_SIZE_MB = 5;
+  private readonly MAX_IMAGE_SIZE_BYTES = this.MAX_IMAGE_SIZE_MB * 1024 * 1024;
+
+  private touchedFields: Record<EditProductField, boolean> = {
+    title: false,
+    price: false,
+    conservation_status: false,
+    province: false,
+    city: false,
+    description: false,
+    fk_categories_id: false,
+    images: false
+  };
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private productsService: ProductsService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
@@ -139,6 +166,8 @@ constructor(
   loadProduct(id: number): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
+    this.showValidationErrors = false;
 
     this.productsService.getById(id).subscribe({
       next: (raw: any) => {
@@ -153,11 +182,10 @@ constructor(
         };
 
         this.currentBadge = this.getBadgeLabel(raw.item_status);
+        this.currentImages = this.mapCurrentImages(raw);
 
-this.currentImages = this.mapCurrentImages(raw);
-
-this.isLoading = false;
-this.cdr.markForCheck();
+        this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isLoading = false;
@@ -175,41 +203,45 @@ this.cdr.markForCheck();
     this.formData.fk_categories_id =
       this.formData.fk_categories_id === categoryId ? null : categoryId;
 
+    this.markTouched('fk_categories_id');
     this.errorMessage = '';
+  }
+
+  markTouched(field: EditProductField): void {
+    this.touchedFields[field] = true;
   }
 
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
 
-    if (!files.length) return;
-
-    const totalImages = this.currentImages.length + this.selectedImages.length;
-    const availableSlots = Math.max(0, 5 - totalImages);
-
-    if (!availableSlots) {
-      this.errorMessage = 'Puedes tener un máximo de 5 imágenes.';
-      input.value = '';
-      return;
-    }
-
-    const validFiles = files
-      .filter(file => file.type.startsWith('image/'))
-      .slice(0, availableSlots);
-
-    if (!validFiles.length) {
-      this.errorMessage = 'Selecciona archivos de imagen válidos.';
-      input.value = '';
-      return;
-    }
-
-    validFiles.forEach(file => {
-      const preview = URL.createObjectURL(file);
-      this.selectedImages.push({ file, preview });
-    });
+    this.addImages(files);
 
     input.value = '';
-    this.errorMessage = '';
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = false;
+
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    this.addImages(files);
   }
 
   removeNewImage(index: number): void {
@@ -220,15 +252,22 @@ this.cdr.markForCheck();
     }
 
     this.selectedImages.splice(index, 1);
+    this.markTouched('images');
   }
 
   cancelEdit(): void {
+    if (this.productId) {
+      this.router.navigate(['/product', this.productId]);
+      return;
+    }
+
     this.router.navigate(['/catalog']);
   }
 
   saveChanges(): void {
     this.successMessage = '';
     this.errorMessage = '';
+    this.showValidationErrors = true;
 
     if (!this.productId || this.isSubmitting) return;
 
@@ -263,40 +302,6 @@ this.cdr.markForCheck();
         console.error('Error guardando cambios:', err);
       }
     });
-  }
-
-  private uploadImagesAndFinish(): void {
-    if (!this.productId) return;
-
-    if (!this.selectedImages.length) {
-      this.finishSave();
-      return;
-    }
-
-    const imagesFormData = new FormData();
-
-    this.selectedImages.forEach(image => {
-      imagesFormData.append('images', image.file);
-    });
-
-    this.productsService.uploadImages(this.productId, imagesFormData).subscribe({
-      next: () => {
-        this.finishSave();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        this.errorMessage = 'Los datos se han guardado, pero no se han podido subir las imágenes.';
-        console.error('Error subiendo imágenes:', err);
-      }
-    });
-  }
-
-  private finishSave(): void {
-    if (!this.productId) return;
-
-    this.isSubmitting = false;
-    this.successMessage = 'Cambios guardados correctamente.';
-    this.router.navigate(['/product', this.productId]);
   }
 
   openWithdrawModal(): void {
@@ -336,6 +341,89 @@ this.cdr.markForCheck();
     });
   }
 
+  getFieldError(field: EditProductField): string {
+    const shouldShow = this.showValidationErrors || this.touchedFields[field];
+
+    if (!shouldShow) return '';
+
+    switch (field) {
+      case 'title': {
+        const title = this.formData.title.trim();
+
+        if (!title) return 'Introduce un título para el producto.';
+        if (title.length < 3) return 'El título debe tener al menos 3 caracteres.';
+        if (title.length > 80) return 'El título no puede superar los 80 caracteres.';
+
+        return '';
+      }
+
+      case 'price': {
+        const price = Number(this.formData.price);
+
+        if (!this.formData.price) return 'Introduce un precio.';
+        if (Number.isNaN(price) || price <= 0) return 'Introduce un precio válido.';
+        if (price > 1000) return 'El precio máximo permitido es 1000 €.';
+
+        return '';
+      }
+
+      case 'conservation_status':
+        return this.formData.conservation_status
+          ? ''
+          : 'Selecciona el estado del producto.';
+
+      case 'province': {
+        const province = this.formData.province.trim();
+
+        if (!province) return 'Introduce la provincia.';
+        if (province.length < 2) return 'La provincia debe tener al menos 2 caracteres.';
+        if (province.length > 60) return 'La provincia no puede superar los 60 caracteres.';
+
+        return '';
+      }
+
+      case 'city': {
+        const city = this.formData.city.trim();
+
+        if (!city) return 'Introduce la ciudad.';
+        if (city.length < 2) return 'La ciudad debe tener al menos 2 caracteres.';
+        if (city.length > 60) return 'La ciudad no puede superar los 60 caracteres.';
+
+        return '';
+      }
+
+      case 'description': {
+        const description = this.formData.description.trim();
+
+        if (!description) return 'Añade una descripción del producto.';
+        if (description.length < 20) return 'La descripción debe tener al menos 20 caracteres.';
+        if (description.length > 600) return 'La descripción no puede superar los 600 caracteres.';
+
+        return '';
+      }
+
+      case 'fk_categories_id':
+        return this.formData.fk_categories_id
+          ? ''
+          : 'Selecciona una categoría.';
+
+      case 'images': {
+        const totalImages = this.currentImages.length + this.selectedImages.length;
+
+        return totalImages
+          ? ''
+          : 'El producto debe tener al menos una imagen.';
+      }
+
+      default:
+        return '';
+    }
+  }
+
+  isFieldInvalid(field: EditProductField): boolean {
+    return Boolean(this.getFieldError(field));
+  }
+
   get selectedCategoryName(): string {
     const selected = this.categories.find(
       category => category.id_categories === this.formData.fk_categories_id
@@ -352,40 +440,115 @@ this.cdr.markForCheck();
     return selected?.label ?? 'Sin estado seleccionado';
   }
 
+  get remainingImageSlots(): number {
+    const totalImages = this.currentImages.length + this.selectedImages.length;
+    return Math.max(0, this.MAX_IMAGES - totalImages);
+  }
+
+  private addImages(files: File[]): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.markTouched('images');
+
+    if (!files.length) return;
+
+    if (!this.remainingImageSlots) {
+      this.errorMessage = `Puedes tener un máximo de ${this.MAX_IMAGES} imágenes.`;
+      return;
+    }
+
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (!imageFiles.length) {
+      this.errorMessage = 'Selecciona archivos de imagen válidos.';
+      return;
+    }
+
+    const acceptedFiles: File[] = [];
+
+    for (const file of imageFiles) {
+      if (acceptedFiles.length >= this.remainingImageSlots) break;
+
+      if (file.size > this.MAX_IMAGE_SIZE_BYTES) {
+        this.errorMessage = `La imagen "${file.name}" supera los ${this.MAX_IMAGE_SIZE_MB} MB.`;
+        continue;
+      }
+
+      const alreadySelected = this.selectedImages.some(
+        image => image.file.name === file.name && image.file.size === file.size
+      );
+
+      if (alreadySelected) {
+        this.errorMessage = `La imagen "${file.name}" ya está seleccionada.`;
+        continue;
+      }
+
+      acceptedFiles.push(file);
+    }
+
+    acceptedFiles.forEach(file => {
+      const preview = URL.createObjectURL(file);
+      this.selectedImages.push({ file, preview });
+    });
+
+    if (files.length > acceptedFiles.length && this.remainingImageSlots === 0) {
+      this.errorMessage = `Solo se han añadido las imágenes permitidas hasta un máximo de ${this.MAX_IMAGES}.`;
+    }
+  }
+
+  private uploadImagesAndFinish(): void {
+    if (!this.productId) return;
+
+    if (!this.selectedImages.length) {
+      this.finishSave();
+      return;
+    }
+
+    const imagesFormData = new FormData();
+
+    this.selectedImages.forEach(image => {
+      imagesFormData.append('images', image.file);
+    });
+
+    this.productsService.uploadImages(this.productId, imagesFormData).subscribe({
+      next: () => {
+        this.finishSave();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.errorMessage = 'Los datos se han guardado, pero no se han podido subir las imágenes.';
+        console.error('Error subiendo imágenes:', err);
+      }
+    });
+  }
+
+  private finishSave(): void {
+    if (!this.productId) return;
+
+    this.isSubmitting = false;
+    this.successMessage = 'Cambios guardados correctamente.';
+    this.router.navigate(['/product', this.productId]);
+  }
+
   private isFormValid(): boolean {
-    if (!this.formData.title.trim()) {
-      this.errorMessage = 'Introduce un título para el producto.';
-      return false;
-    }
+    const fields: EditProductField[] = [
+      'title',
+      'price',
+      'conservation_status',
+      'province',
+      'city',
+      'description',
+      'fk_categories_id',
+      'images'
+    ];
 
-    if (!this.formData.price || Number(this.formData.price) <= 0) {
-      this.errorMessage = 'Introduce un precio válido.';
-      return false;
-    }
+    for (const field of fields) {
+      const error = this.getFieldError(field);
 
-    if (!this.formData.conservation_status) {
-      this.errorMessage = 'Selecciona el estado del producto.';
-      return false;
-    }
-
-    if (!this.formData.province.trim()) {
-      this.errorMessage = 'Introduce la provincia.';
-      return false;
-    }
-
-    if (!this.formData.city.trim()) {
-      this.errorMessage = 'Introduce la ciudad.';
-      return false;
-    }
-
-    if (!this.formData.description.trim()) {
-      this.errorMessage = 'Añade una descripción del producto.';
-      return false;
-    }
-
-    if (!this.formData.fk_categories_id) {
-      this.errorMessage = 'Selecciona una categoría.';
-      return false;
+      if (error) {
+        this.errorMessage = error;
+        return false;
+      }
     }
 
     return true;
@@ -419,7 +582,11 @@ this.cdr.markForCheck();
       available: 'Disponible',
       sold: 'Vendido',
       paused: 'Pausado',
-      deleted: 'Eliminado'
+      deleted: 'Eliminado',
+      draft: 'Borrador',
+      published: 'Publicado',
+      under_review: 'En revisión',
+      removed: 'Retirado'
     };
 
     return labels[status] ?? status ?? 'Publicado';

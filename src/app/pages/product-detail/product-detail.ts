@@ -1,19 +1,24 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { ImageGalleryComponent } from '../../shared/components/image-gallery/image-gallery';
+import { ProductCardComponent } from '../../shared/components/product-card/product-card';
+
 import { ProductsService } from '../../core/services/products.service';
 import { ReportsService } from '../../core/services/reports.service';
+import { FavoritesService } from '../../core/services/favorites.service';
+import { ChatService } from '../../core/services/chat.service';
+import { ReviewsService } from '../../core/services/reviews.service';
+import { AuthService } from '../../core/services/auth.service';
 
-const STATUS_LABELS: Record<string, string> = {
-  draft: 'Borrador',
-  published: 'Publicado',
-  under_review: 'En revisión',
-  removed: 'Retirado',
-  sold: 'Vendido',
+const CONDITION_LABELS: Record<string, string> = {
+  excellent: 'Como nuevo',
+  very_good: 'Muy buen estado',
+  good: 'Buen estado',
+  fair: 'Usado',
 };
 
 const BADGE_LABELS: Record<string, string> = {
@@ -21,6 +26,10 @@ const BADGE_LABELS: Record<string, string> = {
   sold: 'Vendido',
   paused: 'Pausado',
   deleted: 'Eliminado',
+  draft: 'Borrador',
+  published: 'Publicado',
+  under_review: 'En revisión',
+  removed: 'Retirado',
 };
 
 interface DetailProduct {
@@ -54,13 +63,15 @@ interface RelatedProduct {
   category: string;
   price: number;
   location: string;
+  status: string;
   image: string;
+  badge: string;
 }
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [ImageGalleryComponent],
+  imports: [ImageGalleryComponent, ProductCardComponent],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css'
 })
@@ -71,6 +82,14 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   isLoading = true;
   error = '';
+
+  isFavorite = false;
+  isUpdatingFavorite = false;
+  favoriteMessage = '';
+  favoriteError = '';
+
+  isStartingChat = false;
+  chatError = '';
 
   reportReasons: string[] = [
     'Producto inapropiado',
@@ -92,8 +111,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private productsService: ProductsService,
     private reportsService: ReportsService,
+    private favoritesService: FavoritesService,
+    private chatService: ChatService,
+    private reviewsService: ReviewsService,
+    private authService: AuthService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -102,13 +126,22 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         const id = Number(params['id']);
-        if (id) this.loadProduct(id);
+
+        if (id) {
+          this.loadProduct(id);
+        }
       });
   }
 
   loadProduct(id: number): void {
     this.isLoading = true;
     this.error = '';
+    this.favoriteMessage = '';
+    this.favoriteError = '';
+    this.chatError = '';
+    this.reportSuccess = '';
+    this.reportError = '';
+    this.isFavorite = false;
 
     this.productsService.getById(id)
       .pipe(takeUntil(this.destroy$))
@@ -127,6 +160,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           this.isLoading = false;
           this.cdr.markForCheck();
 
+          /*
+            Importante:
+            No llamamos automáticamente a favoritos porque si el usuario no está logueado
+            o el token falla, el interceptor puede mandarnos al login.
+          */
+
+          this.loadSellerReviewsSafely(this.product.seller.id_users);
           this.loadRelated(raw.fk_categories_id, id);
         },
         error: (err: any) => {
@@ -142,12 +182,26 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   private loadRelated(categoryId: number, excludeId: number): void {
-    this.productsService.getAll({ categoryId, limit: 6 })
+    if (!categoryId) {
+      this.relatedProducts = [];
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const filters = {
+      fk_categories_id: categoryId,
+      categoryId,
+      category_id: categoryId,
+      limit: 8
+    } as any;
+
+    this.productsService.getAll(filters)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (res) => {
           this.relatedProducts = res.items
             .filter(item => item.id_items !== excludeId)
+            .filter(item => Number(item.category?.id_categories) === Number(categoryId))
             .slice(0, 4)
             .map(item => ({
               id: item.id_items,
@@ -155,14 +209,202 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
               category: item.category?.name ?? 'Sin categoría',
               price: item.price,
               location: item.location,
+              status: CONDITION_LABELS[item.conservation_status] ?? item.conservation_status,
               image: item.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
+              badge: BADGE_LABELS[item.item_status] ?? item.item_status,
             }));
 
           this.cdr.markForCheck();
         },
         error: (err: any) => {
           console.error('Error cargando relacionados:', err);
+          this.relatedProducts = [];
+          this.cdr.markForCheck();
         },
+      });
+  }
+
+  onToggleFavorite(): void {
+    if (!this.isUserLoggedIn()) {
+      this.favoriteError = 'Debes iniciar sesión para añadir favoritos.';
+      this.favoriteMessage = '';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (!this.product.id_items || this.isUpdatingFavorite) return;
+
+    this.isUpdatingFavorite = true;
+    this.favoriteMessage = '';
+    this.favoriteError = '';
+
+    const request$: Observable<unknown> = this.isFavorite
+      ? this.favoritesService.remove(this.product.id_items)
+      : this.favoritesService.add(this.product.id_items);
+
+    request$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          const wasFavorite = this.isFavorite;
+
+          this.isFavorite = !this.isFavorite;
+          this.isUpdatingFavorite = false;
+
+          this.favoriteMessage = this.isFavorite
+            ? 'Producto añadido a favoritos.'
+            : 'Producto eliminado de favoritos.';
+
+          window.dispatchEvent(new CustomEvent('toybox:favorites-updated', {
+            detail: {
+              productId: this.product.id_items,
+              isFavorite: this.isFavorite,
+              delta: wasFavorite ? -1 : 1
+            }
+          }));
+
+          setTimeout(() => {
+            this.favoriteMessage = '';
+            this.cdr.markForCheck();
+          }, 2500);
+
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isUpdatingFavorite = false;
+
+          if (err.status === 401) {
+            this.favoriteError = 'Debes iniciar sesión para añadir favoritos.';
+          } else {
+            this.favoriteError = 'No se ha podido actualizar favoritos.';
+          }
+
+          console.error('Error actualizando favorito:', err);
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  contactSeller(): void {
+    if (!this.isUserLoggedIn()) {
+      this.chatError = 'Debes iniciar sesión para contactar con el vendedor.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    if (!this.product.id_items || this.isStartingChat) return;
+
+    this.isStartingChat = true;
+    this.chatError = '';
+
+    this.chatService.startChat(this.product.id_items)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (chat: any) => {
+          this.isStartingChat = false;
+
+          const chatId =
+            chat.id_conversations ??
+            chat.conversation?.id_conversations ??
+            chat.chat?.id_conversations ??
+            chat.id_chats ??
+            chat.id_chat ??
+            chat.id ??
+            chat.chat?.id_chats ??
+            chat.chat?.id;
+
+          if (chatId) {
+            this.router.navigate(['/chat', chatId], {
+              queryParams: {
+                productId: this.product.id_items,
+                product: this.product.title,
+                seller: this.product.seller.username || this.product.seller.name
+              }
+            });
+          } else {
+            this.router.navigate(['/chat'], {
+              queryParams: {
+                productId: this.product.id_items,
+                product: this.product.title,
+                seller: this.product.seller.username || this.product.seller.name
+              }
+            });
+          }
+
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isStartingChat = false;
+
+          if (err.status === 401) {
+            this.chatError = 'Debes iniciar sesión para contactar con el vendedor.';
+          } else {
+            this.chatError = 'No se ha podido abrir el chat con el vendedor.';
+          }
+
+          console.error('Error iniciando chat:', err);
+          this.cdr.markForCheck();
+        }
+      });
+  }
+
+  goToSellerProfile(): void {
+    if (!this.product.seller.id_users) return;
+
+    this.router.navigate(['/user/profile', this.product.seller.id_users]);
+  }
+
+  private loadSellerReviewsSafely(sellerId?: number): void {
+    if (!sellerId) return;
+
+    /*
+      Esta llamada se deja protegida.
+      Si el Back no tiene /reviews/seller/:id, no debe romper la página.
+    */
+
+    this.reviewsService.getBySeller(sellerId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (reviews: any[]) => {
+          const totalReviews = reviews.length;
+
+          const totalRating = reviews.reduce((sum, review) => {
+            return sum + Number(review.rating ?? review.score ?? 0);
+          }, 0);
+
+          const averageRating = totalReviews
+            ? Number((totalRating / totalReviews).toFixed(1))
+            : 0;
+
+          this.product = {
+            ...this.product,
+            seller: {
+              ...this.product.seller,
+              rating: averageRating,
+              reviews: totalReviews
+            },
+            averageRating,
+            reviews
+          };
+
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.warn('No se han podido cargar las valoraciones del vendedor:', err);
+
+          this.product = {
+            ...this.product,
+            seller: {
+              ...this.product.seller,
+              rating: 0,
+              reviews: 0
+            },
+            averageRating: 0,
+            reviews: []
+          };
+
+          this.cdr.markForCheck();
+        }
       });
   }
 
@@ -184,6 +426,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   submitReport(): void {
+    if (!this.isUserLoggedIn()) {
+      this.reportError = 'Debes iniciar sesión para reportar un producto.';
+      this.cdr.markForCheck();
+      return;
+    }
+
     const reason = this.selectedReportReason === 'Otro motivo'
       ? this.customReportReason.trim()
       : this.selectedReportReason;
@@ -238,12 +486,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       description: raw.description ?? null,
       price: Number(raw.price),
       location: raw.location ?? 'Sin ubicación',
-      status: STATUS_LABELS[raw.conservation_status] ?? raw.conservation_status ?? '',
+      status: CONDITION_LABELS[raw.conservation_status] ?? raw.conservation_status ?? '',
       badge: BADGE_LABELS[raw.item_status] ?? raw.item_status ?? '',
       image: raw.main_photo ?? '',
       category: raw.category_name ?? raw.category?.name ?? '',
       seller: {
-        id_users: raw.fk_seller_id,
+        id_users: raw.fk_seller_id ?? raw.seller?.id_users ?? raw.seller?.id,
         name: `${raw.first_name ?? ''} ${raw.last_name ?? ''}`.trim() || raw.username || 'Usuario Toybox',
         username: raw.username,
         profile_picture: raw.profile_picture ?? null,
@@ -255,6 +503,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       averageRating: 0,
       reviews: [],
     };
+  }
+
+  private isUserLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
   }
 
   private emptyProduct(): DetailProduct {
