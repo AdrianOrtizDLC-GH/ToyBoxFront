@@ -1,6 +1,6 @@
 :host {
     display: block;
-    height: calc(100vh - 72px);
+    height: auto;
     font-family: var(--font-title);
 }
 
@@ -9,7 +9,7 @@
     margin: 0 auto;
     display: grid;
     grid-template-columns: 320px 1fr;
-    height: calc(80vh - 72px);
+    height: auto;  
     overflow: hidden;
 }
 
@@ -27,7 +27,7 @@
 }
 
 .sidebar-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     margin: 0;
     color: var(--primary-toybox);
@@ -83,13 +83,13 @@
 }
 
 .sidebar-username {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
     color: var(--on-surface);
 }
 
 .sidebar-product {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--secondary-toybox);
     font-weight: 600;
     white-space: nowrap;
@@ -99,7 +99,7 @@
 
 .sidebar-preview {
     font-family: var(--font-text);
-    font-size: 12px;
+    font-size: 13px;
     color: var(--on-surface-variant);
     white-space: nowrap;
     overflow: hidden;
@@ -148,14 +148,14 @@
 }
 
 .header-product-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     margin: 0 0 2px;
     color: var(--on-surface);
 }
 
 .header-username {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--on-surface-variant);
     margin: 0;
     font-family: var(--font-text);
@@ -163,12 +163,12 @@
 
 .messages-container {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: scroll;
     min-height: 0;
-    padding: 24px;
+    padding: 8px 24px 24px 24px;  
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     background: var(--background);
 }
 
@@ -182,7 +182,7 @@
 
 .no-messages p {
   font-family: var(--font-text);
-  font-size: 14px;
+  font-size: 15px;
   margin: 0;
 }
 
@@ -202,7 +202,7 @@
     border-radius: 50px;
     padding: 12px 20px;
     font-family: var(--font-text);
-    font-size: 14px;
+    font-size: 15px;
     outline: none;
     transition: border-color 0.2s;
     color: var(--on-surface);
@@ -250,13 +250,14 @@
 
 .no-conversation p {
     font-family: var(--font-text);
-    font-size: 15px;
+    font-size: 16px;
     margin: 0;
 }
 
 @media (max-width: 991.98px) {
     .chat-detail-page {
         grid-template-columns: 280px 1fr;
+        height: calc(100vh - 72px);
     }
 
     .chat-header {
@@ -265,12 +266,24 @@
 
     .messages-container {
         padding: 20px;
-        gap: 10px;
+        gap: 14px;
     }
 
     .chat-input-bar {
         padding: 14px 20px;
         gap: 10px;
+    }
+
+    .header-product-title {
+        font-size: 15px;
+    }
+
+    .header-username {
+        font-size: 13px;
+    }
+
+    .sidebar-username {
+        font-size: 15px;
     }
 }
 
@@ -279,6 +292,7 @@
         grid-template-columns: 1fr;
         width: 100%;
         margin: 0;
+        height: calc(100vh - 72px);
     }
 
     .sidebar {
@@ -291,7 +305,7 @@
 
     .messages-container {
         padding: 16px;
-        gap: 8px;
+        gap: 12px;
     }
 
     .chat-input-bar {
@@ -319,7 +333,7 @@
 
     .messages-container {
         padding: 12px;
-        gap: 6px;
+        gap: 10px;
     }
 
     .chat-input-bar {
@@ -338,5 +352,23 @@
 
     .header-username {
         font-size: 11px;
+    }
+
+    .chat-input {
+        font-size: 14px;
+        padding: 10px 16px;
+    }
+
+    .send-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .no-messages p {
+        font-size: 13px;
+    }
+
+    .no-conversation p {
+        font-size: 14px;
     }
 }
