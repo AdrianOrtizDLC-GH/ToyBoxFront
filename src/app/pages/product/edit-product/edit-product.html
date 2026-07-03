@@ -1,21 +1,21 @@
 <div class="pattern-bg"></div>
 
 <main class="edit-product-page relative-z-10">
-@if (isLoading) {
-  <section class="edit-product-state card-toybox">
-    <h1>Cargando producto...</h1>
-    <p class="text-on-surface-variant">
-      Estamos preparando la información para editar.
-    </p>
-  </section>
-} @else if (errorMessage) {
-  <section class="edit-product-state card-toybox">
-    <h1>No hemos podido cargar el producto</h1>
-    <p class="error-message">
-      {{ errorMessage }}
-    </p>
-  </section>
-} @else {
+  @if (isLoading) {
+    <section class="edit-product-state card-toybox">
+      <h1>Cargando producto...</h1>
+      <p class="text-on-surface-variant">
+        Estamos preparando la información para editar.
+      </p>
+    </section>
+  } @else if (errorMessage && !productId) {
+    <section class="edit-product-state card-toybox">
+      <h1>No hemos podido cargar el producto</h1>
+      <p class="error-message">
+        {{ errorMessage }}
+      </p>
+    </section>
+  } @else {
     <section class="edit-product-hero">
       <div>
         <span class="edit-product-hero__eyebrow">Editar publicación</span>
@@ -35,7 +35,7 @@
           <span class="edit-product-status__label">Estado actual</span>
           <h2>{{ currentBadge }}</h2>
           <p>
-            Esta publicación está visible en el catálogo. Los cambios se aplicarán
+            Esta publicación mantiene su historial. Los cambios se aplicarán
             cuando guardes la edición.
           </p>
         </div>
@@ -55,42 +55,80 @@
           </div>
         </div>
 
+        <p class="required-note">
+          <span>*</span> Campos obligatorios
+        </p>
+
         <div class="form-grid">
           <div class="form-field form-field--full">
-            <label for="title">Título del producto</label>
+            <label for="title">
+              Título del producto <span class="required-star">*</span>
+            </label>
 
             <input
               id="title"
               name="title"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('title')"
               type="text"
+              maxlength="80"
               [(ngModel)]="formData.title"
+              (blur)="markTouched('title')"
               required
             />
+
+            <small class="field-hint">
+              Entre 3 y 80 caracteres.
+            </small>
+
+            @if (getFieldError('title')) {
+              <small class="field-error">
+                {{ getFieldError('title') }}
+              </small>
+            }
           </div>
 
           <div class="form-field">
-            <label for="price">Precio</label>
+            <label for="price">
+              Precio <span class="required-star">*</span>
+            </label>
 
             <input
               id="price"
               name="price"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('price')"
               type="number"
               min="1"
+              max="1000"
               [(ngModel)]="formData.price"
+              (blur)="markTouched('price')"
               required
             />
+
+            <small class="field-hint">
+              Precio máximo: 1000 €.
+            </small>
+
+            @if (getFieldError('price')) {
+              <small class="field-error">
+                {{ getFieldError('price') }}
+              </small>
+            }
           </div>
 
           <div class="form-field">
-            <label for="state">Estado</label>
+            <label for="state">
+              Estado <span class="required-star">*</span>
+            </label>
 
             <select
               id="state"
               name="state"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('conservation_status')"
               [(ngModel)]="formData.conservation_status"
+              (blur)="markTouched('conservation_status')"
               required
             >
               <option value="">Selecciona estado</option>
@@ -99,45 +137,88 @@
                 <option [value]="state.value">{{ state.label }}</option>
               }
             </select>
+
+            @if (getFieldError('conservation_status')) {
+              <small class="field-error">
+                {{ getFieldError('conservation_status') }}
+              </small>
+            }
           </div>
 
           <div class="form-field">
-            <label for="province">Provincia</label>
+            <label for="province">
+              Provincia <span class="required-star">*</span>
+            </label>
 
             <input
               id="province"
               name="province"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('province')"
               type="text"
+              maxlength="60"
               [(ngModel)]="formData.province"
+              (blur)="markTouched('province')"
               required
             />
+
+            @if (getFieldError('province')) {
+              <small class="field-error">
+                {{ getFieldError('province') }}
+              </small>
+            }
           </div>
 
           <div class="form-field">
-            <label for="city">Ciudad</label>
+            <label for="city">
+              Ciudad <span class="required-star">*</span>
+            </label>
 
             <input
               id="city"
               name="city"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('city')"
               type="text"
+              maxlength="60"
               [(ngModel)]="formData.city"
+              (blur)="markTouched('city')"
               required
             />
+
+            @if (getFieldError('city')) {
+              <small class="field-error">
+                {{ getFieldError('city') }}
+              </small>
+            }
           </div>
 
           <div class="form-field form-field--full">
-            <label for="description">Descripción</label>
+            <label for="description">
+              Descripción <span class="required-star">*</span>
+            </label>
 
             <textarea
               id="description"
               name="description"
               class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('description')"
               rows="5"
+              maxlength="600"
               [(ngModel)]="formData.description"
+              (blur)="markTouched('description')"
               required
             ></textarea>
+
+            <small class="field-hint">
+              Entre 20 y 600 caracteres.
+            </small>
+
+            @if (getFieldError('description')) {
+              <small class="field-error">
+                {{ getFieldError('description') }}
+              </small>
+            }
           </div>
         </div>
       </section>
@@ -158,6 +239,12 @@
           Categoría seleccionada:
           <strong>{{ selectedCategoryName }}</strong>
         </div>
+
+        @if (getFieldError('fk_categories_id')) {
+          <p class="field-error category-error">
+            {{ getFieldError('fk_categories_id') }}
+          </p>
+        }
 
         <div class="category-selector">
           @for (category of categories; track category.id_categories) {
@@ -224,17 +311,36 @@
           (change)="onImagesSelected($event)"
         />
 
-        <label class="upload-box" for="editProductImages">
+        <label
+          class="upload-box"
+          [class.upload-box--dragover]="isDragOver"
+          for="editProductImages"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+        >
           <span class="material-symbols-outlined">add_photo_alternate</span>
 
-          <h3>Añadir más imágenes</h3>
+          <h3>Arrastra nuevas imágenes aquí</h3>
 
-          <p>Haz clic para seleccionar nuevas fotos desde tu ordenador.</p>
+          <p>
+            También puedes hacer clic para seleccionar nuevas fotos desde tu ordenador.
+          </p>
+
+          <small>
+            Máximo 5 imágenes en total. Peso máximo: 5 MB por imagen.
+          </small>
 
           <span class="btn-toybox-secondary upload-box__button">
             Seleccionar imágenes
           </span>
         </label>
+
+        @if (getFieldError('images')) {
+          <p class="field-error image-error">
+            {{ getFieldError('images') }}
+          </p>
+        }
 
         <div class="image-preview-grid">
           @for (image of currentImages; track image.url; let index = $index) {

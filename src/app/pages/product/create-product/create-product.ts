@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -17,6 +17,16 @@ interface SelectedImage {
   preview: string;
 }
 
+type CreateProductField =
+  | 'title'
+  | 'price'
+  | 'conservation_status'
+  | 'province'
+  | 'city'
+  | 'description'
+  | 'fk_categories_id'
+  | 'images';
+
 @Component({
   selector: 'app-create-product',
   standalone: true,
@@ -24,7 +34,7 @@ interface SelectedImage {
   templateUrl: './create-product.html',
   styleUrl: './create-product.css'
 })
-export class CreateProductComponent implements OnDestroy {
+export class CreateProductComponent implements OnInit, OnDestroy {
   categories: Category[] = [
     {
       id_categories: 1,
@@ -96,50 +106,78 @@ export class CreateProductComponent implements OnDestroy {
   selectedImages: SelectedImage[] = [];
 
   isSubmitting = false;
+  isDragOver = false;
+  showValidationErrors = false;
+
   successMessage = '';
   errorMessage = '';
+
+  private readonly MAX_IMAGES = 5;
+  private readonly MAX_IMAGE_SIZE_MB = 5;
+  private readonly MAX_IMAGE_SIZE_BYTES = this.MAX_IMAGE_SIZE_MB * 1024 * 1024;
+  private readonly DRAFT_STORAGE_KEY = 'toybox-create-product-draft';
+
+  private touchedFields: Record<CreateProductField, boolean> = {
+    title: false,
+    price: false,
+    conservation_status: false,
+    province: false,
+    city: false,
+    description: false,
+    fk_categories_id: false,
+    images: false
+  };
 
   constructor(
     private productsService: ProductsService,
     private router: Router
   ) {}
 
+  ngOnInit(): void {
+    this.loadLocalDraft();
+  }
+
   selectCategory(categoryId: number): void {
     this.formData.fk_categories_id = categoryId;
+    this.markTouched('fk_categories_id');
     this.errorMessage = '';
+  }
+
+  markTouched(field: CreateProductField): void {
+    this.touchedFields[field] = true;
   }
 
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
 
-    if (!files.length) return;
-
-    const availableSlots = Math.max(0, 5 - this.selectedImages.length);
-
-    if (!availableSlots) {
-      this.errorMessage = 'Puedes subir un máximo de 5 imágenes.';
-      input.value = '';
-      return;
-    }
-
-    const validFiles = files
-      .filter(file => file.type.startsWith('image/'))
-      .slice(0, availableSlots);
-
-    if (!validFiles.length) {
-      this.errorMessage = 'Selecciona archivos de imagen válidos.';
-      input.value = '';
-      return;
-    }
-
-    validFiles.forEach(file => {
-      const preview = URL.createObjectURL(file);
-      this.selectedImages.push({ file, preview });
-    });
+    this.addImages(files);
 
     input.value = '';
-    this.errorMessage = '';
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.isDragOver = false;
+
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    this.addImages(files);
   }
 
   removeImage(index: number): void {
@@ -150,19 +188,182 @@ export class CreateProductComponent implements OnDestroy {
     }
 
     this.selectedImages.splice(index, 1);
+    this.markTouched('images');
   }
 
   saveDraft(): void {
-    this.submitProduct(false);
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    const title = this.formData.title.trim();
+
+    if (!title) {
+      this.touchedFields.title = true;
+      this.errorMessage = 'Para guardar un borrador, introduce al menos un título.';
+      return;
+    }
+
+    const draft = {
+      formData: this.formData,
+      savedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem(this.DRAFT_STORAGE_KEY, JSON.stringify(draft));
+
+    this.successMessage = 'Borrador guardado correctamente en este navegador. No se ha publicado ningún producto.';
   }
 
   publishProduct(): void {
-    this.submitProduct(true);
+    this.submitProduct();
   }
 
-  private submitProduct(shouldPublish: boolean): void {
+  getFieldError(field: CreateProductField): string {
+    const shouldShow = this.showValidationErrors || this.touchedFields[field];
+
+    if (!shouldShow) return '';
+
+    switch (field) {
+      case 'title': {
+        const title = this.formData.title.trim();
+
+        if (!title) return 'Introduce un título para el producto.';
+        if (title.length < 3) return 'El título debe tener al menos 3 caracteres.';
+        if (title.length > 80) return 'El título no puede superar los 80 caracteres.';
+
+        return '';
+      }
+
+      case 'price': {
+        const price = Number(this.formData.price);
+
+        if (!this.formData.price) return 'Introduce un precio.';
+        if (Number.isNaN(price) || price <= 0) return 'Introduce un precio válido.';
+        if (price > 1000) return 'El precio máximo permitido es 1000 €.';
+
+        return '';
+      }
+
+      case 'conservation_status':
+        return this.formData.conservation_status
+          ? ''
+          : 'Selecciona el estado del producto.';
+
+      case 'province': {
+        const province = this.formData.province.trim();
+
+        if (!province) return 'Introduce la provincia.';
+        if (province.length < 2) return 'La provincia debe tener al menos 2 caracteres.';
+        if (province.length > 60) return 'La provincia no puede superar los 60 caracteres.';
+
+        return '';
+      }
+
+      case 'city': {
+        const city = this.formData.city.trim();
+
+        if (!city) return 'Introduce la ciudad.';
+        if (city.length < 2) return 'La ciudad debe tener al menos 2 caracteres.';
+        if (city.length > 60) return 'La ciudad no puede superar los 60 caracteres.';
+
+        return '';
+      }
+
+      case 'description': {
+        const description = this.formData.description.trim();
+
+        if (!description) return 'Añade una descripción del producto.';
+        if (description.length < 20) return 'La descripción debe tener al menos 20 caracteres.';
+        if (description.length > 600) return 'La descripción no puede superar los 600 caracteres.';
+
+        return '';
+      }
+
+      case 'fk_categories_id':
+        return this.formData.fk_categories_id
+          ? ''
+          : 'Selecciona una categoría.';
+
+      case 'images':
+        return this.selectedImages.length
+          ? ''
+          : 'Sube al menos una imagen del producto.';
+
+      default:
+        return '';
+    }
+  }
+
+  isFieldInvalid(field: CreateProductField): boolean {
+    return Boolean(this.getFieldError(field));
+  }
+
+  get selectedCategoryName(): string {
+    const selectedCategory = this.categories.find(
+      category => category.id_categories === this.formData.fk_categories_id
+    );
+
+    return selectedCategory?.name ?? 'Sin categoría seleccionada';
+  }
+
+  get remainingImageSlots(): number {
+    return Math.max(0, this.MAX_IMAGES - this.selectedImages.length);
+  }
+
+  private addImages(files: File[]): void {
     this.successMessage = '';
     this.errorMessage = '';
+    this.markTouched('images');
+
+    if (!files.length) return;
+
+    if (!this.remainingImageSlots) {
+      this.errorMessage = `Puedes subir un máximo de ${this.MAX_IMAGES} imágenes.`;
+      return;
+    }
+
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+
+    if (!imageFiles.length) {
+      this.errorMessage = 'Selecciona archivos de imagen válidos.';
+      return;
+    }
+
+    const acceptedFiles: File[] = [];
+
+    for (const file of imageFiles) {
+      if (acceptedFiles.length >= this.remainingImageSlots) break;
+
+      if (file.size > this.MAX_IMAGE_SIZE_BYTES) {
+        this.errorMessage = `La imagen "${file.name}" supera los ${this.MAX_IMAGE_SIZE_MB} MB.`;
+        continue;
+      }
+
+      const alreadySelected = this.selectedImages.some(
+        image => image.file.name === file.name && image.file.size === file.size
+      );
+
+      if (alreadySelected) {
+        this.errorMessage = `La imagen "${file.name}" ya está seleccionada.`;
+        continue;
+      }
+
+      acceptedFiles.push(file);
+    }
+
+    acceptedFiles.forEach(file => {
+      const preview = URL.createObjectURL(file);
+      this.selectedImages.push({ file, preview });
+    });
+
+    if (files.length > acceptedFiles.length && this.remainingImageSlots === 0) {
+      this.errorMessage = `Solo se han añadido las primeras ${this.MAX_IMAGES} imágenes.`;
+    }
+  }
+
+  private submitProduct(): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.showValidationErrors = true;
 
     if (!this.isFormValid()) return;
 
@@ -192,7 +393,7 @@ export class CreateProductComponent implements OnDestroy {
           return;
         }
 
-        this.uploadImagesAndFinish(productId, shouldPublish);
+        this.uploadImagesAndPublish(productId);
       },
       error: (err) => {
         this.isSubmitting = false;
@@ -208,12 +409,7 @@ export class CreateProductComponent implements OnDestroy {
     });
   }
 
-  private uploadImagesAndFinish(productId: number, shouldPublish: boolean): void {
-    if (!this.selectedImages.length) {
-      this.finishProductCreation(productId, shouldPublish);
-      return;
-    }
-
+  private uploadImagesAndPublish(productId: number): void {
     const imagesFormData = new FormData();
 
     this.selectedImages.forEach(image => {
@@ -222,7 +418,7 @@ export class CreateProductComponent implements OnDestroy {
 
     this.productsService.uploadImages(productId, imagesFormData).subscribe({
       next: () => {
-        this.finishProductCreation(productId, shouldPublish);
+        this.publishCreatedProduct(productId);
       },
       error: (err) => {
         this.isSubmitting = false;
@@ -232,18 +428,14 @@ export class CreateProductComponent implements OnDestroy {
     });
   }
 
-  private finishProductCreation(productId: number, shouldPublish: boolean): void {
-    if (!shouldPublish) {
-      this.isSubmitting = false;
-      this.successMessage = 'Borrador guardado correctamente.';
-      this.router.navigate(['/product', productId]);
-      return;
-    }
-
+  private publishCreatedProduct(productId: number): void {
     this.productsService.publish(productId).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.successMessage = 'Producto publicado correctamente.';
+
+        localStorage.removeItem(this.DRAFT_STORAGE_KEY);
+
         this.router.navigate(['/product', productId]);
       },
       error: (err) => {
@@ -255,47 +447,49 @@ export class CreateProductComponent implements OnDestroy {
   }
 
   private isFormValid(): boolean {
-    if (!this.formData.title.trim()) {
-      this.errorMessage = 'Introduce un título para el producto.';
-      return false;
-    }
+    const fields: CreateProductField[] = [
+      'title',
+      'price',
+      'conservation_status',
+      'province',
+      'city',
+      'description',
+      'fk_categories_id',
+      'images'
+    ];
 
-    if (!this.formData.price || Number(this.formData.price) <= 0) {
-      this.errorMessage = 'Introduce un precio válido.';
-      return false;
-    }
+    for (const field of fields) {
+      const error = this.getFieldError(field);
 
-    if (!this.formData.conservation_status) {
-      this.errorMessage = 'Selecciona el estado del producto.';
-      return false;
-    }
-
-    if (!this.formData.province.trim()) {
-      this.errorMessage = 'Introduce la provincia.';
-      return false;
-    }
-
-    if (!this.formData.city.trim()) {
-      this.errorMessage = 'Introduce la ciudad.';
-      return false;
-    }
-
-    if (!this.formData.description.trim()) {
-      this.errorMessage = 'Añade una descripción del producto.';
-      return false;
-    }
-
-    if (!this.formData.fk_categories_id) {
-      this.errorMessage = 'Selecciona una categoría.';
-      return false;
-    }
-
-    if (!this.selectedImages.length) {
-      this.errorMessage = 'Sube al menos una imagen del producto.';
-      return false;
+      if (error) {
+        this.errorMessage = error;
+        return false;
+      }
     }
 
     return true;
+  }
+
+  private loadLocalDraft(): void {
+    const savedDraft = localStorage.getItem(this.DRAFT_STORAGE_KEY);
+
+    if (!savedDraft) return;
+
+    try {
+      const parsedDraft = JSON.parse(savedDraft);
+
+      if (parsedDraft?.formData) {
+        this.formData = {
+          ...this.formData,
+          ...parsedDraft.formData
+        };
+
+        this.successMessage = 'Hemos recuperado el borrador guardado en este navegador.';
+      }
+    } catch (error) {
+      console.warn('No se ha podido recuperar el borrador local:', error);
+      localStorage.removeItem(this.DRAFT_STORAGE_KEY);
+    }
   }
 
   ngOnDestroy(): void {

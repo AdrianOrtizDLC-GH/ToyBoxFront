@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -11,13 +10,14 @@ import { LocationsService } from '../../../core/services/locations.service';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 import { MapStaticComponent } from '../../../shared/components/map-static/map-static';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar';
+import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
 import { User, UpdateUserProfileRequest } from '../../../shared/interfaces/user.interface';
 
 
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, BreadcrumbComponent, MapStaticComponent, UserAvatarComponent],
+  imports: [ReactiveFormsModule, BreadcrumbComponent, MapStaticComponent, UserAvatarComponent, ModalConfirmComponent],
   templateUrl: './edit-profile.html',
   styleUrls: ['./edit-profile.css']
 })
@@ -26,8 +26,8 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   errorMessage: string | null = null;
-  successMessage: string | null = null;
   showPasswordField = false;
+  showPassword = false;
   profilePicturePreview: string | null = null;
   selectedFile: File | null = null;
 
@@ -35,11 +35,14 @@ export class EditProfileComponent implements OnInit, OnDestroy {
 
   provinces: string[] = [];
   cities: string[] = [];
+  codigosPostales: string[] = [];
 
   previewLatitude: number | null = null;
   previewLongitude: number | null = null;
 
   breadcrumbItems: any[] = [];
+  showSuccessModal = false;
+  private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -106,8 +109,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       user_province: ['', [Validators.required]],
       user_city: ['', [Validators.required]],
       user_zipcode: ['', [Validators.required, Validators.pattern(/^\d{4,6}$/)]],
-      password: ['', []],
-      profile_picture: ['', []]
+      password: ['', []]
     });
 
     this.editProfileForm.get('user_province')?.valueChanges
@@ -160,7 +162,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
           }
 
           if (user.user_province && user.user_city) {
-            this.onCityChange(user.user_city).catch(() => {});
+            await this.populateLocationOnLoad(user.user_province, user.user_city);
           }
 
           if (user.profile_picture) {
@@ -178,11 +180,29 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  private async populateLocationOnLoad(province: string, city: string): Promise<void> {
+    try {
+      this.codigosPostales = await this.locationsService.getCodigosPostalesByCity(province, city);
+    } catch {
+      this.codigosPostales = [];
+    }
+    try {
+      const coordinates = await this.locationsService.getCoordinates(province, city);
+      this.previewLatitude = coordinates ? coordinates.lat : null;
+      this.previewLongitude = coordinates ? coordinates.lng : null;
+    } catch {
+      this.previewLatitude = null;
+      this.previewLongitude = null;
+    }
+  }
+
   async onProvinceChange(province: string): Promise<void> {
     if (province) {
       try {
         this.cities = await this.locationsService.getCiudadesByProvincia(province);
         this.editProfileForm.get('user_city')?.reset();
+        this.editProfileForm.get('user_zipcode')?.reset();
+        this.codigosPostales = [];
         this.previewLatitude = null;
         this.previewLongitude = null;
       } catch (error) {
@@ -190,6 +210,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       }
     } else {
       this.cities = [];
+      this.codigosPostales = [];
       this.previewLatitude = null;
       this.previewLongitude = null;
     }
@@ -200,6 +221,13 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     const province = this.editProfileForm.get('user_province')?.value;
 
     if (city && province) {
+      try {
+        this.codigosPostales = await this.locationsService.getCodigosPostalesByCity(province, city);
+      } catch {
+        this.codigosPostales = [];
+      }
+      this.editProfileForm.get('user_zipcode')?.reset();
+
       try {
         const coordinates = await this.locationsService.getCoordinates(province, city);
         if (coordinates) {
@@ -214,6 +242,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
         this.previewLongitude = null;
       }
     } else {
+      this.codigosPostales = [];
       this.previewLatitude = null;
       this.previewLongitude = null;
     }
@@ -287,8 +316,13 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     } else {
       passwordControl?.clearValidators();
       passwordControl?.reset();
+      this.showPassword = false;
     }
     passwordControl?.updateValueAndValidity();
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSaveProfile(): void {
@@ -307,7 +341,6 @@ export class EditProfileComponent implements OnInit, OnDestroy {
 
     this.isSaving = true;
     this.errorMessage = null;
-    this.successMessage = null;
     this.cdr.markForCheck();
 
     const formValue = this.editProfileForm.value;
@@ -334,10 +367,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (updatedUser: User) => {
-          this.isSaving = false;
-          this.successMessage = 'Perfil actualizado correctamente.';
           this.authService.updateCurrentUser(updatedUser);
-          this.cdr.markForCheck();
 
           if (this.selectedFile) {
             const formData = new FormData();
@@ -347,20 +377,19 @@ export class EditProfileComponent implements OnInit, OnDestroy {
               .subscribe({
                 next: (userWithImage: User) => {
                   this.authService.updateCurrentUser(userWithImage);
-                  setTimeout(() => {
-                    this.router.navigate(['/user/profile']);
-                  }, 1500);
+                  this.isSaving = false;
+                  this.showSuccessAndRedirect();
                 },
-                error: () => {
-                  setTimeout(() => {
-                    this.router.navigate(['/user/profile']);
-                  }, 1500);
+                error: (error: HttpErrorResponse) => {
+                  this.isSaving = false;
+                  this.errorMessage = 'Tus datos se han guardado, pero la foto no se pudo subir: '
+                    + (error.error?.error || error.error?.message || 'inténtalo de nuevo.');
+                  this.cdr.markForCheck();
                 }
               });
           } else {
-            setTimeout(() => {
-              this.router.navigate(['/user/profile']);
-            }, 1500);
+            this.isSaving = false;
+            this.showSuccessAndRedirect();
           }
         },
         error: (error: HttpErrorResponse) => {
@@ -369,6 +398,23 @@ export class EditProfileComponent implements OnInit, OnDestroy {
           this.cdr.markForCheck();
         }
       });
+  }
+
+  private showSuccessAndRedirect(): void {
+    this.showSuccessModal = true;
+    this.cdr.markForCheck();
+    this.successTimeoutId = setTimeout(() => {
+      this.goToProfileNow();
+    }, 1800);
+  }
+
+  goToProfileNow(): void {
+    if (this.successTimeoutId) {
+      clearTimeout(this.successTimeoutId);
+      this.successTimeoutId = null;
+    }
+    this.showSuccessModal = false;
+    this.router.navigate(['/user/profile']);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -421,6 +467,9 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.successTimeoutId) {
+      clearTimeout(this.successTimeoutId);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }

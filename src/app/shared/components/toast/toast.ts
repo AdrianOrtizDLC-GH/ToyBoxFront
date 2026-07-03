@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 // INTERFACE LOCAL
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
+export type ToastPlacement = 'fixed' | 'inline';
 
 @Component({
   selector: 'app-toast',
@@ -14,6 +15,7 @@ export class ToastComponent {
   @Input() type: ToastType = 'success';
   @Input() title = '';
   @Input() message = '';
+  @Input() placement: ToastPlacement = 'fixed';
 
   @Output() dismissed = new EventEmitter<void>();
 

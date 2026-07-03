@@ -1,4 +1,5 @@
-@if (showError) {
+
+@if (showError()) {
   <div class="map-error">
     <span class="material-symbols-outlined">location_off</span>
     <span>Ubicación no disponible</span>
@@ -6,9 +7,9 @@
 } @else {
   <div class="map-container">
     <iframe
-      [src]="mapUrl"
-      [width]="width"
-      [height]="height"
+      [src]="mapUrl()"
+      [width]="width()"
+      [height]="height()"
       style="border: 0"
       allowfullscreen=""
       loading="lazy"

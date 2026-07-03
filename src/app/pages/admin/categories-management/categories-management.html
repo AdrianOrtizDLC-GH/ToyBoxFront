@@ -1,6 +1,8 @@
 <div class="pattern-bg"></div>
 
 <main class="management-page relative-z-10">
+  <app-admin-navigation />
+
   <header class="page-header">
     <div>
       <p class="eyebrow">Administración</p>
@@ -23,7 +25,13 @@
       </label>
       <label>
         Descripción
-        <input type="text" name="description" [(ngModel)]="form.description" />
+        <textarea
+          name="description"
+          rows="3"
+          [(ngModel)]="form.description"
+          placeholder="Describe brevemente qué artículos pertenecen a esta categoría"
+        ></textarea>
+        <small class="form-help">Esta descripción se mostrará asociada a la categoría.</small>
       </label>
       <div class="form-actions">
         @if (editingId()) {
@@ -32,6 +40,15 @@
         <button type="submit" class="btn btn--primary">{{ editingId() ? 'Guardar cambios' : 'Crear categoría' }}</button>
       </div>
     </form>
+
+    <app-toast
+      placement="inline"
+      [visible]="toast().visible"
+      [type]="toast().type"
+      [title]="toast().title"
+      [message]="toast().message"
+      (dismissed)="toast.set({ ...toast(), visible: false })"
+    />
   </section>
 
   <section class="table-panel">
@@ -78,12 +95,4 @@
   confirmText="Eliminar"
   (confirmed)="confirmDelete()"
   (cancelled)="categoryToDelete.set(null)"
-/>
-
-<app-toast
-  [visible]="toast().visible"
-  [type]="toast().type"
-  [title]="toast().title"
-  [message]="toast().message"
-  (dismissed)="toast.set({ ...toast(), visible: false })"
 />

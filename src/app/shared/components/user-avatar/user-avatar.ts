@@ -1,13 +1,14 @@
 import { Component, Input, Output, EventEmitter, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../interfaces/user.interface';
+import { ModalConfirmComponent } from '../modal-confirm/modal-confirm';
 
 type AvatarSize = 'tiny' | 'small' | 'medium' | 'large' | 'extra-large';
 
 @Component({
   selector: 'app-user-avatar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ModalConfirmComponent], 
   templateUrl: './user-avatar.html',
   styleUrl: './user-avatar.css'
 })
@@ -23,6 +24,8 @@ export class UserAvatarComponent {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   showModal = signal(false);
+
+  showDeleteConfirm = signal(false);
 
   get finalSrc(): string | null {
     if (this.src && this.src.trim() !== '') {
@@ -133,11 +136,16 @@ export class UserAvatarComponent {
 
   deleteImage(): void {
     if (!this.editable) return;
+    this.showDeleteConfirm.set(true);
+  }
 
-    const confirmed = confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?');
-    if (confirmed) {
-      this.imageDeleted.emit();
-    }
+  confirmDeleteImage(): void {
+    this.showDeleteConfirm.set(false);
+    this.imageDeleted.emit();
+  }
+
+  cancelDeleteImage(): void {
+    this.showDeleteConfirm.set(false);
   }
 
   triggerFileInput(): void {

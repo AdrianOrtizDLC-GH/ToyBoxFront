@@ -1,0 +1,8 @@
+<nav class="section-navigation" aria-label="Navegación de administración y moderación">
+  @if (isAdministrator()) {
+    <a routerLink="/admin/dashboard" routerLinkActive="active">Panel</a>
+    <a routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
+    <a routerLink="/admin/categories" routerLinkActive="active">Categorías</a>
+  }
+  <a routerLink="/moderator/reports" routerLinkActive="active">Reportes</a>
+</nav>

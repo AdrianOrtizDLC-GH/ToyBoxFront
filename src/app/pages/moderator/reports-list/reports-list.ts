@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ReportsService } from '../../../core/services/reports.service';
 import { ReportStatus } from '../../../shared/enums/report-status.enum';
+import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
 
 interface ReportRow {
   id: number;
@@ -22,7 +23,7 @@ const REPORT_STATUS_LABELS: Record<ReportRow['status'], string> = {
 @Component({
   selector: 'app-reports-list',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AdminNavigationComponent],
   templateUrl: './reports-list.html',
   styleUrl: './reports-list.css'
 })
@@ -34,7 +35,10 @@ export class ReportsListComponent implements OnInit {
   isLoading = true;
   error = '';
 
-  constructor(private reportsService: ReportsService) {}
+  constructor(
+    private reportsService: ReportsService,
+    private readonly cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadReports();
@@ -44,17 +48,18 @@ export class ReportsListComponent implements OnInit {
     this.isLoading = true;
     this.error = '';
 
-    this.reportsService.getPending().subscribe({
+    this.reportsService.getAll().subscribe({
       next: res => {
-        const raw: any[] = res.reports ?? res ?? [];
-        this.reports = raw.map(report => this.mapReport(report));
+        this.reports = res.reports.map(report => this.mapReport(report));
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.error = err.status === 403
           ? 'No tienes permisos para ver los reportes.'
           : 'Error al cargar los reportes.';
         this.isLoading = false;
+        this.cdr.markForCheck();
         console.error('Error cargando reportes:', err);
       },
     });

@@ -25,12 +25,12 @@
         (change)="onImageSelected($event)"
         style="display: none;" />
 
-      <button class="avatar-action change-btn" (click)="triggerFileInput()" title="Cambiar foto">
+      <button type="button" class="avatar-action change-btn" (click)="triggerFileInput()" title="Cambiar foto">
         <span class="material-symbols-outlined">photo_camera</span>
       </button>
 
       @if (finalSrc) {
-        <button class="avatar-action delete-btn" (click)="deleteImage()" title="Eliminar foto">
+        <button type="button" class="avatar-action delete-btn" (click)="deleteImage()" title="Eliminar foto">
           <span class="material-symbols-outlined">delete</span>
         </button>
       }
@@ -47,7 +47,7 @@
     aria-modal="true"
     aria-labelledby="modal-title">
     <div class="avatar-modal" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="closeModal()" title="Cerrar">
+      <button type="button" class="modal-close" (click)="closeModal()" title="Cerrar">
         <span class="material-symbols-outlined">close</span>
       </button>
 
@@ -57,3 +57,14 @@
     </div>
   </div>
 }
+
+<app-modal-confirm
+  [isOpen]="showDeleteConfirm()"
+  title="Eliminar foto de perfil"
+  message="¿Estás seguro de que deseas eliminar tu foto de perfil? El cambio se aplicará cuando pulses Guardar Cambios."
+  confirmText="Eliminar"
+  cancelText="Cancelar"
+  variant="danger"
+  (confirmed)="confirmDeleteImage()"
+  (cancelled)="cancelDeleteImage()">
+</app-modal-confirm>
