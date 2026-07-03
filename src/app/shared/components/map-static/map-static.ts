@@ -1,4 +1,4 @@
-import { Component, Input, inject, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, input, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
@@ -10,64 +10,37 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   styleUrl: './map-static.css'
 })
 
-export class MapStaticComponent implements OnChanges {
-
-  @Input() location: string = '';
-  @Input() latitude: number | null = null;
-  @Input() longitude: number | null = null;
-  @Input() zoom: number = 14;
-  @Input() width: number | string = '100%';
-  @Input() height: number | string = 300;
+export class MapStaticComponent {
+  location = input<string>('');
+  latitude = input<number | null>(null);
+  longitude = input<number | null>(null);
+  zoom = input<number>(14);
+  width = input<number | string>('100%');
+  height = input<number | string>(300);
 
   private sanitizer = inject(DomSanitizer);
 
-  ngOnChanges(changes: SimpleChanges): void {
+  private hasValidCoordinates = computed<boolean>(() => {
+    const lat = this.latitude();
+    const lng = this.longitude();
+    return (
+      lat !== null && lat !== undefined &&
+      lng !== null && lng !== undefined &&
+      !isNaN(lat) && !isNaN(lng)
+    );
+  });
 
-    if (changes['latitude'] || changes['longitude'] || changes['location']) {
-      console.log('✅ map-static: ngOnChanges() detectó cambio en coordenadas', {
-        latitude: this.latitude,
-        longitude: this.longitude,
-        location: this.location,
-        esValido: this.hasValidCoordinates(),
-
-        cambios: {
-          latitud: changes['latitude']?.currentValue,
-          longitud: changes['longitude']?.currentValue,
-        }
-      });
-    }
-  }
-
-  get mapUrl(): SafeResourceUrl {
-    if (!this.hasValidCoordinates() && !this.location) {
+  mapUrl = computed<SafeResourceUrl>(() => {
+    if (!this.hasValidCoordinates()) {
       return this.sanitizer.bypassSecurityTrustResourceUrl('');
     }
-
-    if (this.hasValidCoordinates()) {
-      const markerCoords = `${this.latitude},${this.longitude}`;
-      const bbox = this.calculateBbox(this.latitude!, this.longitude!);
-      
-      const url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${markerCoords}`;
-      
-      console.log('🗺️ map-static: URL generada para iframe:', url);
-      console.log('📍 map-static: Marcador en:', { lat: this.latitude, lng: this.longitude });
-      
-      return this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    }
-
-    return this.sanitizer.bypassSecurityTrustResourceUrl('');
-  }
-
-  private hasValidCoordinates(): boolean {
-    return (
-      this.latitude !== null &&
-      this.latitude !== undefined &&
-      this.longitude !== null &&
-      this.longitude !== undefined &&
-      !isNaN(this.latitude) &&
-      !isNaN(this.longitude)
-    );
-  }
+    const lat = this.latitude()!;
+    const lng = this.longitude()!;
+    const markerCoords = `${lat},${lng}`;
+    const bbox = this.calculateBbox(lat, lng);
+    const url = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${markerCoords}`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  });
 
   private calculateBbox(lat: number, lng: number): string {
     const offset = 0.05;
@@ -78,21 +51,20 @@ export class MapStaticComponent implements OnChanges {
     return `${west},${south},${east},${north}`;
   }
 
-  get locationDisplay(): string {
-    if (this.location) {
-      return this.location;
-    }
+  locationDisplay = computed<string>(() => {
+    const loc = this.location();
+    if (loc) return loc;
     if (this.hasValidCoordinates()) {
-      return `${this.latitude?.toFixed(4)}, ${this.longitude?.toFixed(4)}`;
+      return `${this.latitude()!.toFixed(4)}, ${this.longitude()!.toFixed(4)}`;
     }
     return '';
-  }
+  });
 
-  get showError(): boolean {
-    return !this.hasValidCoordinates() && (!this.location || this.location.trim() === '');
-  }
+  showError = computed<boolean>(() =>
+    !this.hasValidCoordinates() && (!this.location() || this.location().trim() === '')
+  );
 
-  get showMap(): boolean {
-    return this.hasValidCoordinates() || this.location.trim() !== '';
-  }
+  showMap = computed<boolean>(() =>
+    this.hasValidCoordinates() || this.location().trim() !== ''
+  );
 }

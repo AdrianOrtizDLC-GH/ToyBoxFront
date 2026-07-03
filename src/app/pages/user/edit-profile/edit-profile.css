@@ -1,7 +1,6 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: var(--background);
   position: relative;
   overflow-x: hidden;
 }
@@ -15,11 +14,6 @@
   opacity: 0.08;
   pointer-events: none;
   z-index: 0;
-}
-
-.relative-z-10 {
-  position: relative;
-  z-index: 10;
 }
 
 .edit-profile-container {
@@ -296,11 +290,6 @@
   color: #721c24;
 }
 
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-}
-
 .alert-dismissible {
   padding-right: 40px;
   position: relative;
@@ -316,26 +305,6 @@
 .spinner-border.text-primary {
   border-color: var(--outline-variant);
   border-top-color: var(--primary-toybox);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-.me-2 {
-  margin-right: 0.5rem;
-}
-
-.d-block {
-  display: block;
 }
 
 @media (max-width: 768px) {
