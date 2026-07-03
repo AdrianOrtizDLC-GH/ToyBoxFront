@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 export class SocketService implements OnDestroy {
   private socket: Socket | null = null;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   /** Conecta al servidor WebSocket usando el JWT del usuario actual. */
   connect(): void {
@@ -48,6 +48,13 @@ export class SocketService implements OnDestroy {
     return new Observable((observer) => {
       this.socket?.on('new_message', (msg: T) => observer.next(msg));
       return () => this.socket?.off('new_message');
+    });
+  }
+
+  onEvent<T = any>(event: string): Observable<T> {
+    return new Observable((observer) => {
+      this.socket?.on(event, (data: T) => observer.next(data));
+      return () => this.socket?.off(event);
     });
   }
 

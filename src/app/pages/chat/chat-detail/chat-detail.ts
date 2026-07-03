@@ -59,18 +59,22 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Conectar el socket una sola vez al entrar al módulo de chat
     this.socketService.connect();
 
-    // Escuchar mensajes entrantes en tiempo real
     this.socketSub = this.socketService.onNewMessage<ChatMessageWithSender>().subscribe((msg) => {
       this.ngZone.run(() => {
-        // Solo añadir si pertenece a la conversación activa y no es un duplicado
         if (
           msg.fk_conversations_id === this.selectedConversationId &&
           !this.messages.some(m => m.id_messages === msg.id_messages)
         ) {
           this.messages.push(msg);
+          // Marcar como leído automáticamente al recibir el mensaje si estamos en esa conversación
+          if (this.selectedConversationId) {
+            this.chatService.markAsRead(this.selectedConversationId).subscribe({
+              next: () => this.loadConversations(),
+              error: (err) => console.error('Error marcando como leído:', err)
+            });
+          }
           this.cdr.detectChanges();
         }
       });
@@ -85,6 +89,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
           const chatId = +params['id'];
           this.selectConversation(chatId);
           this.chatService.markAsRead(chatId).subscribe({
+            next: () => this.loadConversations(),
             error: (err) => console.error('Error marcando como leído:', err)
           });
         }
@@ -97,7 +102,6 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Abandonar la sala activa y limpiar suscripciones
     if (this.selectedConversationId !== null) {
       this.socketService.leaveConversation(this.selectedConversationId);
     }
@@ -106,15 +110,20 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   selectConversation(id: number): void {
-    // Abandonar la sala anterior si hay una activa
     if (this.selectedConversationId !== null) {
       this.socketService.leaveConversation(this.selectedConversationId);
     }
 
     this.selectedConversationId = id;
-    this.socketService.joinConversation(id);   // ← unirse a la sala en tiempo real
+    this.socketService.joinConversation(id);
     this.loadMessages(id);
     this.loadConversationData(id);
+
+    // Marcar como leído al seleccionar conversación y recargar lista
+    this.chatService.markAsRead(id).subscribe({
+      next: () => this.loadConversations(),
+      error: (err) => console.error('Error marcando como leído:', err)
+    });
 
     const conv = this.selectedConversation;
     if (conv) {
@@ -182,17 +191,13 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     if (!this.newMessage.trim() || !this.selectedConversationId) return;
 
     const messageContent = this.newMessage.trim();
-    this.newMessage = '';  // limpiar input de inmediato (UX optimista)
+    this.newMessage = '';
 
     this.chatService.sendMessage(this.selectedConversationId, messageContent).subscribe({
-      next: () => {
-        // El socket emitirá new_message a ambos participantes (incluido el emisor),
-        // que lo recibirá en onNewMessage() y lo añadirá a la lista.
-        // No hace falta hacer push aquí para evitar duplicados.
-      },
+      next: () => { },
       error: (err) => {
         console.error('Error enviando mensaje:', err);
-        this.newMessage = messageContent; // restaurar si falla
+        this.newMessage = messageContent;
       }
     });
   }

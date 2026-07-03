@@ -55,13 +55,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {
+    setInterval(() => {
+      if (this.isLoggedIn) {
+        this.loadUnreadMessages();
+      }
+    }, 3000);
+  }
 
   connectSocket(): void {
     this.socketService.connect();
+
     this.socketSub = this.socketService.onNewMessage().subscribe(() => {
       this.loadUnreadMessages();
     });
+
+    this.socketSub.add(
+      this.socketService.onEvent<any>('new_message_notification').subscribe(() => {
+        this.loadUnreadMessages();
+      })
+    );
   }
 
   disconnectSocket(): void {
@@ -72,7 +85,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   loadUnreadMessages(): void {
     this.chatService.getMyChats().subscribe({
       next: (chats) => {
-        this.unreadMessagesCount = chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0);
+        this.unreadMessagesCount = chats.reduce((total, chat: any) => total + (chat.unread_count || chat.unreadCount || 0), 0);
       },
       error: (err) => {
         console.error('Error cargando chats para contador:', err);
