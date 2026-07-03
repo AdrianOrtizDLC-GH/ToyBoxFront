@@ -1,8 +1,15 @@
 <div class="pattern-bg"></div>
 
 <main class="detail-page relative-z-10">
+  <app-admin-navigation />
 
   <a routerLink="/moderator/reports" class="back-link">Volver a reportes</a>
+
+  @if (isLoading) {
+    <section class="panel"><p>Cargando reporte...</p></section>
+  } @else if (error) {
+    <section class="panel"><p>{{ error }}</p></section>
+  } @else if (report) {
 
   <header class="page-header">
     <div>
@@ -42,6 +49,7 @@
       </div>
     </aside>
   </section>
+  }
 </main>
 
 <app-modal-confirm

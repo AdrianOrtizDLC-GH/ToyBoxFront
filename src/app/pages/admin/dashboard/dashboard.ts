@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
 
 interface DashboardMetric {
   label: string;
@@ -24,6 +25,7 @@ interface ChartItem {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
+  imports: [AdminNavigationComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -34,7 +36,7 @@ export class AdminDashboardComponent implements OnInit {
   isLoading = true;
   error = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private readonly cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadStats();
@@ -83,10 +85,12 @@ export class AdminDashboardComponent implements OnInit {
         this.tasks = this.buildTasks(pendingReports, pendingReservations, blockedUsers);
         this.chartItems = this.buildChartItems(activeUsers, publishedItems, pendingReports);
         this.isLoading = false;
+        this.cdr.markForCheck();
       },
       error: err => {
         this.error = 'Error al cargar las estadísticas del panel.';
         this.isLoading = false;
+        this.cdr.markForCheck();
         console.error('Error cargando stats admin:', err);
       },
     });

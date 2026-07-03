@@ -1,5 +1,11 @@
 @if (visible) {
-  <aside class="toast-message" [class]="type" role="status" aria-live="polite">
+  <aside
+    class="toast-message"
+    [class]="type"
+    [class.inline]="placement === 'inline'"
+    role="status"
+    aria-live="polite"
+  >
     <div class="toast-body">
       <strong>{{ title }}</strong>
       <span>{{ message }}</span>
