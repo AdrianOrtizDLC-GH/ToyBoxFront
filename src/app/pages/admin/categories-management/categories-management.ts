@@ -5,6 +5,7 @@ import { CategoriesService } from '../../../core/services/categories.service';
 import { Category } from '../../../shared/interfaces/category.interface';
 import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
 import { ToastComponent, ToastType } from '../../../shared/components/toast/toast';
+import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
 
 interface CategoryRow {
   id: number;
@@ -16,7 +17,7 @@ interface CategoryRow {
 @Component({
   selector: 'app-categories-management',
   standalone: true,
-  imports: [FormsModule, ModalConfirmComponent, ToastComponent],
+  imports: [FormsModule, ModalConfirmComponent, ToastComponent, AdminNavigationComponent],
   templateUrl: './categories-management.html',
   styleUrl: './categories-management.css'
 })
@@ -138,12 +139,12 @@ export class CategoriesManagementComponent implements OnInit {
     this.form = { name: '', description: '' };
   }
 
-  private mapCategory(category: Category & { id?: number }): CategoryRow {
+  private mapCategory(category: Category & { id?: number; total_items?: number | string }): CategoryRow {
     return {
       id: category.id_categories ?? category.id ?? 0,
       name: category.name,
       description: category.description ?? 'Sin descripción',
-      items: 0,
+      items: Number(category.total_items ?? 0),
     };
   }
 

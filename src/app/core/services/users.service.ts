@@ -4,6 +4,13 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../../shared/interfaces/user.interface';
 
+export interface AdminUsersResponse {
+  users: User[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private readonly API = `${environment.apiUrl}/users`;
@@ -27,16 +34,16 @@ export class UsersService {
   }
 
   // Admin only
-  getAllUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${environment.apiUrl}/admin/users`);
+  getAllUsers(): Observable<AdminUsersResponse> {
+    return this.http.get<AdminUsersResponse>(`${environment.apiUrl}/admin/users`);
   }
 
   setRole(id: number, role: string): Observable<User> {
     return this.http.patch<User>(`${environment.apiUrl}/admin/users/${id}/role`, { role });
   }
 
-  toggleActive(id: number, active: boolean): Observable<User> {
-    return this.http.patch<User>(`${environment.apiUrl}/admin/users/${id}/active`, { active });
+  setStatus(id: number, status: 'active' | 'blocked'): Observable<User> {
+    return this.http.patch<User>(`${environment.apiUrl}/admin/users/${id}/active`, { status });
   }
 
   deleteAccount(id: number): Observable<void> {

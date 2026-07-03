@@ -1,6 +1,7 @@
 <div class="pattern-bg"></div>
 
 <main class="moderator-page relative-z-10">
+  <app-admin-navigation />
 
   <header class="page-header">
     <div>
@@ -18,6 +19,11 @@
   </header>
 
   <section class="reports-list">
+    @if (isLoading) {
+      <article class="report-card"><p>Cargando reportes...</p></article>
+    } @else if (error) {
+      <article class="report-card"><p>{{ error }}</p></article>
+    } @else {
     @for (report of filteredReports; track report.id) {
       <article class="report-card">
         <div class="report-main">
@@ -31,6 +37,9 @@
           <a [routerLink]="['/moderator/report', report.id]">Ver detalle</a>
         </div>
       </article>
+    } @empty {
+      <article class="report-card"><p>No hay reportes que coincidan con los filtros.</p></article>
+    }
     }
   </section>
 </main>

@@ -1,6 +1,7 @@
 <div class="pattern-bg"></div>
 
 <main class="management-page relative-z-10">
+  <app-admin-navigation />
 
   <header class="page-header">
     <div>
@@ -24,11 +25,16 @@
           <th>Usuario</th>
           <th>Rol</th>
           <th>Estado</th>
-          <th>Articulos</th>
-          <th>Accion</th>
+          <th>Registro</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody>
+        @if (isLoading) {
+          <tr><td colspan="5">Cargando usuarios...</td></tr>
+        } @else if (error) {
+          <tr><td colspan="5">{{ error }}</td></tr>
+        } @else {
         @for (user of filteredUsers; track user.id) {
           <tr>
             <td data-label="Usuario">
@@ -39,13 +45,16 @@
             <td data-label="Estado">
               <span class="status-pill" [class.blocked]="user.status === 'blocked'">{{ statusLabel(user.status) }}</span>
             </td>
-            <td data-label="Articulos">{{ user.publishedItems }}</td>
-            <td data-label="Accion">
+            <td data-label="Registro">{{ user.registrationDate }}</td>
+            <td data-label="Acción">
               <button type="button" class="link-button" [class.danger]="user.status === 'active'" (click)="askStatusChange(user)">
                 {{ user.status === 'active' ? 'Bloquear' : 'Desbloquear' }}
               </button>
             </td>
           </tr>
+        } @empty {
+          <tr><td colspan="5">No hay usuarios que coincidan con los filtros.</td></tr>
+        }
         }
       </tbody>
     </table>
