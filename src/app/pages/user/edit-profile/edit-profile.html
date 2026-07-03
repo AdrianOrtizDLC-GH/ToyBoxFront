@@ -1,373 +1,3 @@
-<!-- <div class="pattern-bg"></div>
-
-<div class="breadcrumb-wrapper">
-  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
-</div>
-
-<div class="edit-profile-container">
-
-  @if (isLoading) {
-    <div class="loading-spinner">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Cargando...</span>
-      </div>
-    </div>
-  }
-
-  @if (!isLoading) {
-    <div class="edit-profile-content">
-      <h1 class="page-title">Editar Perfil</h1>
-
-      @if (successMessage) {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ successMessage }}
-        </div>
-      }
-
-      @if (errorMessage) {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-          {{ errorMessage }}
-        </div>
-      }
-
-      <form [formGroup]="editProfileForm" (ngSubmit)="onSaveProfile()" class="edit-form">
-        <div class="form-section">
-          <h2 class="section-title">Foto de Perfil</h2>
-
-          <div class="profile-picture-section">
-            <div class="profile-picture-preview">
-              @if (profilePicturePreview) {
-                <img
-                  [src]="profilePicturePreview"
-                  alt="Vista previa de foto de perfil"
-                  class="preview-image"
-                />
-              } @else {
-                <div class="no-image-placeholder">
-                  <i class="fas fa-user-circle"></i>
-                  <p>Sin foto</p>
-                </div>
-              }
-            </div>
-
-            <div class="picture-upload">
-              <label for="profile_picture" class="small-label">Cargar Foto</label>
-              <input
-                type="file"
-                id="profile_picture"
-                class="form-control"
-                accept="image/*"
-                (change)="onFileSelected($event)"
-                [disabled]="isSaving"
-              />
-              <small class="form-text text-muted">
-                Máximo 5MB. Formatos: JPG, PNG, GIF
-              </small>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h2 class="section-title">Información Personal</h2>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="first_name" class="small-label">Nombre</label>
-              <input
-                type="text"
-                id="first_name"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('first_name')?.invalid && editProfileForm.get('first_name')?.touched"
-                formControlName="first_name"
-                placeholder="Tu nombre"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('first_name')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('first_name') }}
-                </div>
-              }
-            </div>
-
-            <div class="form-group">
-              <label for="last_name" class="small-label">Apellido</label>
-              <input
-                type="text"
-                id="last_name"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('last_name')?.invalid && editProfileForm.get('last_name')?.touched"
-                formControlName="last_name"
-                placeholder="Tu apellido"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('last_name')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('last_name') }}
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="email" class="small-label">Email</label>
-              <input
-                type="email"
-                id="email"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('email')?.invalid && editProfileForm.get('email')?.touched"
-                formControlName="email"
-                placeholder="tu@email.com"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('email')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('email') }}
-                </div>
-              }
-            </div>
-
-            <div class="form-group">
-              <label for="phone_number" class="small-label">Teléfono</label>
-              <input
-                type="tel"
-                id="phone_number"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('phone_number')?.invalid && editProfileForm.get('phone_number')?.touched"
-                formControlName="phone_number"
-                placeholder="+34 xxx xxx xxx"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('phone_number')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('phone_number') }}
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="user_birthday" class="small-label">Fecha de Nacimiento</label>
-              <input
-                type="date"
-                id="user_birthday"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('user_birthday')?.invalid && editProfileForm.get('user_birthday')?.touched"
-                formControlName="user_birthday"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('user_birthday')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('user_birthday') }}
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <h2 class="section-title">Ubicación</h2>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="user_province" class="small-label">Provincia</label>
-              <select
-                id="user_province"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('user_province')?.invalid && editProfileForm.get('user_province')?.touched"
-                formControlName="user_province"
-                [disabled]="isSaving"
-              >
-                <option value="">Selecciona una provincia</option>
-                @for (province of provinces; track province) {
-                  <option [value]="province">{{ province }}</option>
-                }
-              </select>
-              @if (getErrorMessage('user_province')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('user_province') }}
-                </div>
-              }
-            </div>
-
-            <div class="form-group">
-              <label for="user_city" class="small-label">Ciudad</label>
-              <select
-                id="user_city"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('user_city')?.invalid && editProfileForm.get('user_city')?.touched"
-                formControlName="user_city"
-                [disabled]="isSaving || cities.length === 0"
-              >
-                <option value="">Selecciona una ciudad</option>
-                @for (city of cities; track city) {
-                  <option [value]="city">{{ city }}</option>
-                }
-              </select>
-              @if (getErrorMessage('user_city')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('user_city') }}
-                </div>
-              }
-            </div>
-
-            <div class="form-group">
-              <label for="user_zipcode" class="small-label">Código Postal</label>
-              <input
-                type="text"
-                id="user_zipcode"
-                class="form-control"
-                [class.is-invalid]="editProfileForm.get('user_zipcode')?.invalid && editProfileForm.get('user_zipcode')?.touched"
-                formControlName="user_zipcode"
-                placeholder="28001"
-                [disabled]="isSaving"
-              />
-              @if (getErrorMessage('user_zipcode')) {
-                <div class="invalid-feedback d-block">
-                  {{ getErrorMessage('user_zipcode') }}
-                </div>
-              }
-            </div>
-          </div>
-
-          <div class="map-preview-section">
-            <h3 class="small-title">Vista previa de ubicación</h3>
-            @if (editProfileForm.get('user_province')?.value && editProfileForm.get('user_city')?.value && previewLatitude !== null && previewLongitude !== null) {
-              <app-map-static
-                [latitude]="previewLatitude"
-                [longitude]="previewLongitude"
-                [zoom]="12"
-              ></app-map-static>
-            } @else if (editProfileForm.get('user_province')?.value && editProfileForm.get('user_city')?.value) {
-              <p class="text-muted">
-                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                Obteniendo coordenadas...
-              </p>
-            } @else {
-              <p class="text-muted">Selecciona provincia y ciudad para ver el mapa</p>
-            }
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="password-header">
-            <h2 class="section-title">Contraseña</h2>
-            <button
-              type="button"
-              class="btn btn-sm btn-link"
-              (click)="togglePasswordField()"
-            >
-              @if (!showPasswordField) {
-                <i class="fas fa-plus"></i>
-                Cambiar contraseña
-              } @else {
-                <i class="fas fa-minus"></i>
-                Cancelar cambio
-              }
-            </button>
-          </div>
-
-          @if (showPasswordField) {
-            <div class="form-row">
-              <div class="form-group">
-                <label for="password" class="small-label">Nueva Contraseña</label>
-                <input
-                  type="password"
-                  id="password"
-                  class="form-control"
-                  [class.is-invalid]="editProfileForm.get('password')?.invalid && editProfileForm.get('password')?.touched"
-                  formControlName="password"
-                  placeholder="••••••••"
-                  [disabled]="isSaving"
-                />
-                @if (getErrorMessage('password')) {
-                  <div class="invalid-feedback d-block">
-                    {{ getErrorMessage('password') }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
-        </div>
-
-        <div class="form-actions">
-          <button
-            type="submit"
-            class="btn btn-primary"
-            [disabled]="isSaving || editProfileForm.invalid"
-          >
-            @if (isSaving) {
-              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Guardando...
-            } @else {
-              <i class="fas fa-save"></i>
-              Guardar Cambios
-            }
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-danger"
-            (click)="openDeleteModal()"
-            [disabled]="isSaving"
-          >
-            <i class="fas fa-trash-alt"></i>
-            Eliminar Cuenta
-          </button>
-        </div>
-      </form>
-    </div>
-  }
-</div>
-
-@if (showDeleteModal) {
-  <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
-  <div class="modal-dialog modal-confirm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Eliminar Cuenta</h5>
-        <button
-          type="button"
-          class="btn-close"
-          (click)="closeDeleteModal()"
-          aria-label="Cerrar"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p class="text-danger">
-          <strong>Advertencia:</strong> Esta acción es irreversible. Se borrarán:
-        </p>
-        <ul>
-          <li>Tu perfil y datos personales</li>
-          <li>Todos tus anuncios</li>
-          <li>Todas tus valoraciones y reseñas</li>
-          <li>Todos tus mensajes</li>
-        </ul>
-        <p class="text-danger">
-          <strong>¿Estás seguro?</strong>
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="closeDeleteModal()"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger"
-          (click)="onDeleteAccount()"
-        >
-          Eliminar Definitivamente
-        </button>
-      </div>
-    </div>
-  </div>
-} -->
-
 <div class="pattern-bg"></div>
 
 <div class="breadcrumb-wrapper">
@@ -388,11 +18,16 @@
     <div class="edit-profile-content">
       <h1 class="page-title">Editar Perfil</h1>
 
-      @if (successMessage) {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ successMessage }}
-        </div>
-      }
+      <app-modal-confirm
+        [isOpen]="showSuccessModal"
+        title="¡Perfil actualizado! ✅"
+        message="Tus cambios se han guardado correctamente."
+        confirmText="Ir a mi perfil"
+        cancelText="Cerrar"
+        variant="info"
+        (confirmed)="goToProfileNow()"
+        (cancelled)="goToProfileNow()">
+      </app-modal-confirm>
 
       @if (errorMessage) {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -568,15 +203,18 @@
 
             <div class="form-group">
               <label for="user_zipcode" class="small-label">Código Postal</label>
-              <input
-                type="text"
+              <select
                 id="user_zipcode"
                 class="form-control"
                 [class.is-invalid]="editProfileForm.get('user_zipcode')?.invalid && editProfileForm.get('user_zipcode')?.touched"
                 formControlName="user_zipcode"
-                placeholder="28001"
-                [disabled]="isSaving"
-              />
+                [disabled]="isSaving || codigosPostales.length === 0"
+              >
+                <option value="">Selecciona un código</option>
+                @for (codigo of codigosPostales; track codigo) {
+                  <option [value]="codigo">{{ codigo }}</option>
+                }
+              </select>
               @if (getErrorMessage('user_zipcode')) {
                 <div class="invalid-feedback d-block">
                   {{ getErrorMessage('user_zipcode') }}
@@ -626,15 +264,22 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="password" class="small-label">Nueva Contraseña</label>
-                <input
-                  type="password"
-                  id="password"
-                  class="form-control"
-                  [class.is-invalid]="editProfileForm.get('password')?.invalid && editProfileForm.get('password')?.touched"
-                  formControlName="password"
-                  placeholder="••••••••"
-                  [disabled]="isSaving"
-                />
+                <div class="input-group-wrapper">
+                  <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    id="password"
+                    class="form-control"
+                    [class.is-invalid]="editProfileForm.get('password')?.invalid && editProfileForm.get('password')?.touched"
+                    formControlName="password"
+                    placeholder="••••••••"
+                    [disabled]="isSaving"
+                  />
+                  <button class="password-toggle" type="button" (click)="togglePasswordVisibility()">
+                    <span class="material-symbols-outlined">
+                      {{ showPassword ? 'visibility_off' : 'visibility' }}
+                    </span>
+                  </button>
+                </div>
                 @if (getErrorMessage('password')) {
                   <div class="invalid-feedback d-block">
                     {{ getErrorMessage('password') }}
