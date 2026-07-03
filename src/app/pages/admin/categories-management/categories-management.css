@@ -44,7 +44,8 @@ h2 {
 }
 
 .page-header input,
-.form-panel input {
+.form-panel input,
+.form-panel textarea {
   width: 100%;
   border: 1.5px solid var(--outline-variant);
   border-radius: 50px;
@@ -61,7 +62,8 @@ h2 {
 }
 
 .page-header input:focus,
-.form-panel input:focus {
+.form-panel input:focus,
+.form-panel textarea:focus {
   border-color: var(--secondary-toybox);
   box-shadow: 0 0 0 3px rgba(97, 136, 193, 0.14);
 }
@@ -81,10 +83,21 @@ h2 {
 
 form {
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
-  align-items: end;
+  grid-template-columns: 1fr;
+  align-items: stretch;
   gap: 16px;
   margin-top: 18px;
+}
+
+.form-panel textarea {
+  min-height: 92px;
+  resize: vertical;
+  border-radius: var(--radius-md);
+}
+
+.form-help {
+  color: var(--on-surface-variant);
+  font-weight: 400;
 }
 
 label {

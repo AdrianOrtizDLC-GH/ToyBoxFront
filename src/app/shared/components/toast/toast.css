@@ -16,6 +16,13 @@
   box-shadow: var(--shadow-hover);
 }
 
+.toast-message.inline {
+  position: static;
+  width: 100%;
+  margin-top: 18px;
+  box-shadow: var(--shadow-card);
+}
+
 .toast-body {
   display: grid;
   gap: 4px;
