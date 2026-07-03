@@ -1,7 +1,7 @@
 @if (items && items.length > 0) {
   <nav class="tb-breadcrumb" aria-label="Ruta de navegación">
     <ol class="tb-breadcrumb__list">
-      @for (item of items; track $index; let last = $last; let idx = $index) {
+      @for (item of items; track item.label; let last = $last) {
         <li class="tb-breadcrumb__item" [class.tb-breadcrumb__item--active]="last">
           @if (!last && item.route) {
             <a

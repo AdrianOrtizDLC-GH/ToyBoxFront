@@ -1,13 +1,12 @@
 <div class="avatar-container">
   <div
     class="avatar"
-    [class]="sizeClass"
     [class.avatar--clickable]="!editable"
     [style.width.px]="sizePixels"
     [style.height.px]="sizePixels"
-    [style.fontSize.px]="sizePixels * 0.35"
-    (click)="openModal()"
-    [attr.role]="editable ? null : 'button'"
+    [style.fontSize.px]="fontSizePixels"
+    (click)="openModal($event)"
+    [attr.role]="editable ? null : 'button'"  
     [attr.tabindex]="editable ? -1 : 0">
 
     @if (finalSrc) {
@@ -20,17 +19,18 @@
   @if (editable) {
     <div class="avatar-edit-overlay">
       <input
+        #fileInput
         type="file"
         accept="image/*"
         (change)="onImageSelected($event)"
         style="display: none;" />
 
-      <button class="avatar-action change-btn" (click)="triggerFileInput()" title="Cambiar foto">
+      <button type="button" class="avatar-action change-btn" (click)="triggerFileInput()" title="Cambiar foto">
         <span class="material-symbols-outlined">photo_camera</span>
       </button>
 
       @if (finalSrc) {
-        <button class="avatar-action delete-btn" (click)="deleteImage()" title="Eliminar foto">
+        <button type="button" class="avatar-action delete-btn" (click)="deleteImage()" title="Eliminar foto">
           <span class="material-symbols-outlined">delete</span>
         </button>
       }
@@ -39,15 +39,32 @@
 </div>
 
 @if (showModal() && finalSrc && !editable) {
-  <div class="avatar-modal-overlay" (click)="closeModal()">
+  <div 
+    class="avatar-modal-overlay" 
+    (click)="closeModal()"
+    (keydown)="onKeyDown($event)"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title">
     <div class="avatar-modal" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="closeModal()" title="Cerrar">
+      <button type="button" class="modal-close" (click)="closeModal()" title="Cerrar">
         <span class="material-symbols-outlined">close</span>
       </button>
 
       <img [src]="finalSrc" [alt]="'Foto de ' + displayName" class="modal-image" />
 
-      <p class="modal-name">{{ displayName }}</p>
+      <p class="modal-name" id="modal-title">{{ displayName }}</p>
     </div>
   </div>
 }
+
+<app-modal-confirm
+  [isOpen]="showDeleteConfirm()"
+  title="Eliminar foto de perfil"
+  message="¿Estás seguro de que deseas eliminar tu foto de perfil? El cambio se aplicará cuando pulses Guardar Cambios."
+  confirmText="Eliminar"
+  cancelText="Cancelar"
+  variant="danger"
+  (confirmed)="confirmDeleteImage()"
+  (cancelled)="cancelDeleteImage()">
+</app-modal-confirm>

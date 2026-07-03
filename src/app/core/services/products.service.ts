@@ -37,9 +37,10 @@ export class ProductsService {
     );
   }
 
-  getById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.API}/${id}`);
-  }
+getById(id: number): Observable<any> {
+  const params = new HttpParams().set('_', String(Date.now()));
+  return this.http.get<any>(`${this.API}/${id}`, { params });
+}
 
   create(body: ItemFormData): Observable<Item> {
     return this.http.post<Item>(this.API, body);

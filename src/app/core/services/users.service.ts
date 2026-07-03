@@ -21,6 +21,10 @@ export class UsersService {
     return this.http.get<User>(`${this.API}/${id}`);
   }
 
+  getMe(): Observable<User> { 
+    return this.http.get<User>(`${this.API}/me`);
+  }
+
   updateProfile(id: number, body: Partial<User>): Observable<User> {
     return this.http.put<User>(`${this.API}/${id}`, body);
   }

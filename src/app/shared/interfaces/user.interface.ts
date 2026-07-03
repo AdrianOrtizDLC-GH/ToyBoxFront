@@ -73,7 +73,7 @@ export interface AuthResponse {
 export interface UpdateUserProfileRequest {
   username?: string;
   email?: string;
-  password?: string; // Si viene, actualizar contraseña
+  password?: string; 
   profile_picture?: string | null;
   first_name?: string;
   last_name?: string;
@@ -82,4 +82,5 @@ export interface UpdateUserProfileRequest {
   user_province?: string;
   user_zipcode?: string;
   phone_number?: string | null;
+  remove_profile_picture?: boolean;
 }

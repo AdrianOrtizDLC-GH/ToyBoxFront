@@ -1,5 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -10,13 +9,15 @@ import { UsersService } from '../../../core/services/users.service';
 import { LocationsService } from '../../../core/services/locations.service';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 import { MapStaticComponent } from '../../../shared/components/map-static/map-static';
-import { User } from '../../../shared/interfaces/user.interface';
+import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar';
+import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
+import { User, UpdateUserProfileRequest } from '../../../shared/interfaces/user.interface';
 
 
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
-  imports: [CommonModule,ReactiveFormsModule,BreadcrumbComponent,MapStaticComponent],
+  imports: [ReactiveFormsModule, BreadcrumbComponent, MapStaticComponent, UserAvatarComponent, ModalConfirmComponent],
   templateUrl: './edit-profile.html',
   styleUrls: ['./edit-profile.css']
 })
@@ -25,54 +26,77 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   isLoading = false;
   isSaving = false;
   errorMessage: string | null = null;
-  successMessage: string | null = null;
-  showDeleteModal = false;
   showPasswordField = false;
+  showPassword = false;
   profilePicturePreview: string | null = null;
   selectedFile: File | null = null;
 
+  removeProfilePicture = false;
+
   provinces: string[] = [];
   cities: string[] = [];
+  codigosPostales: string[] = [];
 
   previewLatitude: number | null = null;
   previewLongitude: number | null = null;
 
-  breadcrumbItems = [
-    { label: 'Inicio', route: '/', icon: 'home' },
-    { label: 'Mi Perfil', route: '/user/profile', icon: 'person' },
-    { label: 'Editar Perfil', icon: 'edit' }
-  ];
+  breadcrumbItems: any[] = [];
+  showSuccessModal = false;
+  private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   private destroy$ = new Subject<void>();
+
+  private readonly requiredMessages: Record<string, string> = {
+    first_name: 'El nombre es obligatorio',
+    last_name: 'El apellido es obligatorio',
+    email: 'El email es obligatorio',
+    user_birthday: 'La fecha de nacimiento es obligatoria',
+    user_province: 'La provincia es obligatoria',
+    user_city: 'La ciudad es obligatoria',
+    user_zipcode: 'El código postal es obligatorio',
+    password: 'La contraseña es obligatoria'
+  };
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private usersService: UsersService,
     private locationsService: LocationsService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    this.checkAuthentication();
+    this.initializeBreadcrumbs();
     this.initializeForm();
     this.loadLocationData();
     this.loadUserData();
   }
 
-  checkAuthentication(): void {
-    // if (!this.authService.isLoggedIn()) {
-    //   this.router.navigate(['/login']);
-    // }
+  private initializeBreadcrumbs(): void {
+    const isLoggedIn = this.authService.isLoggedIn();
+    const homeRoute = isLoggedIn ? '/catalog' : '/home';
+
+    this.breadcrumbItems = [
+      { label: 'Inicio', route: homeRoute, icon: 'home' },
+      { label: 'Mi Perfil', route: '/user/profile', icon: 'person' },
+      { label: 'Editar Perfil', icon: 'edit' }
+    ];
+  }
+
+  get avatarDisplayName(): string {
+    const fn = this.editProfileForm?.get('first_name')?.value || '';
+    const ln = this.editProfileForm?.get('last_name')?.value || '';
+    return `${fn} ${ln}`.trim();
   }
 
   async loadLocationData(): Promise<void> {
     try {
       this.provinces = await this.locationsService.getProvincias();
     } catch (error) {
-      console.error('Error loading provinces:', error);
       this.errorMessage = 'Error al cargar las provincias.';
     }
+    this.cdr.markForCheck();
   }
 
   initializeForm(): void {
@@ -85,8 +109,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       user_province: ['', [Validators.required]],
       user_city: ['', [Validators.required]],
       user_zipcode: ['', [Validators.required, Validators.pattern(/^\d{4,6}$/)]],
-      password: ['', []],
-      profile_picture: ['', []]
+      password: ['', []]
     });
 
     this.editProfileForm.get('user_province')?.valueChanges
@@ -109,34 +132,37 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     if (!currentUser) {
       this.isLoading = false;
       this.errorMessage = 'No hay usuario autenticado.';
+      this.cdr.markForCheck();
       return;
     }
 
-    this.usersService.getById(currentUser.id_users)
+    this.usersService.getMe()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (user: User) => {
+        next: async (user: User) => {
           this.editProfileForm.patchValue({
             first_name: user.first_name,
             last_name: user.last_name,
             email: user.email,
             phone_number: user.phone_number,
-            user_birthday: user.user_birthday,
+            user_birthday: user.user_birthday ? String(user.user_birthday).substring(0, 10) : '',
             user_province: user.user_province,
             user_city: user.user_city,
             user_zipcode: user.user_zipcode
-          });
+          }, { emitEvent: false });
+
+          this.editProfileForm.markAsPristine();
 
           if (user.user_province) {
-            this.onProvinceChange(user.user_province).catch(error =>
-              console.error('Error loading cities for province:', error)
-            );
+            try {
+              this.cities = await this.locationsService.getCiudadesByProvincia(user.user_province);
+            } catch {
+              this.cities = [];
+            }
           }
 
           if (user.user_province && user.user_city) {
-            this.onCityChange(user.user_city).catch(error =>
-              console.error('Error loading initial coordinates:', error)
-            );
+            await this.populateLocationOnLoad(user.user_province, user.user_city);
           }
 
           if (user.profile_picture) {
@@ -144,13 +170,30 @@ export class EditProfileComponent implements OnInit, OnDestroy {
           }
 
           this.isLoading = false;
+          this.cdr.markForCheck();
         },
         error: (error: HttpErrorResponse) => {
           this.isLoading = false;
           this.errorMessage = error.error?.message || 'Error al cargar tus datos.';
-          console.error('Error loading user data:', error);
+          this.cdr.markForCheck();
         }
       });
+  }
+
+  private async populateLocationOnLoad(province: string, city: string): Promise<void> {
+    try {
+      this.codigosPostales = await this.locationsService.getCodigosPostalesByCity(province, city);
+    } catch {
+      this.codigosPostales = [];
+    }
+    try {
+      const coordinates = await this.locationsService.getCoordinates(province, city);
+      this.previewLatitude = coordinates ? coordinates.lat : null;
+      this.previewLongitude = coordinates ? coordinates.lng : null;
+    } catch {
+      this.previewLatitude = null;
+      this.previewLongitude = null;
+    }
   }
 
   async onProvinceChange(province: string): Promise<void> {
@@ -158,17 +201,20 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       try {
         this.cities = await this.locationsService.getCiudadesByProvincia(province);
         this.editProfileForm.get('user_city')?.reset();
+        this.editProfileForm.get('user_zipcode')?.reset();
+        this.codigosPostales = [];
         this.previewLatitude = null;
         this.previewLongitude = null;
       } catch (error) {
-        console.error('Error loading cities:', error);
         this.cities = [];
       }
     } else {
       this.cities = [];
+      this.codigosPostales = [];
       this.previewLatitude = null;
       this.previewLongitude = null;
     }
+    this.cdr.markForCheck();
   }
 
   async onCityChange(city: string): Promise<void> {
@@ -176,25 +222,31 @@ export class EditProfileComponent implements OnInit, OnDestroy {
 
     if (city && province) {
       try {
+        this.codigosPostales = await this.locationsService.getCodigosPostalesByCity(province, city);
+      } catch {
+        this.codigosPostales = [];
+      }
+      this.editProfileForm.get('user_zipcode')?.reset();
+
+      try {
         const coordinates = await this.locationsService.getCoordinates(province, city);
         if (coordinates) {
           this.previewLatitude = coordinates.lat;
           this.previewLongitude = coordinates.lng;
-          console.log('✅ Coordenadas actualizadas para mapa preview:', { lat: this.previewLatitude, lng: this.previewLongitude });
         } else {
-          console.warn('⚠️ No se encontraron coordenadas para', city, province);
           this.previewLatitude = null;
           this.previewLongitude = null;
         }
       } catch (error) {
-        console.error('❌ Error cargando coordenadas del mapa:', error);
         this.previewLatitude = null;
         this.previewLongitude = null;
       }
     } else {
+      this.codigosPostales = [];
       this.previewLatitude = null;
       this.previewLongitude = null;
     }
+    this.cdr.markForCheck();
   }
 
   minAgeValidator(minAge: number): (control: AbstractControl) => ValidationErrors | null {
@@ -216,61 +268,83 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     };
   }
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
+  private minLength8(control: AbstractControl): ValidationErrors | null {
+    return control.value && control.value.length >= 8 ? null : { minLength8: true };
+  }
 
-      if (!file.type.startsWith('image/')) {
-        this.errorMessage = 'Por favor selecciona una imagen válida.';
-        return;
-      }
+  private hasUppercase(control: AbstractControl): ValidationErrors | null {
+    return /[A-Z]/.test(control.value || '') ? null : { uppercase: true };
+  }
 
-      if (file.size > 5 * 1024 * 1024) {
-        this.errorMessage = 'La imagen debe ser menor a 5MB.';
-        return;
-      }
+  private hasSpecialChar(control: AbstractControl): ValidationErrors | null {
+    return /[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/.test(control.value || '') ? null : { special: true };
+  }
 
-      this.selectedFile = file;
+  onAvatarFileChanged(file: File): void {
+    this.selectedFile = file;
+    this.removeProfilePicture = false;
 
-      const reader = new FileReader();
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        this.profilePicturePreview = (e.target as FileReader).result as string;
-      };
-      reader.readAsDataURL(file);
-    }
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      this.profilePicturePreview = (e.target as FileReader).result as string;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  onAvatarImageDeleted(): void {
+    this.selectedFile = null;
+    this.profilePicturePreview = null;
+    this.removeProfilePicture = true;
+    this.cdr.markForCheck();
+  }
+
+  get hasChanges(): boolean {
+    return this.editProfileForm.dirty || this.selectedFile !== null || this.removeProfilePicture;
   }
 
   togglePasswordField(): void {
     this.showPasswordField = !this.showPasswordField;
     const passwordControl = this.editProfileForm.get('password');
     if (this.showPasswordField) {
-      passwordControl?.setValidators([Validators.required, Validators.minLength(6)]);
+      passwordControl?.setValidators([
+        Validators.required,
+        this.minLength8.bind(this),
+        this.hasUppercase.bind(this),
+        this.hasSpecialChar.bind(this)
+      ]);
     } else {
       passwordControl?.clearValidators();
       passwordControl?.reset();
+      this.showPassword = false;
     }
     passwordControl?.updateValueAndValidity();
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSaveProfile(): void {
     if (this.editProfileForm.invalid) {
       this.markFormGroupTouched(this.editProfileForm);
+      this.cdr.markForCheck();
       return;
     }
 
     const currentUser = this.authService.currentUser();
     if (!currentUser) {
       this.errorMessage = 'No hay usuario autenticado.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isSaving = true;
     this.errorMessage = null;
-    this.successMessage = null;
+    this.cdr.markForCheck();
 
     const formValue = this.editProfileForm.value;
-    const updateData: Partial<User> = {
+    const updateData: UpdateUserProfileRequest = {
       first_name: formValue.first_name,
       last_name: formValue.last_name,
       email: formValue.email,
@@ -285,81 +359,62 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       updateData.password = formValue.password;
     }
 
+    if (this.removeProfilePicture && !this.selectedFile) {
+      updateData.remove_profile_picture = true;
+    }
+
     this.usersService.updateProfile(currentUser.id_users, updateData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (updatedUser: User) => {
-          this.isSaving = false;
-          this.successMessage = 'Perfil actualizado correctamente.';
           this.authService.updateCurrentUser(updatedUser);
 
           if (this.selectedFile) {
             const formData = new FormData();
-            formData.append('profile_picture', this.selectedFile);
+            formData.append('avatar', this.selectedFile);
             this.usersService.updateProfileImage(currentUser.id_users, formData)
               .pipe(takeUntil(this.destroy$))
               .subscribe({
                 next: (userWithImage: User) => {
                   this.authService.updateCurrentUser(userWithImage);
-                  setTimeout(() => {
-                    this.router.navigate(['/user/profile']);
-                  }, 1500);
+                  this.isSaving = false;
+                  this.showSuccessAndRedirect();
                 },
                 error: (error: HttpErrorResponse) => {
-                  console.error('Error uploading profile image:', error);
-                  setTimeout(() => {
-                    this.router.navigate(['/user/profile']);
-                  }, 1500);
+                  this.isSaving = false;
+                  this.errorMessage = 'Tus datos se han guardado, pero la foto no se pudo subir: '
+                    + (error.error?.error || error.error?.message || 'inténtalo de nuevo.');
+                  this.cdr.markForCheck();
                 }
               });
           } else {
-            setTimeout(() => {
-              this.router.navigate(['/user/profile']);
-            }, 1500);
+            this.isSaving = false;
+            this.showSuccessAndRedirect();
           }
         },
         error: (error: HttpErrorResponse) => {
           this.isSaving = false;
           this.errorMessage = error.error?.message || 'Error al actualizar el perfil.';
-          console.error('Error updating profile:', error);
+          this.cdr.markForCheck();
         }
       });
   }
 
-  onCancel(): void {
-    if (confirm('¿Descartar cambios?')) {
-      this.router.navigate(['/user/profile']);
+  private showSuccessAndRedirect(): void {
+    this.showSuccessModal = true;
+    this.cdr.markForCheck();
+    this.successTimeoutId = setTimeout(() => {
+      this.goToProfileNow();
+    }, 1800);
+  }
+
+  goToProfileNow(): void {
+    if (this.successTimeoutId) {
+      clearTimeout(this.successTimeoutId);
+      this.successTimeoutId = null;
     }
-  }
-
-  openDeleteModal(): void {
-    this.showDeleteModal = true;
-  }
-
-  closeDeleteModal(): void {
-    this.showDeleteModal = false;
-  }
-
-  onDeleteAccount(): void {
-    const currentUser = this.authService.currentUser();
-    if (!currentUser) {
-      alert('No hay usuario autenticado.');
-      return;
-    }
-
-    this.usersService.deleteAccount(currentUser.id_users)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: () => {
-          alert('Tu cuenta ha sido eliminada correctamente.');
-          this.authService.logout();
-          this.router.navigate(['/login']);
-        },
-        error: (error: HttpErrorResponse) => {
-          alert(error.error?.message || 'Error al eliminar la cuenta.');
-          console.error('Error deleting account:', error);
-        }
-      });
+    this.showSuccessModal = false;
+    this.router.navigate(['/user/profile']);
   }
 
   private markFormGroupTouched(formGroup: FormGroup): void {
@@ -380,10 +435,10 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     }
 
     if (control.errors['required']) {
-      return `${fieldName.replace(/_/g, ' ')} es requerido`;
+      return this.requiredMessages[fieldName] || 'Este campo es obligatorio';
     }
     if (control.errors['email']) {
-      return 'Email inválido';
+      return 'El email no es válido';
     }
     if (control.errors['minLength']) {
       return `Mínimo ${control.errors['minLength'].requiredLength} caracteres`;
@@ -399,10 +454,22 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     if (control.errors['minAge']) {
       return `Debes tener al menos ${control.errors['minAge'].requiredAge} años`;
     }
+    if (control.errors['minLength8']) {
+      return 'La contraseña debe tener al menos 8 caracteres';
+    }
+    if (control.errors['uppercase']) {
+      return 'La contraseña debe tener al menos una mayúscula';
+    }
+    if (control.errors['special']) {
+      return 'La contraseña debe tener al menos un carácter especial';
+    }
     return null;
   }
 
   ngOnDestroy(): void {
+    if (this.successTimeoutId) {
+      clearTimeout(this.successTimeoutId);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }

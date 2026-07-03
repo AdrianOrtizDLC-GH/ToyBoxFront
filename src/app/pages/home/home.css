@@ -206,6 +206,7 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 20px;
+    align-items: start;
 }
 
 .featured-product {
@@ -217,13 +218,14 @@
 .featured-image {
     position: relative;
     width: 100%;
-    height: 420px;
+    aspect-ratio: 4/3;
     background: linear-gradient(135deg, rgba(216, 69, 101, .14), rgba(97, 136, 193, .18));
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
 }
+
 
 .featured-image img {
     width: 100%;
@@ -370,6 +372,18 @@
 .page-info {
     font-size: 14px;
     color: var(--on-surface-variant);
+}
+
+.featured-product-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.featured-extra {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
 }
 
 @media (max-width: 1024px) {

@@ -1,13 +1,14 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../interfaces/user.interface';
+import { ModalConfirmComponent } from '../modal-confirm/modal-confirm';
 
-type AvatarSize = 'small' | 'medium' | 'large';
+type AvatarSize = 'tiny' | 'small' | 'medium' | 'large' | 'extra-large';
 
 @Component({
   selector: 'app-user-avatar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ModalConfirmComponent], 
   templateUrl: './user-avatar.html',
   styleUrl: './user-avatar.css'
 })
@@ -20,7 +21,11 @@ export class UserAvatarComponent {
   @Output() imageChanged = new EventEmitter<File>();
   @Output() imageDeleted = new EventEmitter<void>();
 
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+
   showModal = signal(false);
+
+  showDeleteConfirm = signal(false);
 
   get finalSrc(): string | null {
     if (this.src && this.src.trim() !== '') {
@@ -53,31 +58,42 @@ export class UserAvatarComponent {
     return displayName.substring(0, 2).toUpperCase();
   }
 
-  get sizeClass(): string {
-    return `avatar--${this.size}`;
-  }
-
   get sizePixels(): number {
     switch (this.size) {
+      case 'tiny':
+        return 36;
       case 'small':
         return 32;
       case 'medium':
         return 48;
       case 'large':
         return 80;
+      case 'extra-large':
+        return 200;
       default:
         return 48;
     }
   }
 
-  openModal(): void {
+  get fontSizePixels(): number {
+    return Math.round(this.sizePixels * 0.35);
+  }
+
+  openModal(event?: Event): void {
     if (!this.editable) {
+      event?.stopPropagation();
       this.showModal.set(true);
     }
   }
 
   closeModal(): void {
     this.showModal.set(false);
+  }
+
+  onKeyDown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.closeModal();
+    }
   }
 
   onImageSelected(event: Event): void {
@@ -87,11 +103,28 @@ export class UserAvatarComponent {
     const file = input.files?.[0];
 
     if (file) {
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const maxSizeMB = 5;
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+      if (!validTypes.includes(file.type)) {
+        console.warn('Tipo de imagen no permitido');
+        return;
+      }
+
+      if (file.size > maxSizeBytes) {
+        console.warn('Imagen demasiado grande');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = () => {
         const img = new Image();
         img.onload = () => {
           this.imageChanged.emit(file);
+        };
+        img.onerror = () => {
+          console.warn('Error cargando imagen');
         };
         img.src = reader.result as string;
       };
@@ -103,27 +136,19 @@ export class UserAvatarComponent {
 
   deleteImage(): void {
     if (!this.editable) return;
+    this.showDeleteConfirm.set(true);
+  }
 
-    const confirmed = confirm('¿Estás seguro de que deseas eliminar tu foto de perfil?');
-    if (confirmed) {
-      this.imageDeleted.emit();
-    }
+  confirmDeleteImage(): void {
+    this.showDeleteConfirm.set(false);
+    this.imageDeleted.emit();
+  }
+
+  cancelDeleteImage(): void {
+    this.showDeleteConfirm.set(false);
   }
 
   triggerFileInput(): void {
-    const fileInput = document.querySelector(
-      `.avatar-edit-${this.hashCode(this.displayName)} input[type="file"]`
-    ) as HTMLInputElement;
-    fileInput?.click();
-  }
-
-  private hashCode(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString();
+    this.fileInput?.nativeElement.click();
   }
 }

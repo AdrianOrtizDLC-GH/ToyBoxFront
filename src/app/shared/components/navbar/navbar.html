@@ -13,14 +13,25 @@
 
     @if (isLoggedIn) {
     <div class="navbar-actions">
+        <a class="nav-item" routerLink="/catalog">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+            </svg>
+            <span>Catálogo</span>
+        </a>
+
         <a class="nav-item" routerLink="/notifications">
             <div class="icon-wrapper">
                 <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
-                @if (unreadNotificationsCount > 0) {
-                <span class="badge-count">{{ unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount }}</span>
+                @if (notificationsService.unreadCount() > 0) {
+                <span class="badge-count">{{ notificationsService.unreadCount() > 9 ? '9+' :
+                    notificationsService.unreadCount() }}</span>
                 }
             </div>
             <span>Notificaciones</span>
@@ -65,11 +76,6 @@
             <span>Compras</span>
         </a>
 
-        <a class="nav-item profile-item" routerLink="/user/profile">
-            <img [src]="userAvatar || 'assets/images/avatar-placeholder.png'" alt="Mi perfil" class="avatar" />
-            <span>Mi perfil</span>
-        </a>
-
         @if (isModerator) {
         <a class="nav-item" routerLink="/moderator/reports">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -92,6 +98,12 @@
             <span>Dashboard</span>
         </a>
         }
+
+        <a class="nav-item profile-item" routerLink="/user/profile">
+            <img [src]="userAvatar || 'assets/images/avatar-placeholder.png'" alt="Mi perfil" class="avatar" />
+            <span>Mi perfil</span>
+        </a>
+
 
         <button class="btn-sell" (click)="goToCreateProduct()">
             + Vender

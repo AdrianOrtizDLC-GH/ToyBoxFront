@@ -24,6 +24,7 @@ export interface Item {
   category?: Category; 
   images?: ItemPhoto[]; 
   reviews?: Review[]; 
+  main_photo?: string;
 }
 
 export interface ItemCard {

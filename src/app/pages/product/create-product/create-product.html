@@ -26,10 +26,11 @@
     </aside>
   </section>
 
-  <form class="create-product-layout">
+  <form class="create-product-layout" #createProductForm="ngForm" (ngSubmit)="publishProduct()">
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">edit_square</span>
+
         <div>
           <h2>Información del juguete</h2>
           <p class="text-on-surface-variant">
@@ -41,62 +42,90 @@
       <div class="form-grid">
         <div class="form-field form-field--full">
           <label for="title">Título del producto</label>
+
           <input
             id="title"
+            name="title"
             class="form-control"
             type="text"
             placeholder="Ej. Caja de bloques de construcción"
+            [(ngModel)]="formData.title"
+            required
           />
         </div>
 
         <div class="form-field">
           <label for="price">Precio</label>
+
           <input
             id="price"
+            name="price"
             class="form-control"
             type="number"
+            min="1"
             placeholder="Ej. 18"
+            [(ngModel)]="formData.price"
+            required
           />
         </div>
 
         <div class="form-field">
           <label for="state">Estado</label>
-          <select id="state" class="form-control">
+
+          <select
+            id="state"
+            name="state"
+            class="form-control"
+            [(ngModel)]="formData.conservation_status"
+            required
+          >
             <option value="">Selecciona estado</option>
 
-            @for (state of productStates; track state) {
-              <option>{{ state }}</option>
+            @for (state of productStates; track state.value) {
+              <option [value]="state.value">{{ state.label }}</option>
             }
           </select>
         </div>
 
         <div class="form-field">
           <label for="province">Provincia</label>
+
           <input
             id="province"
+            name="province"
             class="form-control"
             type="text"
             placeholder="Ej. Madrid"
+            [(ngModel)]="formData.province"
+            required
           />
         </div>
 
         <div class="form-field">
           <label for="city">Ciudad</label>
+
           <input
             id="city"
+            name="city"
             class="form-control"
             type="text"
             placeholder="Ej. Madrid"
+            [(ngModel)]="formData.city"
+            required
           />
         </div>
 
         <div class="form-field form-field--full">
           <label for="description">Descripción</label>
+
           <textarea
             id="description"
+            name="description"
             class="form-control"
             rows="5"
             placeholder="Describe el juguete, su estado, piezas incluidas y cualquier detalle útil."
+            [(ngModel)]="formData.description"
+            required
           ></textarea>
         </div>
       </div>
@@ -105,6 +134,7 @@
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">category</span>
+
         <div>
           <h2>Categoría</h2>
           <p class="text-on-surface-variant">
@@ -115,9 +145,19 @@
 
       <div class="category-selector">
         @for (category of categories; track category.id_categories) {
-          <button class="category-option" type="button">
-            <img [src]="category.icon" [alt]="category.name" />
-            <span>{{ category.name }}</span>
+          <button
+            class="category-option"
+            [class.category-option--active]="formData.fk_categories_id === category.id_categories"
+            type="button"
+            (click)="selectCategory(category.id_categories)"
+          >
+            <span class="category-option__icon">
+              <img [src]="category.icon" [alt]="category.name" />
+            </span>
+
+            <span class="category-option__name">
+              {{ category.name }}
+            </span>
           </button>
         }
       </div>
@@ -126,6 +166,7 @@
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">add_photo_alternate</span>
+
         <div>
           <h2>Imágenes del producto</h2>
           <p class="text-on-surface-variant">
@@ -134,29 +175,52 @@
         </div>
       </div>
 
-      <div class="upload-box">
-        <span class="material-symbols-outlined">cloud_upload</span>
-        <h3>Arrastra tus imágenes aquí</h3>
-        <p>O haz clic para seleccionarlas desde tu ordenador.</p>
+      <input
+        id="productImages"
+        class="hidden-file-input"
+        type="file"
+        accept="image/*"
+        multiple
+        (change)="onImagesSelected($event)"
+      />
 
-        <button class="btn-toybox-secondary" type="button">
+      <label class="upload-box" for="productImages">
+        <span class="material-symbols-outlined">cloud_upload</span>
+
+        <h3>Selecciona tus imágenes</h3>
+
+        <p>Haz clic para elegirlas desde tu ordenador.</p>
+
+        <span class="btn-toybox-secondary upload-box__button">
           Seleccionar imágenes
-        </button>
-      </div>
+        </span>
+      </label>
 
       <div class="image-preview-grid">
-        <div class="image-preview">
-          <img src="/assets/images/Iconos%20categorias/icono_munecosycoches.svg" alt="Vista previa" />
-          <span>Principal</span>
-        </div>
+        @for (image of selectedImages; track image.preview; let index = $index) {
+          <div class="image-preview">
+            <img [src]="image.preview" alt="Vista previa del producto" />
 
-        <div class="image-preview image-preview--empty">
-          <span class="material-symbols-outlined">add</span>
-        </div>
+            @if (index === 0) {
+              <span>Principal</span>
+            }
 
-        <div class="image-preview image-preview--empty">
-          <span class="material-symbols-outlined">add</span>
-        </div>
+            <button
+              class="image-preview__remove"
+              type="button"
+              aria-label="Eliminar imagen"
+              (click)="removeImage(index)"
+            >
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+        }
+
+        @if (selectedImages.length < 5) {
+          <label class="image-preview image-preview--empty" for="productImages">
+            <span class="material-symbols-outlined">add</span>
+          </label>
+        }
       </div>
     </section>
 
@@ -168,23 +232,46 @@
           <span class="material-symbols-outlined">check_circle</span>
           Revisa que el título sea claro.
         </li>
+
         <li>
           <span class="material-symbols-outlined">check_circle</span>
           Añade precio, estado y ubicación.
         </li>
+
         <li>
           <span class="material-symbols-outlined">check_circle</span>
           Sube al menos una imagen.
         </li>
       </ul>
 
+      @if (errorMessage) {
+        <p class="error-message">
+          {{ errorMessage }}
+        </p>
+      }
+
+      @if (successMessage) {
+        <p class="success-message">
+          {{ successMessage }}
+        </p>
+      }
+
       <div class="publish-actions">
-        <button class="btn-toybox-secondary" type="button">
-          Guardar borrador
+        <button
+          class="btn-toybox-secondary"
+          type="button"
+          [disabled]="isSubmitting"
+          (click)="saveDraft()"
+        >
+          {{ isSubmitting ? 'Guardando...' : 'Guardar borrador' }}
         </button>
 
-        <button class="btn-toybox-primary" type="button">
-          Publicar juguete
+        <button
+          class="btn-toybox-primary"
+          type="submit"
+          [disabled]="isSubmitting"
+        >
+          {{ isSubmitting ? 'Publicando...' : 'Publicar juguete' }}
         </button>
       </div>
     </aside>

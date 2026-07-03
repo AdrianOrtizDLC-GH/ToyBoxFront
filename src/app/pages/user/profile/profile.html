@@ -1,8 +1,19 @@
 <div class="profile-container">
   <div class="pattern-bg"></div>
 
-  <div class="relative-z-10 profile-content">
+  <div class="breadcrumb-wrapper">
     <app-breadcrumb></app-breadcrumb>
+  </div>
+
+  <div class="relative-z-10 profile-content">
+
+    <app-toast
+      [visible]="toastVisible"
+      [type]="toastType"
+      [title]="toastTitle"
+      [message]="toastMessage"
+      (dismissed)="onToastDismissed()">
+    </app-toast>
 
     @if (isLoading) {
       <div class="loading-spinner">
@@ -17,16 +28,18 @@
     }
 
     @if (user && !isLoading) {
-      <div class="profile-layout">
-        <div class="profile-left-column">
-          <div class="profile-card">
+
+      <div class="profile-top-grid">
+
+        <div class="profile-card profile-card--main">
+          <div class="profile-main-content">
             <div class="profile-header">
               <h1 class="profile-name">{{ getFullName() }}</h1>
               <p class="profile-username">@{{ user.username }}</p>
 
               @if (user.user_city && user.user_province) {
                 <p class="profile-location">
-                  <i class="fas fa-map-marker-alt"></i>
+                  <span class="material-symbols-outlined profile-location-icon">location_on</span>
                   {{ user.user_city }}, {{ user.user_province }}
                 </p>
               }
@@ -52,6 +65,36 @@
             </div>
           </div>
 
+          @if (isCurrentUser) {
+            <div class="profile-main-actions">
+              <button class="btn btn-edit-profile mb-2 w-100" (click)="goToEditProfile()">
+                <span class="material-symbols-outlined">edit</span>
+                Editar Perfil
+              </button>
+              <button class="btn btn-outline-danger mb-2 w-100" (click)="openDeleteModal()">
+                <span class="material-symbols-outlined">person_remove</span>
+                Dar de Baja
+              </button>
+              <button class="btn btn-outline-danger w-100" (click)="logout()">
+                <span class="material-symbols-outlined">logout</span>
+                Cerrar Sesión
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="profile-card">
+          <div style="text-align: center;">
+            <app-user-avatar
+              [user]="user"
+              size="extra-large"
+              (click)="toggleAvatarModal()"
+              style="cursor: pointer;">
+            </app-user-avatar>
+          </div>
+        </div>
+
+        @if (isCurrentUser) {
           <div class="profile-card">
             <h2 class="section-title">Información Personal</h2>
 
@@ -80,7 +123,7 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="small-label">Fecha de Nacimiento</label>
-                <input type="date" class="form-control" [value]="user.user_birthday" disabled />
+                <input type="date" class="form-control" [value]="birthdayValue" disabled />
               </div>
             </div>
 
@@ -99,73 +142,36 @@
               </div>
             </div>
           </div>
-        </div>
-
-        <div class="profile-right-column">
+        } @else if (sellerProducts.length > 0) {
           <div class="profile-card">
-            <div style="text-align: center;">
-              <app-user-avatar
-                [user]="user"
-                size="large"
-                (click)="toggleAvatarModal()"
-                style="cursor: pointer;">
-              </app-user-avatar>
-            </div>
-          </div>
-
-          @if (user.user_city && user.user_province) {
-            <div class="profile-card">
-              <h2 class="section-title">Ubicación</h2>
-              @if (userLatitude !== null && userLongitude !== null) {
-                <button
-                  class="map-container-btn"
-                  (click)="toggleMapModal()"
-                >
-                  <app-map-static
-                    [latitude]="userLatitude"
-                    [longitude]="userLongitude"
-                    [zoom]="12"
-                  ></app-map-static>
-                </button>
-              } @else {
-                <div class="map-loading-placeholder">
-                  <p>Cargando ubicación...</p>
-                  <small>{{ user.user_city }}, {{ user.user_province }}</small>
-                </div>
+            <h2 class="section-title">Productos en venta</h2>
+            <div class="seller-products-grid">
+              @for (product of sellerProducts; track product.id) {
+                <app-product-card [product]="product"></app-product-card>
               }
             </div>
-          }
-
-          <div class="profile-card">
-            <button class="btn btn-primary mb-2 w-100" (click)="goToEditProfile()">
-              <i class="fas fa-edit"></i>
-              Editar Perfil
-            </button>
-            <button class="btn btn-outline-danger mb-2 w-100" (click)="openDeleteModal()">
-              <i class="fas fa-trash-alt"></i>
-              Dar de Baja
-            </button>
-            <button class="btn btn-outline-danger w-100" (click)="logout()">
-              <i class="fas fa-sign-out-alt"></i>
-              Cerrar Sesión
-            </button>
           </div>
+        }
 
-          @if (isAdmin) {
-            <div class="profile-card">
-              <h3 style="font-size: 16px; font-weight: 700; color: var(--primary-toybox); margin: 0 0 1rem 0;">Panel Admin</h3>
-              <button class="btn btn-warning mb-2 w-100" (click)="goToDashboard()">
-                <i class="fas fa-chart-bar"></i> Dashboard
+        @if (user.user_city && user.user_province) {
+          <div class="profile-card profile-card--map">
+            <h2 class="section-title">Ubicación</h2>
+            @if (userLatitude !== null && userLongitude !== null) {
+              <button class="map-container-btn" (click)="toggleMapModal()">
+                <app-map-static
+                  [latitude]="userLatitude"
+                  [longitude]="userLongitude"
+                  [zoom]="12">
+                </app-map-static>
               </button>
-              <button class="btn btn-warning mb-2 w-100" (click)="goToUsersManagement()">
-                <i class="fas fa-users"></i> Usuarios
-              </button>
-              <button class="btn btn-warning w-100" (click)="goToCategoriesManagement()">
-                <i class="fas fa-list"></i> Categorías
-              </button>
-            </div>
-          }
-        </div>
+            } @else {
+              <div class="map-loading-placeholder">
+                <p>Cargando ubicación...</p>
+                <small>{{ user.user_city }}, {{ user.user_province }}</small>
+              </div>
+            }
+          </div>
+        }
       </div>
 
       @if (reviews.length > 0) {
@@ -177,18 +183,57 @@
                 <div class="review-header">
                   <strong class="review-author">{{ review.reviewer?.first_name }} {{ review.reviewer?.last_name }}</strong>
                   <div class="review-rating">
-                    <app-star-rating
-                      [rating]="review.rating"
-                      [readonly]="true"
-                      [size]="16"
-                    ></app-star-rating>
+                    <app-star-rating [rating]="review.rating" [readonly]="true" [size]="16"></app-star-rating>
                   </div>
                 </div>
+
+                @if (review.item) {
+                  <div class="review-product">
+                    @if (review.item.images?.[0]?.photo_url) {
+                      <img class="review-product-img" [src]="review.item.images![0].photo_url" [alt]="review.item.title" />
+                    } @else {
+                      <div class="review-product-img review-product-img--placeholder">
+                        <span class="material-symbols-outlined">image</span>
+                      </div>
+                    }
+                    <span class="review-product-title">{{ review.item.title }}</span>
+                  </div>
+                }
+
                 <p class="review-comment">{{ review.comment }}</p>
                 <small class="review-date">{{ review.review_date | date: 'dd/MM/yyyy' }}</small>
               </div>
             }
           </div>
+        </div>
+      }
+
+      @if (isCurrentUser && (isModerator || isAdmin)) {
+        <div class="panels-row">
+          @if (isModerator) {
+            <div class="profile-card panel-moderator-card">
+              <h3 class="panel-title">Panel Moderador</h3>
+              <button class="btn btn-warning w-100" (click)="goToReports()">
+                <span class="material-symbols-outlined">report</span>
+                Reportes
+              </button>
+            </div>
+          }
+
+          @if (isAdmin) {
+            <div class="profile-card panel-admin-card">
+              <h3 class="panel-title">Panel Admin</h3>
+              <button class="btn btn-warning mb-2 w-100" (click)="goToDashboard()">
+                <span class="material-symbols-outlined">dashboard</span> Dashboard
+              </button>
+              <button class="btn btn-warning mb-2 w-100" (click)="goToUsersManagement()">
+                <span class="material-symbols-outlined">group</span> Usuarios
+              </button>
+              <button class="btn btn-warning w-100" (click)="goToCategoriesManagement()">
+                <span class="material-symbols-outlined">category</span> Categorías
+              </button>
+            </div>
+          }
         </div>
       }
     }
@@ -219,46 +264,30 @@
         <button class="btn-close" (click)="toggleMapModal()"></button>
       </div>
       <div class="modal-body">
-        <app-map-static
-          [latitude]="userLatitude"
-          [longitude]="userLongitude"
-          [zoom]="14"
-        ></app-map-static>
+        <app-map-static [latitude]="userLatitude" [longitude]="userLongitude" [zoom]="14"></app-map-static>
       </div>
     </div>
   </div>
 }
 
-@if (showDeleteModal) {
-  <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
-  <div class="modal-dialog modal-confirm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Eliminar Cuenta</h5>
-        <button class="btn-close" (click)="closeDeleteModal()"></button>
-      </div>
-      <div class="modal-body">
-        <p class="text-danger">
-          <strong>⚠️ Advertencia:</strong> Esta acción es irreversible. Se borrarán todos tus datos de la plataforma incluyendo:
-        </p>
-        <ul>
-          <li>Tu perfil y datos personales</li>
-          <li>Todos tus anuncios</li>
-          <li>Todas tus valoraciones y reseñas</li>
-          <li>Todos tus mensajes</li>
-        </ul>
-        <p class="text-danger">
-          <strong>¿Estás seguro de que deseas continuar?</strong>
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">
-          Cancelar
-        </button>
-        <button type="button" class="btn btn-danger" (click)="deleteAccount()">
-          Sí, Dar de Baja
-        </button>
-      </div>
-    </div>
-  </div>
-}
+<app-modal-confirm
+  [isOpen]="showDeleteModal"
+  title="Dar de baja tu cuenta"
+  message="Tu cuenta pasará a estado bloqueado y tus datos personales (email, usuario, teléfono, foto) se anonimizarán. Tus productos, mensajes y valoraciones se mantienen para no romper el histórico de la plataforma. Esta acción no se puede deshacer. ¿Quieres continuar?"
+  confirmText="Sí, dar de baja"
+  cancelText="Cancelar"
+  variant="danger"
+  (confirmed)="confirmDeactivateAccount()"
+  (cancelled)="closeDeleteModal()">
+</app-modal-confirm>
+
+<app-modal-confirm
+  [isOpen]="showLogoutModal"
+  title="Cerrar sesión"
+  message="¿Seguro que quieres cerrar sesión?"
+  confirmText="Cerrar sesión"
+  cancelText="Cancelar"
+  variant="warning"
+  (confirmed)="confirmLogout()"
+  (cancelled)="closeLogoutModal()">
+</app-modal-confirm>

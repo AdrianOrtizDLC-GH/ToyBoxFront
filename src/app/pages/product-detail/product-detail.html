@@ -1,114 +1,238 @@
 <div class="pattern-bg"></div>
 
 <main class="product-detail-page relative-z-10">
-  <section class="product-detail-layout">
-    <app-image-gallery
-      [images]="galleryImages"
-      [badge]="product.badge"
-      [altText]="product.title"
-    ></app-image-gallery>
-
-    <section class="product-info card-toybox">
-      <span class="product-info__category">{{ product.category }}</span>
-
-      <h1>{{ product.title }}</h1>
-
-      <div class="product-info__price">
-        {{ product.price }} €
-      </div>
-
-      <div class="product-info__meta">
-        <span>
-          <span class="material-symbols-outlined">verified</span>
-          {{ product.status }}
-        </span>
-
-        <span>
-          <span class="material-symbols-outlined">location_on</span>
-          {{ product.location }}
-        </span>
-      </div>
-
-      <p class="product-info__description">
-        {{ product.description }}
-      </p>
-
-      <div class="product-actions">
-        <button class="btn-toybox-primary" type="button">
-          <span class="material-symbols-outlined">chat</span>
-          Contactar con vendedor
-        </button>
-
-        <button class="btn-toybox-secondary" type="button">
-          <span class="material-symbols-outlined">favorite</span>
-          Añadir a favoritos
-        </button>
-      </div>
-    </section>
-  </section>
-
-  <section class="detail-extra-layout">
-    @if (product.seller) {
-      <article class="seller-card card-toybox">
-        <div class="seller-card__avatar">
-          {{ product.seller.name.charAt(0) }}
-        </div>
-
-        <div>
-          <span class="seller-card__label">Vendedor</span>
-
-          <h2>{{ product.seller.name }}</h2>
-
-          <p>
-            {{ product.seller.city }} · {{ product.seller.rating }} ★
-            · {{ product.seller.reviews }} valoraciones
-          </p>
-        </div>
-      </article>
-    }
-
-    <article class="safe-card card-toybox">
-      <span class="material-symbols-outlined">shield</span>
-
-      <div>
-        <h2>Compra con confianza</h2>
-
-        <p>
-          Usa la mensajería interna de Toybox para hablar con el vendedor
-          sin compartir datos personales.
-        </p>
-      </div>
-    </article>
-  </section>
-
-  <section class="related-section">
-    <div class="related-section__heading">
-      <h2>También te puede interesar</h2>
-
+  @if (isLoading) {
+    <section class="product-detail-state card-toybox">
+      <h1>Cargando producto...</h1>
       <p class="text-on-surface-variant">
-        Otros juguetes publicados recientemente.
+        Estamos preparando la información del juguete.
       </p>
-    </div>
+    </section>
+  } @else if (error) {
+    <section class="product-detail-state card-toybox">
+      <h1>No hemos podido cargar el producto</h1>
+      <p class="error-message">
+        {{ error }}
+      </p>
+    </section>
+  } @else {
+    <section class="product-detail-layout">
+      <app-image-gallery
+        [images]="galleryImages"
+        [badge]="product.badge"
+        [altText]="product.title"
+      ></app-image-gallery>
 
-    <div class="related-grid">
-      @for (item of relatedProducts; track item.id) {
-        <article class="related-card card-toybox">
-          <div class="related-card__image">
-            <img [src]="item.image" [alt]="item.title" />
+      <section class="product-info card-toybox">
+        <span class="product-info__category">{{ product.category }}</span>
+
+        <h1>{{ product.title }}</h1>
+
+        <div class="product-info__price">
+          {{ product.price }} €
+        </div>
+
+        <div class="product-info__meta">
+          <span>
+            <span class="material-symbols-outlined">verified</span>
+            {{ product.status }}
+          </span>
+
+          <span>
+            <span class="material-symbols-outlined">location_on</span>
+            {{ product.location }}
+          </span>
+        </div>
+
+        <p class="product-info__description">
+          {{ product.description }}
+        </p>
+
+        <div class="product-actions">
+          <button class="btn-toybox-primary" type="button">
+            <span class="material-symbols-outlined">chat</span>
+            Contactar con vendedor
+          </button>
+
+          <button class="btn-toybox-secondary" type="button">
+            <span class="material-symbols-outlined">favorite</span>
+            Añadir a favoritos
+          </button>
+
+          <button
+            class="btn-toybox-secondary product-report-button"
+            type="button"
+            (click)="openReportModal()"
+          >
+            <span class="material-symbols-outlined">flag</span>
+            Reportar producto
+          </button>
+        </div>
+
+        @if (reportSuccess) {
+          <p class="success-message product-report-message">
+            {{ reportSuccess }}
+          </p>
+        }
+      </section>
+    </section>
+
+    <section class="detail-extra-layout">
+      @if (product.seller) {
+        <article class="seller-card card-toybox">
+          <div class="seller-card__avatar">
+            {{ product.seller.name.charAt(0) }}
           </div>
 
-          <div class="related-card__content">
-            <span>{{ item.category }}</span>
+          <div>
+            <span class="seller-card__label">Vendedor</span>
 
-            <h3>{{ item.title }}</h3>
+            <h2>{{ product.seller.name }}</h2>
 
-            <div class="related-card__footer">
-              <strong>{{ item.price }} €</strong>
-              <small>{{ item.location }}</small>
-            </div>
+            <p>
+              {{ product.seller.city }} · {{ product.seller.rating }} ★
+              · {{ product.seller.reviews }} valoraciones
+            </p>
           </div>
         </article>
       }
+
+      <article class="safe-card card-toybox">
+        <span class="material-symbols-outlined">shield</span>
+
+        <div>
+          <h2>Compra con confianza</h2>
+
+          <p>
+            Usa la mensajería interna de Toybox para hablar con el vendedor
+            sin compartir datos personales.
+          </p>
+        </div>
+      </article>
+    </section>
+
+    <section class="related-section">
+      <div class="related-section__heading">
+        <h2>También te puede interesar</h2>
+
+        <p class="text-on-surface-variant">
+          Otros juguetes publicados recientemente.
+        </p>
+      </div>
+
+      <div class="related-grid">
+        @for (item of relatedProducts; track item.id) {
+          <article class="related-card card-toybox">
+            <div class="related-card__image">
+              <img [src]="item.image" [alt]="item.title" />
+            </div>
+
+            <div class="related-card__content">
+              <span>{{ item.category }}</span>
+
+              <h3>{{ item.title }}</h3>
+
+              <div class="related-card__footer">
+                <strong>{{ item.price }} €</strong>
+                <small>{{ item.location }}</small>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  @if (showReportModal) {
+    <div
+      class="report-modal-backdrop"
+      role="presentation"
+      (click)="closeReportModal()"
+    >
+      <section
+        class="report-modal card-toybox"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-modal-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="report-modal__header">
+          <div>
+            <span class="report-modal__eyebrow">Moderación Toybox</span>
+            <h2 id="report-modal-title">Reportar producto</h2>
+          </div>
+
+          <button
+            class="report-modal__close"
+            type="button"
+            aria-label="Cerrar reporte"
+            (click)="closeReportModal()"
+          >
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <p class="report-modal__description">
+          Selecciona el motivo por el que quieres reportar este producto.
+          Nuestro equipo de moderación lo revisará.
+        </p>
+
+        <div class="report-reasons">
+          @for (reason of reportReasons; track reason) {
+            <label class="report-reason">
+              <input
+                type="radio"
+                name="reportReason"
+                [value]="reason"
+                [checked]="selectedReportReason === reason"
+                (change)="selectedReportReason = reason; reportError = ''"
+              />
+
+              <span>{{ reason }}</span>
+            </label>
+          }
+        </div>
+
+        @if (selectedReportReason === 'Otro motivo') {
+          <label class="report-custom-reason">
+            <span>Cuéntanos el motivo</span>
+
+            <textarea
+              class="form-control"
+              rows="4"
+              placeholder="Describe brevemente qué ocurre con este producto"
+              [value]="customReportReason"
+              (input)="customReportReason = $any($event.target).value; reportError = ''"
+            ></textarea>
+          </label>
+        }
+
+        @if (reportError) {
+          <p class="error-message report-modal__error">
+            {{ reportError }}
+          </p>
+        }
+
+        <div class="report-modal__actions">
+          <button
+            class="btn-toybox-secondary"
+            type="button"
+            (click)="closeReportModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn-toybox-primary"
+            type="button"
+            [disabled]="isSendingReport"
+            (click)="submitReport()"
+          >
+            <span class="material-symbols-outlined">send</span>
+            {{ isSendingReport ? 'Enviando...' : 'Enviar reporte' }}
+          </button>
+        </div>
+      </section>
     </div>
-  </section>
+  }
 </main>

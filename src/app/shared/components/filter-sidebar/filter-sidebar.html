@@ -4,37 +4,57 @@
     <h2>Filtros</h2>
   </div>
 
+  <p class="filter-sidebar__required-note">
+    <span>*</span> Campos obligatorios
+  </p>
+
   <form
     class="filter-sidebar__form"
     #filterForm
     (submit)="$event.preventDefault(); onApplyFilters(category.value, price.value, location.value, status.value)"
   >
     <div class="filter-group">
-      <label for="filter-category">Categoría</label>
+      <label for="filter-category">
+        Categoría <span class="required-star">*</span>
+      </label>
 
-      <select id="filter-category" class="form-control" #category>
+      <select
+        id="filter-category"
+        class="form-control"
+        #category
+        [value]="selectedCategoryId"
+      >
+        <option value="0">Selecciona una categoría</option>
+
         @for (categoryItem of categories; track categoryItem.id_categories) {
-          <option [value]="categoryItem.name">
-            {{ categoryItem.name }}
-          </option>
+          @if (categoryItem.id_categories !== 0) {
+            <option [value]="categoryItem.id_categories">
+              {{ categoryItem.name }}
+            </option>
+          }
         }
       </select>
     </div>
 
     <div class="filter-group">
-      <label for="filter-price">Precio máximo</label>
+      <label for="filter-price">
+        Precio máximo <span class="required-star">*</span>
+      </label>
 
       <input
         id="filter-price"
         class="form-control"
         type="number"
+        min="1"
         placeholder="Ej. 30 €"
         #price
       />
     </div>
 
     <div class="filter-group">
-      <label for="filter-location">Ubicación</label>
+      <label for="filter-location">
+        Ubicación <span class="required-star">*</span>
+      </label>
 
       <input
         id="filter-location"
@@ -46,16 +66,24 @@
     </div>
 
     <div class="filter-group">
-      <label for="filter-status">Estado</label>
+      <label for="filter-status">
+        Estado <span class="required-star">*</span>
+      </label>
 
       <select id="filter-status" class="form-control" #status>
-        <option value="">Todos</option>
+        <option value="">Selecciona estado</option>
 
-        @for (state of productStates; track state) {
-          <option [value]="state">{{ state }}</option>
+        @for (state of productStates; track state.value) {
+          <option [value]="state.value">{{ state.label }}</option>
         }
       </select>
     </div>
+
+    @if (errorMessage) {
+      <p class="filter-sidebar__error">
+        {{ errorMessage }}
+      </p>
+    }
 
     <div class="filter-sidebar__actions">
       <button class="btn-toybox-secondary" type="submit">

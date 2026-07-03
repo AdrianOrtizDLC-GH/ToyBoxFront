@@ -5,9 +5,11 @@
 }
 
 .chat-detail-page {
+    width: min(1320px, calc(100% - 2rem));
+    margin: 0 auto;
     display: grid;
     grid-template-columns: 320px 1fr;
-    height: 100%;
+    height: calc(80vh - 72px);
     overflow: hidden;
 }
 
@@ -21,6 +23,7 @@
 .sidebar-header {
     padding: 24px 20px 16px;
     border-bottom: 1px solid var(--outline-variant);
+    flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -33,6 +36,7 @@
 .sidebar-list {
     overflow-y: auto;
     flex: 1;
+    min-height: 0;
 }
 
 .sidebar-item {
@@ -126,6 +130,7 @@
     padding: 16px 24px;
     border-bottom: 1px solid var(--outline-variant);
     background: var(--color-white);
+    flex-shrink: 0;
 }
 
 .chat-header-product {
@@ -159,6 +164,7 @@
 .messages-container {
     flex: 1;
     overflow-y: auto;
+    min-height: 0;
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -187,6 +193,7 @@
     padding: 16px 24px;
     border-top: 1px solid var(--outline-variant);
     background: var(--color-white);
+    flex-shrink: 0;
 }
 
 .chat-input {
@@ -247,12 +254,89 @@
     margin: 0;
 }
 
+@media (max-width: 991.98px) {
+    .chat-detail-page {
+        grid-template-columns: 280px 1fr;
+    }
+
+    .chat-header {
+        padding: 14px 20px;
+    }
+
+    .messages-container {
+        padding: 20px;
+        gap: 10px;
+    }
+
+    .chat-input-bar {
+        padding: 14px 20px;
+        gap: 10px;
+    }
+}
+
 @media (max-width: 768px) {
     .chat-detail-page {
         grid-template-columns: 1fr;
+        width: 100%;
+        margin: 0;
     }
 
     .sidebar {
         display: none;
+    }
+
+    .chat-header {
+        padding: 12px 16px;
+    }
+
+    .messages-container {
+        padding: 16px;
+        gap: 8px;
+    }
+
+    .chat-input-bar {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .header-product-title {
+        font-size: 14px;
+    }
+
+    .header-username {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .chat-detail-page {
+        height: calc(100vh - 72px);
+    }
+
+    .chat-header {
+        padding: 10px 12px;
+    }
+
+    .messages-container {
+        padding: 12px;
+        gap: 6px;
+    }
+
+    .chat-input-bar {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .header-product-img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .header-product-title {
+        font-size: 13px;
+    }
+
+    .header-username {
+        font-size: 11px;
     }
 }

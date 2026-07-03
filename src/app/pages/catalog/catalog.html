@@ -1,4 +1,5 @@
 <div class="pattern-bg"></div>
+
 <main class="catalog-page relative-z-10">
   <section class="catalog-hero">
     <div class="catalog-hero__text">
@@ -26,29 +27,62 @@
   <section class="catalog-categories">
     <div class="catalog-section-heading">
       <h2>Categorías</h2>
+
       <p class="text-on-surface-variant">
         Elige el tipo de juguete que quieres encontrar.
       </p>
     </div>
 
-    <div class="category-grid">
+    <div class="category-row" aria-label="Categorías del catálogo">
       @for (category of categories; track category.id_categories) {
-        <button class="category-card" type="button">
+        <button
+          class="category-pill"
+          [class.category-pill--active]="selectedCategoryId === category.id_categories"
+          type="button"
+          (click)="onCategorySelected(category.id_categories)"
+        >
           @if (category.icon) {
-            <img [src]="category.icon" [alt]="category.name" />
+            <span class="category-pill__icon">
+              <img [src]="category.icon" [alt]="category.name" />
+            </span>
           } @else {
-            <span class="category-card__all">Todo</span>
+            <span class="category-pill__all">
+              <span class="material-symbols-outlined">apps</span>
+            </span>
           }
 
-          <span>{{ category.name }}</span>
+          <span class="category-pill__name">
+            {{ category.name }}
+          </span>
         </button>
       }
+    </div>
+
+    <div class="category-mobile">
+      <label for="mobile-category">Categoría</label>
+
+      <select
+        id="mobile-category"
+        class="form-control"
+        #mobileCategory
+        (change)="onCategorySelected(mobileCategory.value)"
+      >
+        @for (category of categories; track category.id_categories) {
+          <option
+            [value]="category.id_categories"
+            [selected]="selectedCategoryId === category.id_categories"
+          >
+            {{ category.name }}
+          </option>
+        }
+      </select>
     </div>
   </section>
 
   <section class="catalog-layout">
     <app-filter-sidebar
       [categories]="categories"
+      [selectedCategoryId]="selectedCategoryId"
       (filtersApplied)="onFiltersApplied($event)"
     ></app-filter-sidebar>
 
@@ -56,8 +90,13 @@
       <div class="catalog-results__top">
         <div>
           <h2>Juguetes disponibles</h2>
+
           <p class="text-on-surface-variant">
-            Mostrando productos publicados recientemente.
+            @if (selectedCategoryId === 0) {
+              Mostrando productos publicados recientemente.
+            } @else {
+              Mostrando productos de la categoría {{ activeCategoryName }}.
+            }
           </p>
         </div>
 
@@ -68,11 +107,32 @@
         </select>
       </div>
 
-      <div class="products-grid">
-        @for (product of products; track product.id) {
-          <app-product-card [product]="product"></app-product-card>
-        }
-      </div>
+      @if (isLoading) {
+        <div class="catalog-state card-toybox">
+          <h3>Cargando juguetes...</h3>
+          <p class="text-on-surface-variant">
+            Estamos buscando productos disponibles.
+          </p>
+        </div>
+      } @else if (error) {
+        <div class="catalog-state card-toybox">
+          <h3>No se han podido cargar los productos</h3>
+          <p class="error-message">{{ error }}</p>
+        </div>
+      } @else if (!products.length) {
+        <div class="catalog-state card-toybox">
+          <h3>No hay productos para estos filtros</h3>
+          <p class="text-on-surface-variant">
+            Prueba a cambiar la categoría, la ubicación o limpiar los filtros.
+          </p>
+        </div>
+      } @else {
+        <div class="products-grid">
+          @for (product of products; track product.id) {
+            <app-product-card [product]="product"></app-product-card>
+          }
+        </div>
+      }
     </section>
   </section>
 </main>

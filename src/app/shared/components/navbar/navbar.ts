@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
+import { NotificationsService } from '../../../core/services/notifications.service';
 import { UserRole } from '../../enums/user-role.enum';
 
 @Component({
@@ -22,27 +23,31 @@ export class NavbarComponent implements OnInit {
   isAdministrator: boolean = false;
 
   unreadMessagesCount: number = 0;
-  unreadNotificationsCount: number = 0;
 
   constructor(
     private router: Router,
-    private authService: AuthService,
-    private chatService: ChatService
-  ) { }
+    private chatService: ChatService,
+    public authService: AuthService,
+    public notificationsService: NotificationsService
+  ) {
+    effect(() => {
+      const user = this.authService.currentUser();
+      this.isLoggedIn = !!user;
+      this.userAvatar = user?.profile_picture || '';
+      this.userRole = user?.role ?? null;
+      this.isModerator = this.userRole === UserRole.Moderator;
+      this.isAdministrator = this.userRole === UserRole.Administrator;
 
-  ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
-    const user = this.authService.currentUser();
-    this.userAvatar = user?.profile_picture || '';
-    this.userRole = user?.role ?? null;
-
-    this.isModerator = this.userRole === UserRole.Moderator;
-    this.isAdministrator = this.userRole === UserRole.Administrator;
-
-    if (this.isLoggedIn) {
-      this.loadUnreadMessages();
-    }
+      if (this.isLoggedIn) {
+        this.loadUnreadMessages();
+        this.notificationsService.refreshUnreadCount();
+      } else {
+        this.unreadMessagesCount = 0;
+      }
+    });
   }
+
+  ngOnInit(): void { }
 
   loadUnreadMessages(): void {
     this.chatService.getMyChats().subscribe({

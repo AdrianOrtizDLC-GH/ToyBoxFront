@@ -1,8 +1,19 @@
 <div class="pattern-bg"></div>
 
+<div class="breadcrumb-wrapper">
+  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+</div>
+
 <div class="container py-5 position-relative" style="z-index: 2;">
 
-  <app-breadcrumb></app-breadcrumb>
+  <app-toast
+    [visible]="toastVisible"
+    [type]="toastType"
+    [title]="toastTitle"
+    [message]="toastMessage"
+    (dismissed)="onToastDismissed()">
+  </app-toast>
+
   <section class="products-section">
     <h2 class="section-title">
       <span class="material-symbols-outlined">inventory_2</span>
@@ -15,50 +26,67 @@
       <app-empty-state
         title="Error cargando productos"
         [message]="productsError"
-        icon="error"
+        icon="⚠️"
       ></app-empty-state>
     } @else if (products.length === 0) {
       <app-empty-state
+        icon="📦"
         title="Sin productos en venta"
         message="Aún no has publicado ningún producto. ¡Comienza a vender!"
-        icon="shopping_bag"
-      ></app-empty-state>
+        [buttonText]="'Crear producto'"
+        [buttonLink]="'/product/create'">
+      </app-empty-state>
     } @else {
       <div class="product-list">
         @for (product of products; track product.id_items) {
           <div class="product-item">
-            <div class="product-img">
+            
+            <div class="col-image">
               @if (product.images && product.images.length > 0) {
-                <img [src]="product.images[0].photo_url" [alt]="product.title">
+                <img [src]="product.images[0].photo_url" [alt]="product.title" class="product-image">
               } @else {
                 <div class="placeholder-img">Sin imagen</div>
               }
             </div>
 
-            <div class="product-info">
-              <h5>{{ product.title }}</h5>
-              <p class="small text-muted mb-2">
+            <div class="col-basic-info">
+              <h5 class="product-title">{{ product.title }}</h5>
+              <p class="product-price">€{{ product.price | number:'1.2-2' }}</p>
+              <p class="product-location">
                 <span class="material-symbols-outlined">location_on</span>
                 {{ product.location }}
               </p>
-              <p class="price">€{{ product.price | number:'1.2-2' }}</p>
-              <div class="status-container">
+            </div>
+
+            <div class="col-meta-info">
+              @if (product.category) {
+                <p class="meta-item">
+                  <span class="category-badge">{{ product.category.name }}</span>
+                </p>
+              }
+              
+              <div class="meta-item">
                 <app-status-badge
-                  [status]="mapItemStatus(product.item_status)"
-                  [label]="product.conservation_status"
-                ></app-status-badge>
+                  [status]="product.item_status === 'sold' ? 'sold' : 'available'"
+                  [label]="getStatusLabel(product.conservation_status)">
+                </app-status-badge>
               </div>
-              <p class="dates">
-                Publicado: {{ product.publication_date | date:'dd/MM/yyyy' }}
+
+              <p class="product-date">
+                {{ product.publication_date | date:'dd/MM/yyyy' }}
               </p>
             </div>
 
-            <div class="product-actions">
+            <div class="col-actions">
               <button class="icon-btn" title="Ver" (click)="viewProduct(product.id_items)">
                 <span class="material-symbols-outlined">visibility</span>
               </button>
 
-              <button class="icon-btn" title="Marcar como vendido" (click)="markAsSold(product.id_items)">
+              <button 
+                class="icon-btn" 
+                title="Marcar como vendido" 
+                [disabled]="product.item_status === 'sold'"
+                (click)="markAsSold(product)">
                 <span class="material-symbols-outlined">check_circle</span>
               </button>
 
@@ -70,147 +98,83 @@
                 <span class="material-symbols-outlined">delete</span>
               </button>
             </div>
+
           </div>
         }
       </div>
-      <app-pagination
-        [currentPage]="currentPage"
-        [totalPages]="totalPages"
-        (pageChange)="onPageChange($event)"
-      ></app-pagination>
-    }
-  </section>
 
-  <section class="sales-section mt-5">
-    <h2 class="section-title">
-      <span class="material-symbols-outlined">receipt_long</span>
-      Mis transacciones de venta
-    </h2>
-
-    @if (isLoadingSales) {
-      <app-loading-spinner text="Cargando transacciones..."></app-loading-spinner>
-    } @else if (salesError) {
-      <app-empty-state
-        title="Error cargando ventas"
-        [message]="salesError"
-        icon="error"
-      ></app-empty-state>
-    } @else if (sales.length === 0) {
-      <app-empty-state
-        title="Sin ventas registradas"
-        message="Aún no has realizado ninguna venta. ¡Continúa vendiendo!"
-        icon="trending_up"
-      ></app-empty-state>
-    } @else {
-      <div class="sales-list">
-        @for (sale of sales; track sale.id_item_history) {
-          <div class="sale-card">
-            <div class="sale-header">
-              <h5 class="sale-title">
-                @if (sale.item) {
-                  {{ sale.item.title }}
-                } @else {
-                  Producto desconocido
-                }
-              </h5>
-              <app-status-badge
-                [status]="mapTradeStatus(sale.trade_status)"
-                label=""
-              ></app-status-badge>
-            </div>
-
-            <div class="sale-body">
-              <div class="sale-detail">
-                <span class="label">Comprador:</span>
-                <span class="value">
-                  @if (sale.buyer) {
-                    {{ sale.buyer.first_name }} {{ sale.buyer.last_name }}
-                  } @else {
-                    Desconocido
-                  }
-                </span>
-              </div>
-              <div class="sale-detail">
-                <span class="label">Precio final:</span>
-                <span class="value price">€{{ sale.final_price | number:'1.2-2' }}</span>
-              </div>
-              <div class="sale-detail">
-                <span class="label">Fecha:</span>
-                <span class="value">{{ sale.trade_date | date:'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    }
-  </section>
-
-  <section class="reviews-section mt-5">
-    <h2 class="section-title">
-      <span class="material-symbols-outlined">star_rate</span>
-      Reseñas que has recibido
-    </h2>
-
-    @if (isLoadingReviews) {
-      <app-loading-spinner text="Cargando reseñas..."></app-loading-spinner>
-    } @else if (reviewsError) {
-      <app-empty-state
-        title="Error cargando reseñas"
-        [message]="reviewsError"
-        icon="error"
-      ></app-empty-state>
-    } @else if (receivedReviews.length === 0) {
-      <app-empty-state
-        title="Sin reseñas"
-        message="Aún no has recibido reseñas. ¡Continúa vendiendo!"
-        icon="feedback"
-      ></app-empty-state>
-    } @else {
-      <div class="reviews-summary mb-4">
-        <div class="rating-card">
-          <div class="avg-rating">
-            <span class="rating-number">{{ getAverageRating() | number:'1.1-1' }}</span>
-            <app-star-rating
-              [rating]="getAverageRating()"
-              [size]="32"
-              [readonly]="true"
-            ></app-star-rating>
-            <span class="review-count">({{ receivedReviews.length }} {{ receivedReviews.length === 1 ? 'reseña' : 'reseñas' }})</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="reviews-list">
-        @for (review of receivedReviews; track review.id_reviews) {
-          <div class="review-card">
-            <div class="review-header">
-              <div class="reviewer-info">
-                @if (review.reviewer) {
-                  <h6>{{ review.reviewer.first_name }} {{ review.reviewer.last_name }}</h6>
-                } @else {
-                  <h6>Usuario anónimo</h6>
-                }
-                <p class="review-date">{{ review.review_date | date:'dd/MM/yyyy' }}</p>
-              </div>
-              <app-star-rating
-                [rating]="review.rating"
-                [size]="20"
-                [readonly]="true"
-              ></app-star-rating>
-            </div>
-
-            @if (review.comment) {
-              <div class="review-body">
-                <p class="review-comment">{{ review.comment }}</p>
-              </div>
-            }
-          </div>
-        }
+      <div class="mt-4">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          (pageChange)="onPageChange($event)">
+        </app-pagination>
       </div>
     }
   </section>
 
 </div>
+
+@if (showSaleModal && productToSell) {
+  <div class="sale-modal-backdrop" (click)="cancelSale()">
+    <div class="sale-modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Marcar como vendido</h3>
+
+      <div class="modal-content">
+        <div class="modal-product">
+          <strong>Producto:</strong>
+          <p>{{ productToSell.title }}</p>
+        </div>
+
+        <div class="form-group">
+          <label>Comprador (selecciona la conversación):</label>
+          @if (isLoadingConversations) {
+            <p class="text-muted">Cargando conversaciones...</p>
+          } @else if (conversations.length === 0) {
+            <p class="text-muted">No hay conversaciones disponibles</p>
+          } @else {
+            <select 
+              class="form-control"
+              [(ngModel)]="selectedConversation"
+              [compareWith]="(a, b) => a?.id_conversations === b?.id_conversations">
+              <option [ngValue]="null">-- Selecciona con quién se vende --</option>
+              @for (chat of conversations; track chat.id_conversations) {
+                <option [ngValue]="chat">
+                  {{ chat.buyer?.first_name }} {{ chat.buyer?.last_name }}
+                </option>
+              }
+            </select>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Precio final (€):</label>
+          <input 
+            type="number" 
+            class="form-control"
+            [(ngModel)]="newPrice"
+            step="0.01"
+            min="0">
+        </div>
+
+        <div class="modal-info">
+          <span class="material-symbols-outlined">info</span>
+          <span>Una vez vendido, podrás dejar una reseña en el apartado de Compras</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="cancelSale()">Cancelar</button>
+        <button 
+          class="btn-confirm" 
+          [disabled]="!selectedConversation || !newPrice"
+          (click)="confirmSale()">
+          Confirmar venta
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <app-modal-confirm
   [isOpen]="showDeleteModal"
@@ -220,5 +184,5 @@
   cancelText="Cancelar"
   variant="danger"
   (confirmed)="deleteProductConfirmed()"
-  (cancelled)="cancelDelete()"
-></app-modal-confirm>
+  (cancelled)="cancelDelete()">
+</app-modal-confirm>

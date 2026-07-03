@@ -1,5 +1,16 @@
+.breadcrumb-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
 .tb-breadcrumb {
-  padding: 12px 0;
+  padding: 12px 0;  
+}
+
+.tb-breadcrumb {
+  padding: 12px 15px;
 }
 
 .tb-breadcrumb__list {
@@ -111,7 +122,7 @@
 
 @media (max-width: 768px) {
   .tb-breadcrumb {
-    padding: 10px 0;
+    padding: 10px 12px;
   }
 
   .tb-breadcrumb__link,
@@ -137,7 +148,7 @@
 
 @media (max-width: 480px) {
   .tb-breadcrumb {
-    padding: 8px 0;
+    padding: 8px 10px;
   }
 
   .tb-breadcrumb__list {

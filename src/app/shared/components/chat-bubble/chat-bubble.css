@@ -13,6 +13,7 @@
 .tb-bubble--own {
   align-self: flex-end;
   flex-direction: row-reverse;
+  margin-left: auto;
 }
 
 .tb-bubble__content {
@@ -94,6 +95,10 @@
     margin-bottom: .5rem;
   }
 
+  .tb-bubble--own {
+    margin-left: auto;
+  }
+
   .tb-bubble__sender {
     font-size: .65rem;
     padding: 0 .4rem;
@@ -118,6 +123,10 @@
     max-width: 85%;
   }
 
+  .tb-bubble--own {
+    margin-left: auto;
+  }
+
   .tb-bubble__text {
     font-size: .88rem;
     padding: .55rem .8rem;
@@ -135,6 +144,10 @@
 @media (min-width: 992px) {
   .tb-bubble {
     max-width: 72%;
+  }
+
+  .tb-bubble--own {
+    margin-left: auto;
   }
 
   .tb-bubble__text {

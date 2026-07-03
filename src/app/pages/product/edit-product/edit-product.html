@@ -1,211 +1,384 @@
 <div class="pattern-bg"></div>
 
 <main class="edit-product-page relative-z-10">
-  <section class="edit-product-hero">
-    <div>
-      <span class="edit-product-hero__eyebrow">Editar publicación</span>
-
-      <h1>Actualiza la información de tu juguete</h1>
-
-      <p>
-        Revisa los datos del producto, mejora la descripción, cambia el precio
-        o actualiza las imágenes para que tu publicación siga siendo clara y atractiva.
-      </p>
-    </div>
-
-    <aside class="edit-product-status card-toybox">
-      <span class="material-symbols-outlined">inventory_2</span>
-
+@if (isLoading) {
+  <section class="edit-product-state card-toybox">
+    <h1>Cargando producto...</h1>
+    <p class="text-on-surface-variant">
+      Estamos preparando la información para editar.
+    </p>
+  </section>
+} @else if (errorMessage) {
+  <section class="edit-product-state card-toybox">
+    <h1>No hemos podido cargar el producto</h1>
+    <p class="error-message">
+      {{ errorMessage }}
+    </p>
+  </section>
+} @else {
+    <section class="edit-product-hero">
       <div>
-        <span class="edit-product-status__label">Estado actual</span>
-        <h2>{{ product.badge }}</h2>
+        <span class="edit-product-hero__eyebrow">Editar publicación</span>
+
+        <h1>Actualiza la información de tu juguete</h1>
+
         <p>
-          Esta publicación está visible en el catálogo. Los cambios se aplicarán
-          cuando guardes la edición.
+          Revisa los datos del producto, mejora la descripción, cambia el precio
+          o actualiza las imágenes para que tu publicación siga siendo clara y atractiva.
         </p>
       </div>
-    </aside>
-  </section>
 
-  <form class="edit-product-layout">
-    <section class="form-panel card-toybox">
-      <div class="panel-heading">
-        <span class="material-symbols-outlined">edit_square</span>
+      <aside class="edit-product-status card-toybox">
+        <span class="material-symbols-outlined">inventory_2</span>
 
         <div>
-          <h2>Datos del producto</h2>
-          <p class="text-on-surface-variant">
-            Modifica la información principal de tu juguete.
-          </p>
-        </div>
-      </div>
-
-      <div class="form-grid">
-        <div class="form-field form-field--full">
-          <label for="title">Título del producto</label>
-          <input
-            id="title"
-            class="form-control"
-            type="text"
-            [value]="product.title"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="price">Precio</label>
-          <input
-            id="price"
-            class="form-control"
-            type="number"
-            [value]="product.price"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="state">Estado</label>
-          <select id="state" class="form-control">
-            @for (state of productStates; track state) {
-              <option [selected]="state === product.status">{{ state }}</option>
-            }
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="province">Provincia</label>
-          <input
-            id="province"
-            class="form-control"
-            type="text"
-            [value]="product.province"
-          />
-        </div>
-
-        <div class="form-field">
-          <label for="city">Ciudad</label>
-          <input
-            id="city"
-            class="form-control"
-            type="text"
-            [value]="product.city"
-          />
-        </div>
-
-        <div class="form-field form-field--full">
-          <label for="description">Descripción</label>
-          <textarea
-            id="description"
-            class="form-control"
-            rows="5"
-          >{{ product.description }}</textarea>
-        </div>
-      </div>
-    </section>
-
-    <section class="form-panel card-toybox">
-      <div class="panel-heading">
-        <span class="material-symbols-outlined">category</span>
-
-        <div>
-          <h2>Categoría</h2>
-          <p class="text-on-surface-variant">
-            Puedes cambiar la categoría si el juguete encaja mejor en otra sección.
-          </p>
-        </div>
-      </div>
-
-      <div class="category-selector">
-        @for (category of categories; track category.id_categories) {
-          <button
-            class="category-option"
-            [class.category-option--active]="category.name === product.category"
-            type="button"
-          >
-            <img [src]="category.icon" [alt]="category.name" />
-            <span>{{ category.name }}</span>
-          </button>
-        }
-      </div>
-    </section>
-
-    <section class="form-panel card-toybox">
-      <div class="panel-heading">
-        <span class="material-symbols-outlined">photo_library</span>
-
-        <div>
-          <h2>Imágenes actuales</h2>
-          <p class="text-on-surface-variant">
-            Revisa las imágenes del producto o añade nuevas fotos.
-          </p>
-        </div>
-      </div>
-
-      <div class="current-image-box">
-        <img [src]="product.image" [alt]="product.title" />
-
-        <div>
-          <span>Imagen principal</span>
+          <span class="edit-product-status__label">Estado actual</span>
+          <h2>{{ currentBadge }}</h2>
           <p>
-            Esta imagen será la primera que verá el comprador en el catálogo.
+            Esta publicación está visible en el catálogo. Los cambios se aplicarán
+            cuando guardes la edición.
           </p>
         </div>
-      </div>
-
-      <div class="image-preview-grid">
-        <div class="image-preview">
-          <img [src]="product.image" [alt]="product.title" />
-          <span>Principal</span>
-        </div>
-
-        <div class="image-preview">
-          <img src="/assets/images/Iconos%20categorias/icono_construccion.svg" alt="Imagen secundaria" />
-        </div>
-
-        <div class="image-preview image-preview--empty">
-          <span class="material-symbols-outlined">add</span>
-        </div>
-      </div>
-
-      <button class="btn-toybox-secondary upload-button" type="button">
-        <span class="material-symbols-outlined">add_photo_alternate</span>
-        Añadir más imágenes
-      </button>
+      </aside>
     </section>
 
-    <aside class="save-panel card-toybox">
-      <h2>Guardar cambios</h2>
+    <form class="edit-product-layout" #editProductForm="ngForm" (ngSubmit)="saveChanges()">
+      <section class="form-panel card-toybox">
+        <div class="panel-heading">
+          <span class="material-symbols-outlined">edit_square</span>
 
-      <p>
-        Antes de guardar, revisa que todos los datos sigan siendo correctos.
-      </p>
+          <div>
+            <h2>Datos del producto</h2>
+            <p class="text-on-surface-variant">
+              Modifica la información principal de tu juguete.
+            </p>
+          </div>
+        </div>
 
-      <ul>
-        <li>
-          <span class="material-symbols-outlined">check_circle</span>
-          La publicación mantiene su historial.
-        </li>
-        <li>
-          <span class="material-symbols-outlined">check_circle</span>
-          Los compradores verán la información actualizada.
-        </li>
-        <li>
-          <span class="material-symbols-outlined">check_circle</span>
-          Puedes seguir editando más adelante.
-        </li>
-      </ul>
+        <div class="form-grid">
+          <div class="form-field form-field--full">
+            <label for="title">Título del producto</label>
 
-      <div class="save-actions">
-        <button class="btn-toybox-secondary" type="button">
-          Cancelar
+            <input
+              id="title"
+              name="title"
+              class="form-control"
+              type="text"
+              [(ngModel)]="formData.title"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="price">Precio</label>
+
+            <input
+              id="price"
+              name="price"
+              class="form-control"
+              type="number"
+              min="1"
+              [(ngModel)]="formData.price"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="state">Estado</label>
+
+            <select
+              id="state"
+              name="state"
+              class="form-control"
+              [(ngModel)]="formData.conservation_status"
+              required
+            >
+              <option value="">Selecciona estado</option>
+
+              @for (state of productStates; track state.value) {
+                <option [value]="state.value">{{ state.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="province">Provincia</label>
+
+            <input
+              id="province"
+              name="province"
+              class="form-control"
+              type="text"
+              [(ngModel)]="formData.province"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="city">Ciudad</label>
+
+            <input
+              id="city"
+              name="city"
+              class="form-control"
+              type="text"
+              [(ngModel)]="formData.city"
+              required
+            />
+          </div>
+
+          <div class="form-field form-field--full">
+            <label for="description">Descripción</label>
+
+            <textarea
+              id="description"
+              name="description"
+              class="form-control"
+              rows="5"
+              [(ngModel)]="formData.description"
+              required
+            ></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="form-panel card-toybox">
+        <div class="panel-heading">
+          <span class="material-symbols-outlined">category</span>
+
+          <div>
+            <h2>Categoría</h2>
+            <p class="text-on-surface-variant">
+              Puedes cambiar la categoría si el juguete encaja mejor en otra sección.
+            </p>
+          </div>
+        </div>
+
+        <div class="selected-category-info">
+          Categoría seleccionada:
+          <strong>{{ selectedCategoryName }}</strong>
+        </div>
+
+        <div class="category-selector">
+          @for (category of categories; track category.id_categories) {
+            <button
+              class="category-option"
+              [class.category-option--active]="formData.fk_categories_id === category.id_categories"
+              type="button"
+              (click)="selectCategory(category.id_categories)"
+            >
+              <span class="category-option__icon">
+                <img [src]="category.icon" [alt]="category.name" />
+              </span>
+
+              <span class="category-option__name">
+                {{ category.name }}
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+
+      <section class="form-panel card-toybox">
+        <div class="panel-heading">
+          <span class="material-symbols-outlined">photo_library</span>
+
+          <div>
+            <h2>Imágenes del producto</h2>
+            <p class="text-on-surface-variant">
+              Revisa las imágenes actuales o añade nuevas fotos.
+            </p>
+          </div>
+        </div>
+
+        @if (currentImages.length) {
+          <div class="current-image-box">
+            <img [src]="currentImages[0].url" [alt]="formData.title" />
+
+            <div>
+              <span>Imagen principal</span>
+              <p>
+                Esta imagen será la primera que verá el comprador en el catálogo.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="current-image-box current-image-box--empty">
+            <span class="material-symbols-outlined">image_not_supported</span>
+
+            <div>
+              <span>Sin imágenes actuales</span>
+              <p>
+                Añade nuevas imágenes para mejorar la publicación.
+              </p>
+            </div>
+          </div>
+        }
+
+        <input
+          id="editProductImages"
+          class="hidden-file-input"
+          type="file"
+          accept="image/*"
+          multiple
+          (change)="onImagesSelected($event)"
+        />
+
+        <label class="upload-box" for="editProductImages">
+          <span class="material-symbols-outlined">add_photo_alternate</span>
+
+          <h3>Añadir más imágenes</h3>
+
+          <p>Haz clic para seleccionar nuevas fotos desde tu ordenador.</p>
+
+          <span class="btn-toybox-secondary upload-box__button">
+            Seleccionar imágenes
+          </span>
+        </label>
+
+        <div class="image-preview-grid">
+          @for (image of currentImages; track image.url; let index = $index) {
+            <div class="image-preview">
+              <img [src]="image.url" [alt]="formData.title" />
+
+              @if (index === 0) {
+                <span>Principal</span>
+              }
+            </div>
+          }
+
+          @for (image of selectedImages; track image.preview; let index = $index) {
+            <div class="image-preview">
+              <img [src]="image.preview" alt="Nueva imagen del producto" />
+
+              <span>Nueva</span>
+
+              <button
+                class="image-preview__remove"
+                type="button"
+                aria-label="Eliminar imagen"
+                (click)="removeNewImage(index)"
+              >
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+          }
+
+          @if (currentImages.length + selectedImages.length < 5) {
+            <label class="image-preview image-preview--empty" for="editProductImages">
+              <span class="material-symbols-outlined">add</span>
+            </label>
+          }
+        </div>
+      </section>
+
+      <aside class="save-panel card-toybox">
+        <h2>Guardar cambios</h2>
+
+        <p>
+          Antes de guardar, revisa que todos los datos sigan siendo correctos.
+        </p>
+
+        <ul>
+          <li>
+            <span class="material-symbols-outlined">check_circle</span>
+            La publicación mantiene su historial.
+          </li>
+
+          <li>
+            <span class="material-symbols-outlined">check_circle</span>
+            Los compradores verán la información actualizada.
+          </li>
+
+          <li>
+            <span class="material-symbols-outlined">check_circle</span>
+            Puedes seguir editando más adelante.
+          </li>
+        </ul>
+
+        @if (errorMessage) {
+          <p class="error-message">
+            {{ errorMessage }}
+          </p>
+        }
+
+        @if (successMessage) {
+          <p class="success-message">
+            {{ successMessage }}
+          </p>
+        }
+
+        <div class="save-actions">
+          <button
+            class="btn-toybox-secondary"
+            type="button"
+            [disabled]="isSubmitting || isWithdrawing"
+            (click)="cancelEdit()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="btn-toybox-primary"
+            type="submit"
+            [disabled]="isSubmitting || isWithdrawing"
+          >
+            {{ isSubmitting ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+
+        <button
+          class="danger-link"
+          type="button"
+          [disabled]="isSubmitting || isWithdrawing"
+          (click)="openWithdrawModal()"
+        >
+          Retirar publicación
         </button>
+      </aside>
+    </form>
+  }
 
-        <button class="btn-toybox-primary" type="button">
-          Guardar cambios
-        </button>
-      </div>
+  @if (showWithdrawModal) {
+    <div class="withdraw-modal-backdrop" role="presentation" (click)="closeWithdrawModal()">
+      <section
+        class="withdraw-modal card-toybox"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="withdraw-title"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="withdraw-modal__icon">
+          <span class="material-symbols-outlined">warning</span>
+        </div>
 
-      <button class="danger-link" type="button">
-        Retirar publicación
-      </button>
-    </aside>
-  </form>
+        <h2 id="withdraw-title">¿Retirar publicación?</h2>
+
+        <p>
+          Esta acción retirará el producto del catálogo. Si continúas, otros usuarios
+          dejarán de verlo como disponible.
+        </p>
+
+        <div class="withdraw-modal__actions">
+          <button
+            class="btn-toybox-secondary"
+            type="button"
+            [disabled]="isWithdrawing"
+            (click)="closeWithdrawModal()"
+          >
+            No, cancelar
+          </button>
+
+          <button
+            class="btn-toybox-primary"
+            type="button"
+            [disabled]="isWithdrawing"
+            (click)="confirmWithdraw()"
+          >
+            {{ isWithdrawing ? 'Retirando...' : 'Sí, retirar' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
 </main>

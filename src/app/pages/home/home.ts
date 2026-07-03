@@ -157,7 +157,7 @@ export class Home implements OnInit {
     this.productsService.getAll(params).subscribe({
       next: (res) => {
         this.relatedProducts = res.items.map(this.toLocalProduct);
-        this.latestProducts = this.relatedProducts.slice(0, 4);
+        this.latestProducts = this.relatedProducts.slice(0, 6);
         this.featuredProduct = this.latestProducts[0] ?? null;
         this.hasNextPage = this.currentPage < res.totalPages;
         this.cdr.markForCheck();

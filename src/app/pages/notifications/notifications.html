@@ -1,50 +1,93 @@
-<div class="notifications-wrapper">
-    <div class="pattern-bg"></div>
+<div class="pattern-bg"></div>
 
-    <div class="relative-z-10">
-        <div class="notifications-page">
-            <div class="header">
-                <h1>
-                    <span class="material-symbols-outlined">
-                        notifications
-                    </span>
-                    Notificaciones
-                </h1>
+<div class="notifications-wrapper relative-z-10 container py-5">
+  <app-breadcrumb></app-breadcrumb>
 
-                <div class="counter">
-                    {{ unreadCount }} sin leer
-                </div>
-            </div>
-
-            @for (notification of notifications; track notification.id) {
-            <div
-                class="notification-card"
-                [class.unread]="!notification.read"
-                (click)="markAsRead(notification)">
-
-                <div class="icon">
-                    <span class="material-symbols-outlined">
-                        {{ getIcon(notification.type) }}
-                    </span>
-                </div>
-
-                <div class="content">
-                    <h3>{{ notification.title }}</h3>
-                    <p>{{ notification.message }}</p>
-                    <small>{{ notification.date }}</small>
-                </div>
-
-                @if (!notification.read) {
-                <span class="status unread-status">
-                    No leído
-                </span>
-                } @else {
-                <span class="status read-status">
-                    Leído
-                </span>
-                }
-            </div>
-            }
-        </div>
+  <header class="notifications-header">
+    <div>
+      <h1 class="notifications-title">
+        <span class="material-symbols-outlined">notifications</span>
+        Notificaciones
+      </h1>
+      <p class="notifications-subtitle">
+        Mantente al día con la actividad de tu cuenta en ToyBox.
+      </p>
     </div>
+
+    <div class="notifications-header-actions">
+      <span class="notifications-count">
+        {{ unreadCount }} sin leer
+      </span>
+
+      @if (unreadCount > 0) {
+        <button class="mark-all-btn" type="button" (click)="markAllAsRead()">
+          Marcar todas como leídas
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (backendError) {
+    <div class="error-message text-center mb-4">
+      {{ backendError }}
+    </div>
+  }
+
+  @if (isLoading) {
+    <div class="loading-state text-center py-5">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Cargando notificaciones...</span>
+      </div>
+      <p class="text-on-surface-variant mt-3">Cargando tus notificaciones...</p>
+    </div>
+  } @else {
+    @if (notifications.length > 0) {
+      <div class="notifications-list">
+        @for (notification of paginatedNotifications; track notification.id_notifications) {
+          <div
+            class="notification-card"
+            [class.unread]="!notification.read"
+            (click)="markAsRead(notification)"
+          >
+            <div class="icon">
+              <span class="material-symbols-outlined">
+                {{ getIcon(notification.type) }}
+              </span>
+            </div>
+
+            <div class="content">
+              <h3>
+                {{ notification.title || 'Notificación' }}
+              </h3>
+              <p>{{ notification.message }}</p>
+              <small>{{ notification.date }}</small>
+            </div>
+
+            @if (!notification.read) {
+              <span class="status unread-status">
+                No leído
+              </span>
+            } @else {
+              <span class="status read-status">
+                Leído
+              </span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="mt-4">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    } @else {
+      <div class="empty-state text-center mt-5">
+        <span class="material-symbols-outlined empty-icon">notifications_off</span>
+        <p>Aún no tienes notificaciones.</p>
+      </div>
+    }
+  }
 </div>

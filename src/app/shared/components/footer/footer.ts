@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,13 +10,13 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './footer.html',
   styleUrls: ['./footer.css']
 })
-export class FooterComponent implements OnInit {
+export class FooterComponent {
   currentYear: number = new Date().getFullYear();
   isLoggedIn: boolean = false;
 
-  constructor(private authService: AuthService) { }
-
-  ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
+  constructor(private authService: AuthService) {
+    effect(() => {
+      this.isLoggedIn = !!this.authService.currentUser();
+    });
   }
 }

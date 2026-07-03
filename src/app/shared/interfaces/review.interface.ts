@@ -1,3 +1,4 @@
+import { ItemPhoto } from './item.interface';
 import { DateString, UserSummary } from './user.interface';
 
 export interface Review {
@@ -12,8 +13,15 @@ export interface Review {
   // optionals
   reviewer?: UserSummary;
   reviewed?: UserSummary;
+  item?: ProductSummary;
 }
 
+export interface ProductSummary {
+  id_items: number;
+  title: string;
+  price: number;
+  images?: ItemPhoto[];
+}
 export interface CreateReviewRequest {
   rating: number;
   comment?: string | null;

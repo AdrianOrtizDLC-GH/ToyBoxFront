@@ -5,6 +5,19 @@
     <span class="product-card__badge">
       {{ product.badge }}
     </span>
+
+    <button
+      class="product-card__favorite"
+      [class.product-card__favorite--active]="isFavorite"
+      [disabled]="isUpdatingFavorite"
+      type="button"
+      [attr.aria-label]="isFavorite ? 'Quitar de favoritos' : 'Añadir a favoritos'"
+      (click)="onToggleFavorite($event)"
+    >
+      <span class="material-symbols-outlined">
+        {{ isFavorite ? 'favorite' : 'favorite_border' }}
+      </span>
+    </button>
   </div>
 
   <div class="product-card__content">

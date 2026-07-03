@@ -14,6 +14,7 @@ export class StarRatingComponent {
   @Input() color: string = '#d84565';
   @Input() readonly: boolean = true;
   @Input() reviewCount: number = 0;
+  @Input() showReviewCount: boolean = false; 
   @Output() ratingChange = new EventEmitter<number>();
 
   stars = [1, 2, 3, 4, 5];

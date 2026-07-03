@@ -1,8 +1,12 @@
+
 <div class="pattern-bg"></div>
+
+<div class="breadcrumb-wrapper">
+  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+</div>
 
 <div class="container py-5 position-relative" style="z-index: 2;">
 
-  <app-breadcrumb></app-breadcrumb>
   <div class="tabs-wrapper mb-4">
     <button
       class="tab-btn"
@@ -21,6 +25,7 @@
     </button>
   </div>
 
+
   <h2 class="page-title mb-3">
     @if (activeTab === 'purchases') {
       Reseñas que yo hice
@@ -30,11 +35,10 @@
   </h2>
 
   @if (isLoading) {
-    <div class="loading-container">
-      <div class="spinner"></div>
-      <p class="loading-text">Cargando reseñas...</p>
-    </div>
-  } @else if (errorMessage) {
+    <app-loading-spinner text="Cargando reseñas..."></app-loading-spinner>
+  } 
+  
+  @else if (errorMessage) {
     <div class="error-alert">
       <span class="material-symbols-outlined">error</span>
       <div class="error-content">
@@ -42,59 +46,56 @@
         <p class="error-message">{{ errorMessage }}</p>
       </div>
     </div>
-  } @else {
+  } 
+  
+  @else {
     @if (paginatedReviews.length === 0) {
-      <div class="empty-state">
-        <span class="material-symbols-outlined">rate_review</span>
-        <p class="empty-title">
-          @if (activeTab === 'purchases') {
-            Aún no has hecho reseñas
-          } @else {
-            Aún no tienes reseñas de tus productos
-          }
-        </p>
-        <p class="empty-description">
-          @if (activeTab === 'purchases') {
-            Compra productos y déjanos tu opinión
-          } @else {
-            Cuando otros usuarios compren tus productos, recibirás reseñas aquí
-          }
-        </p>
-      </div>
-    } @else {
-      <div class="review-list">
+      <app-empty-state
+        icon="⭐"
+        [title]="emptyStateTitle"
+        [message]="emptyStateMessage"
+        [buttonText]="activeTab === 'purchases' ? 'Explorar catálogo' : ''"
+        [buttonLink]="'/catalog'">
+      </app-empty-state>
+    } 
+    
+    @else {
+      <div class="reviews-grid">
         @for (review of paginatedReviews; track review.id_reviews) {
-          <div class="review-item shadow-sm">
-
-            @if (review.reviewer?.profile_picture || review.reviewed?.profile_picture) {
-              <img
-                class="review-img"
-                [src]="activeTab === 'purchases' ? review.reviewed?.profile_picture : review.reviewer?.profile_picture"
-                alt="Perfil usuario" />
-            } @else {
-              <div class="review-img-placeholder">
-                <span class="material-symbols-outlined">account_circle</span>
-              </div>
-            }
-
-            <div class="review-info">
-              <h5>
-                @if (activeTab === 'purchases') {
-                  {{ review.reviewed?.first_name }} {{ review.reviewed?.last_name }}
-                } @else {
-                  {{ review.reviewer?.first_name }} {{ review.reviewer?.last_name }}
-                }
-              </h5>
-              <p class="small text-muted">{{ review.review_date | date:'dd/MM/yyyy' }}</p>
-
-              <div class="rating-row">
-                <app-star-rating [rating]="review.rating"></app-star-rating>
-                @if (review.comment) {
-                  <p class="review-comment">{{ review.comment }}</p>
-                }
-              </div>
+          <div class="review-card">
+            <div class="review-card-img-container">
+              @if (getProductImage(review)) {
+                <img 
+                  class="review-card-img" 
+                  [src]="getProductImage(review)" 
+                  [alt]="review.item?.title || 'Producto'" />
+              } @else {
+                <div class="review-card-img-placeholder">
+                  <span class="material-symbols-outlined">image</span>
+                </div>
+              }
             </div>
 
+            <div class="review-card-content">
+              @if (review.item) {
+                <h5 class="review-card-title">{{ review.item.title }}</h5>
+                @if (review.item.price) {
+                  <p class="review-card-price">€{{ review.item.price | number:'1.2-2' }}</p>
+                }
+              }
+
+              <p class="review-card-user">{{ getReviewerName(review) }}</p>
+
+              <p class="review-card-date">{{ review.review_date | date:'dd/MM/yyyy' }}</p>
+
+              <div class="review-card-rating">
+                <app-star-rating [rating]="review.rating"></app-star-rating>
+              </div>
+
+              @if (review.comment) {
+                <p class="review-card-comment">{{ review.comment }}</p>
+              }
+            </div>
           </div>
         }
       </div>

@@ -15,24 +15,6 @@
   flex-shrink: 0;
 }
 
-.avatar--small {
-  width: 32px;
-  height: 32px;
-  font-size: 11px;
-}
-
-.avatar--medium {
-  width: 48px;
-  height: 48px;
-  font-size: 17px;
-}
-
-.avatar--large {
-  width: 80px;
-  height: 80px;
-  font-size: 28px;
-}
-
 .avatar--clickable {
   cursor: pointer;
 }
@@ -133,6 +115,7 @@
   width: 90%;
   box-shadow: var(--shadow-elevation-5);
   animation: slideUp 0.3s ease;
+  will-change: transform;  
 }
 
 .modal-close {
@@ -157,10 +140,15 @@
 
 .modal-image {
   width: 100%;
-  max-height: 400px;
+  max-height: 500px;
   object-fit: contain;
   border-radius: var(--radius-md);
   margin-bottom: 16px;
+  image-rendering: crisp-edges;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  will-change: transform;  
+  transform: translateZ(0); 
 }
 
 .modal-name {
@@ -187,7 +175,6 @@
   }
   to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 

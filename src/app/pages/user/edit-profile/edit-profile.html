@@ -1,6 +1,10 @@
+<div class="pattern-bg"></div>
+
+<div class="breadcrumb-wrapper">
+  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+</div>
 
 <div class="edit-profile-container">
-  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
 
   @if (isLoading) {
     <div class="loading-spinner">
@@ -14,11 +18,16 @@
     <div class="edit-profile-content">
       <h1 class="page-title">Editar Perfil</h1>
 
-      @if (successMessage) {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          {{ successMessage }}
-        </div>
-      }
+      <app-modal-confirm
+        [isOpen]="showSuccessModal"
+        title="¡Perfil actualizado! ✅"
+        message="Tus cambios se han guardado correctamente."
+        confirmText="Ir a mi perfil"
+        cancelText="Cerrar"
+        variant="info"
+        (confirmed)="goToProfileNow()"
+        (cancelled)="goToProfileNow()">
+      </app-modal-confirm>
 
       @if (errorMessage) {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -31,35 +40,19 @@
           <h2 class="section-title">Foto de Perfil</h2>
 
           <div class="profile-picture-section">
-            <div class="profile-picture-preview">
-              @if (profilePicturePreview) {
-                <img
-                  [src]="profilePicturePreview"
-                  alt="Vista previa de foto de perfil"
-                  class="preview-image"
-                />
-              } @else {
-                <div class="no-image-placeholder">
-                  <i class="fas fa-user-circle"></i>
-                  <p>Sin foto</p>
-                </div>
-              }
-            </div>
+            <app-user-avatar
+              [src]="profilePicturePreview"
+              [name]="avatarDisplayName"
+              size="extra-large"
+              [editable]="true"
+              (imageChanged)="onAvatarFileChanged($event)"
+              (imageDeleted)="onAvatarImageDeleted()"
+            ></app-user-avatar>
 
-            <div class="picture-upload">
-              <label for="profile_picture" class="small-label">Cargar Foto</label>
-              <input
-                type="file"
-                id="profile_picture"
-                class="form-control"
-                accept="image/*"
-                (change)="onFileSelected($event)"
-                [disabled]="isSaving"
-              />
-              <small class="form-text text-muted">
-                Máximo 5MB. Formatos: JPG, PNG, GIF
-              </small>
-            </div>
+            <p class="form-text text-muted">
+              Pasa el ratón por encima para cambiar o eliminar la foto. Máximo 5MB.
+              Formatos: JPG, PNG, GIF, WEBP.
+            </p>
           </div>
         </div>
 
@@ -210,15 +203,18 @@
 
             <div class="form-group">
               <label for="user_zipcode" class="small-label">Código Postal</label>
-              <input
-                type="text"
+              <select
                 id="user_zipcode"
                 class="form-control"
                 [class.is-invalid]="editProfileForm.get('user_zipcode')?.invalid && editProfileForm.get('user_zipcode')?.touched"
                 formControlName="user_zipcode"
-                placeholder="28001"
-                [disabled]="isSaving"
-              />
+                [disabled]="isSaving || codigosPostales.length === 0"
+              >
+                <option value="">Selecciona un código</option>
+                @for (codigo of codigosPostales; track codigo) {
+                  <option [value]="codigo">{{ codigo }}</option>
+                }
+              </select>
               @if (getErrorMessage('user_zipcode')) {
                 <div class="invalid-feedback d-block">
                   {{ getErrorMessage('user_zipcode') }}
@@ -255,10 +251,10 @@
               (click)="togglePasswordField()"
             >
               @if (!showPasswordField) {
-                <i class="fas fa-plus"></i>
+                <span class="material-symbols-outlined">add</span>
                 Cambiar contraseña
               } @else {
-                <i class="fas fa-minus"></i>
+                <span class="material-symbols-outlined">remove</span>
                 Cancelar cambio
               }
             </button>
@@ -268,15 +264,22 @@
             <div class="form-row">
               <div class="form-group">
                 <label for="password" class="small-label">Nueva Contraseña</label>
-                <input
-                  type="password"
-                  id="password"
-                  class="form-control"
-                  [class.is-invalid]="editProfileForm.get('password')?.invalid && editProfileForm.get('password')?.touched"
-                  formControlName="password"
-                  placeholder="••••••••"
-                  [disabled]="isSaving"
-                />
+                <div class="input-group-wrapper">
+                  <input
+                    [type]="showPassword ? 'text' : 'password'"
+                    id="password"
+                    class="form-control"
+                    [class.is-invalid]="editProfileForm.get('password')?.invalid && editProfileForm.get('password')?.touched"
+                    formControlName="password"
+                    placeholder="••••••••"
+                    [disabled]="isSaving"
+                  />
+                  <button class="password-toggle" type="button" (click)="togglePasswordVisibility()">
+                    <span class="material-symbols-outlined">
+                      {{ showPassword ? 'visibility_off' : 'visibility' }}
+                    </span>
+                  </button>
+                </div>
                 @if (getErrorMessage('password')) {
                   <div class="invalid-feedback d-block">
                     {{ getErrorMessage('password') }}
@@ -291,75 +294,18 @@
           <button
             type="submit"
             class="btn btn-primary"
-            [disabled]="isSaving || editProfileForm.invalid"
+            [disabled]="isSaving || editProfileForm.invalid || !hasChanges"
           >
             @if (isSaving) {
               <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
               Guardando...
             } @else {
-              <i class="fas fa-save"></i>
+              <span class="material-symbols-outlined">save</span>
               Guardar Cambios
             }
-          </button>
-
-          <button
-            type="button"
-            class="btn btn-danger"
-            (click)="openDeleteModal()"
-            [disabled]="isSaving"
-          >
-            <i class="fas fa-trash-alt"></i>
-            Eliminar Cuenta
           </button>
         </div>
       </form>
     </div>
   }
 </div>
-
-@if (showDeleteModal) {
-  <div class="modal-backdrop" (click)="closeDeleteModal()"></div>
-  <div class="modal-dialog modal-confirm">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Eliminar Cuenta</h5>
-        <button
-          type="button"
-          class="btn-close"
-          (click)="closeDeleteModal()"
-          aria-label="Cerrar"
-        ></button>
-      </div>
-      <div class="modal-body">
-        <p class="text-danger">
-          <strong>Advertencia:</strong> Esta acción es irreversible. Se borrarán:
-        </p>
-        <ul>
-          <li>Tu perfil y datos personales</li>
-          <li>Todos tus anuncios</li>
-          <li>Todas tus valoraciones y reseñas</li>
-          <li>Todos tus mensajes</li>
-        </ul>
-        <p class="text-danger">
-          <strong>¿Estás seguro?</strong>
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="closeDeleteModal()"
-        >
-          Cancelar
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger"
-          (click)="onDeleteAccount()"
-        >
-          Eliminar Definitivamente
-        </button>
-      </div>
-    </div>
-  </div>
-}

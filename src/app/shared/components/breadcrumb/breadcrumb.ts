@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil, filter } from 'rxjs/operators';
+import { AuthService } from '../../../core/services/auth.service';
 
 export interface BreadcrumbItem {
   label: string;
@@ -24,31 +25,33 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   private routeLabels: { [key: string]: { label: string; icon?: string } } = {
-    'catalog': { label: 'Catálogo', icon: 'shopping_bag' },
-    'product': { label: 'Detalles del Producto', icon: 'info' },
+  'catalog': { label: 'Catálogo', icon: 'shopping_bag' },
+  'product': { label: 'Detalles del Producto', icon: 'info' },
 
-    'profile': { label: 'Perfil', icon: 'person' },
-    'edit-profile': { label: 'Editar Perfil', icon: 'edit' },
-    'my-products': { label: 'Mis Productos', icon: 'store' },
-    'my-purchases': { label: 'Mis Compras', icon: 'shopping_cart' },
-    'favorites': { label: 'Favoritos', icon: 'favorite' },
+  'profile': { label: 'Perfil', icon: 'person' },
+  'edit-profile': { label: 'Editar Perfil', icon: 'edit' },
+  'my-products': { label: 'Mis Productos', icon: 'store' },
+  'my-purchases': { label: 'Mis Compras', icon: 'shopping_cart' },
+  'favorites': { label: 'Favoritos', icon: 'favorite' },
+  'notifications': { label: 'Notificaciones', icon: 'notifications' },
 
-    'create': { label: 'Crear Producto', icon: 'add_circle' },
-    'edit': { label: 'Editar Producto', icon: 'edit' },
+  'create': { label: 'Crear Producto', icon: 'add_circle' },
+  'edit': { label: 'Editar Producto', icon: 'edit' },
 
-    'chat': { label: 'Mensajes', icon: 'mail' },
+  'chat': { label: 'Mensajes', icon: 'mail' },
 
-    'reports': { label: 'Reportes', icon: 'report' },
-    'report': { label: 'Detalle del Reporte', icon: 'report_problem' },
+  'reports': { label: 'Reportes', icon: 'report' },
+  'report': { label: 'Detalle del Reporte', icon: 'report_problem' },
 
-    'dashboard': { label: 'Dashboard', icon: 'dashboard' },
-    'users': { label: 'Gestión de Usuarios', icon: 'people' },
-    'categories': { label: 'Gestión de Categorías', icon: 'category' }
+  'dashboard': { label: 'Dashboard', icon: 'dashboard' },
+  'users': { label: 'Gestión de Usuarios', icon: 'people' },
+  'categories': { label: 'Gestión de Categorías', icon: 'category' }
   };
 
   constructor(
     private router: Router,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -74,9 +77,13 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   private generateBreadcrumbs(): void {
     const breadcrumbs: BreadcrumbItem[] = [];
 
+    // ← AGREGAR ESTO:
+    const isLoggedIn = this.authService.isLoggedIn();
+    const homeRoute = isLoggedIn ? '/catalog' : '/home';
+
     breadcrumbs.push({
       label: 'Inicio',
-      route: ['/'],
+      route: homeRoute,  // ← Dinámico según login
       icon: 'home'
     });
 

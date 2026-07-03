@@ -6,177 +6,78 @@ import { ProductCardComponent } from '../../../shared/components/product-card/pr
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { FavoritesService } from '../../../core/services/favorites.service';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
-
-// Interfaz local para product-card
-interface DemoProduct {
-  id: number;
-  title: string;
-  category: string;
-  price: number;
-  location: string;
-  status: string;
-  image: string;
-  badge: string;
-}
+import { AuthService } from '../../../core/services/auth.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state';
+import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
+import { ToastComponent } from '../../../shared/components/toast/toast';
+import { Item } from '../../../shared/interfaces/item.interface';
 
 @Component({
   selector: 'app-favorites',
   standalone: true,
-  imports: [CommonModule,RouterModule,ProductCardComponent,PaginationComponent, BreadcrumbComponent],
+  imports: [CommonModule,RouterModule,ProductCardComponent,PaginationComponent, BreadcrumbComponent, LoadingSpinnerComponent, EmptyStateComponent, ModalConfirmComponent, ToastComponent],
   templateUrl: './favorites.html',
   styleUrl: './favorites.css',
 })
 export class FavoritesComponent implements OnInit {
   private favoritesService = inject(FavoritesService);
   private cdr = inject(ChangeDetectorRef);
+  private authService = inject(AuthService); 
 
-  favorites: DemoProduct[] = [];
+  favorites: Item[] = []; 
   currentPage = 1;
   pageSize = 8;
   totalPages = 1;
+  breadcrumbItems: any[] = []; 
+  modalConfirmOpen = false;
 
-  showConfirmModal = false;
-  selectedFavoriteId: number | null = null;
+  productToDeleteId: number | null = null;
 
   isLoading = false;
-  backendError = '';
-  backendSuccess = '';
+  toastVisible = false;
+  toastType: 'success' | 'error' | 'warning' | 'info' = 'success';
+  toastTitle = '';
+  toastMessage = '';
+
 
   ngOnInit(): void {
-    // this.loadFavorites();
-      // Datos de prueba mientras el backend no esté listo
-  this.favorites = [
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },{
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },{
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    },
-    {
-      id: 1,
-      title: 'LEGO Star Wars',
-      category: 'Construcción',
-      price: 25,
-      location: 'Madrid',
-      status: 'Muy buen estado',
-      image: '/assets/images/placeholder.jpg',
-      badge: 'Guardado'
-    }
+    this.initializeBreadcrumbs();
+    this.loadFavorites();
+  }
 
-  ];
-  this.isLoading = false; // Asegúrate de que no esté en true
-  this.updatePagination();
+  private initializeBreadcrumbs(): void {
+    const isLoggedIn = this.authService.isLoggedIn();
+    const homeRoute = isLoggedIn ? '/catalog' : '/home';
+
+    this.breadcrumbItems = [
+      { label: 'Inicio', route: homeRoute, icon: 'home' },
+      { label: 'Mis Favoritos', icon: 'favorite' }
+    ];
   }
 
   loadFavorites(): void {
     this.isLoading = true;
-    this.backendError = '';
 
     this.favoritesService.getMyFavorites().subscribe({
       next: (response: any) => {
-        // Mapear respuesta del backend a DemoProduct para product-card
+
         this.favorites = response.map((item: any) => ({
-          id: item.id_items,
+          id_items: item.id_items,
           title: item.title,
-          category: item.category || 'Sin categoría',
           price: item.price,
-          location: item.location,
-          status: this.getStatusText(item.conservation_status),
-          image: item.main_photo || '/assets/images/Iconos%20categorias/icono_educativo.svg',
-          badge: 'Guardado'
-        })) as DemoProduct[];
+          location: item.location || 'Sin especificar',
+          conservation_status: item.conservation_status || 'published',
+          publication_date: item.added_at || new Date().toISOString(),
+          
+          images: item.images || [],
+          
+          description: null,
+          item_status: 'available',
+          fk_seller_id: 0,
+          fk_categories_id: 0,
+          item_update: null
+        } as Item));
 
         this.updatePagination();
         this.isLoading = false;
@@ -191,32 +92,45 @@ export class FavoritesComponent implements OnInit {
     });
   }
 
-  private getStatusText(conservationStatus: string): string {
+  public getStatusText(conservationStatus: string): string {
+
     const statusMap: { [key: string]: string } = {
-      'excellent': 'Excelente estado',
-      'very_good': 'Muy buen estado',
-      'good': 'Buen estado',
-      'fair': 'Estado aceptable',
-      'poor': 'Necesita reparación'
+      'draft':        'Borrador',
+      'published':    'Publicado',
+      'under_review': 'En revisión',
+      'removed':      'Retirado',
+      'sold':         'Vendido',
+      'reserved':     'Reservado'
     };
-    return statusMap[conservationStatus] || conservationStatus || 'Buen estado';
+    return statusMap[conservationStatus] || conservationStatus || 'Publicado';
   }
 
   private handleError(err: HttpErrorResponse, defaultMessage: string): void {
     if (err.status === 401) {
-      this.backendError = 'Debes iniciar sesión para ver tus favoritos';
+      this.showToast('error', 'Error', 'Debes iniciar sesión para ver tus favoritos');
     } else if (err.status === 0) {
-      this.backendError = 'Error de conexión. Verifica que el servidor esté corriendo';
+      this.showToast('error', 'Error', 'Error de conexión. Verifica que el servidor esté corriendo');
     } else {
-      this.backendError = err.error?.error || defaultMessage;
+      this.showToast('error', 'Error', err.error?.error || defaultMessage);
     }
+  }
+
+  private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
+    this.toastType = type;
+    this.toastTitle = title;
+    this.toastMessage = message;
+    this.toastVisible = true;
+
+    setTimeout(() => {
+      this.toastVisible = false;
+    }, 3000);
   }
 
   get totalFavorites(): number {
     return this.favorites.length;
   }
 
-  get paginatedFavorites(): DemoProduct[] {
+  get paginatedFavorites(): Item[] { 
     const start = (this.currentPage - 1) * this.pageSize;
     return this.favorites.slice(start, start + this.pageSize);
   }
@@ -226,31 +140,27 @@ export class FavoritesComponent implements OnInit {
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
   }
 
-  requestRemoveFavorite(productId: number): void {
-    this.selectedFavoriteId = productId;
-    this.showConfirmModal = true;
+    requestRemoveFavorite(productId: number): void {
+    this.productToDeleteId = productId;
+    this.modalConfirmOpen = true;
   }
 
   cancelRemove(): void {
-    this.showConfirmModal = false;
-    this.selectedFavoriteId = null;
+    this.modalConfirmOpen = false;
+    this.productToDeleteId = null;
   }
 
   confirmRemove(): void {
-    if (!this.selectedFavoriteId) return;
+    if (!this.productToDeleteId) return;
 
-    this.favoritesService.remove(this.selectedFavoriteId).subscribe({
+    this.favoritesService.remove(this.productToDeleteId).subscribe({
       next: () => {
-        this.favorites = this.favorites.filter(f => f.id !== this.selectedFavoriteId);
+        this.favorites = this.favorites.filter(f => f.id_items !== this.productToDeleteId);
         this.updatePagination();
-        this.backendSuccess = 'Juguete eliminado de favoritos';
+        this.showToast('success', 'Eliminado', 'Juguete eliminado de favoritos');
 
-        setTimeout(() => {
-          this.backendSuccess = '';
-        }, 3000);
-
-        this.showConfirmModal = false;
-        this.selectedFavoriteId = null;
+        this.modalConfirmOpen = false;
+        this.productToDeleteId = null;
       },
       error: (err: HttpErrorResponse) => {
         this.handleError(err, 'Error al eliminar de favoritos');
@@ -261,5 +171,9 @@ export class FavoritesComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.currentPage = page;
+  }
+  
+  onToastDismissed(): void {
+    this.toastVisible = false;
   }
 }

@@ -1,7 +1,11 @@
+
 <div class="pattern-bg"></div>
 
-<div class="relative-z-10 container py-5">
+<div class="breadcrumb-wrapper">
   <app-breadcrumb></app-breadcrumb>
+</div>
+
+<div class="relative-z-10 container py-5">
 
   <header class="d-flex justify-content-between align-items-end mb-4">
     <div>
@@ -14,32 +18,33 @@
     </span>
   </header>
 
-  @if (backendError) {
-    <div class="error-message text-center mb-4">
-      {{ backendError }}
-    </div>
-  }
-
-  @if (backendSuccess) {
-    <div class="success-message text-center mb-4">
-      {{ backendSuccess }}
-    </div>
-  }
+  <app-toast
+    [visible]="toastVisible"
+    [type]="toastType"
+    [title]="toastTitle"
+    [message]="toastMessage"
+    (dismissed)="onToastDismissed()">
+  </app-toast>
 
   @if (isLoading) {
-    <div class="text-center py-5">
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Cargando favoritos...</span>
-      </div>
-      <p class="text-on-surface-variant mt-3">Cargando tus favoritos...</p>
-    </div>
+    <app-loading-spinner text="Cargando tus favoritos..."></app-loading-spinner>
   } @else {
     @if (totalFavorites > 0) {
       <div class="favorites-grid">
-        @for (item of paginatedFavorites; track item.id) {
+        @for (item of paginatedFavorites; track item.id_items) {
+
           <app-product-card
-            [product]="item"
-            (toggleFavorite)="requestRemoveFavorite(item.id)">
+            [product]="{
+              id: item.id_items,
+              title: item.title,
+              category: item.category?.name || 'Sin especificar',
+              price: item.price,
+              location: item.location || 'Sin ubicación',
+              status: getStatusText(item.conservation_status),
+              image: item.images?.[0]?.photo_url || '/assets/images/placeholder.jpg',
+              badge: 'Guardado'
+            }"
+            (toggleFavorite)="requestRemoveFavorite(item.id_items)">
           </app-product-card>
         }
       </div>
@@ -52,28 +57,26 @@
         </app-pagination>
       </div>
     } @else {
-      <p class="favorites-empty text-on-surface-variant text-center mt-5">
-        Aún no tienes juguetes guardados en favoritos.
-      </p>
+
+      <app-empty-state
+        icon="🧸"
+        title="Aún sin favoritos"
+        message="Aún no tienes juguetes guardados en favoritos."
+        [buttonText]="'Explorar catálogo'"
+        [buttonLink]="'/catalog'">
+      </app-empty-state>
     }
   }
 
 </div>
 
-@if (showConfirmModal) {
-  <div class="confirm-modal-backdrop" (click)="cancelRemove()">
-    <div class="confirm-modal" (click)="$event.stopPropagation()">
-
-      <h3 class="modal-title">¿Quitar de favoritos?</h3>
-      <p class="modal-text">
-        Este juguete desaparecerá de tu lista de favoritos.
-      </p>
-
-      <div class="modal-actions">
-        <button class="btn-cancel" type="button" (click)="cancelRemove()">Cancelar</button>
-        <button class="btn-confirm-delete" type="button" (click)="confirmRemove()">Sí, quitar</button>
-      </div>
-
-    </div>
-  </div>
-}
+<app-modal-confirm
+  [isOpen]="modalConfirmOpen"
+  title="¿Quitar de favoritos?"
+  message="Este juguete desaparecerá de tu lista de favoritos."
+  [confirmText]="'Sí, quitar'"
+  [cancelText]="'Cancelar'"
+  variant="danger"
+  (confirmed)="confirmRemove()"
+  (cancelled)="cancelRemove()">
+</app-modal-confirm>

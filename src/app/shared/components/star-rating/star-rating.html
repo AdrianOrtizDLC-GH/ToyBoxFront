@@ -15,10 +15,10 @@
     }
   </div>
 
-  @if (reviewCount > 0 || rating > 0) {
+  @if (rating > 0) {
     <div class="rating-info">
       <span class="rating-value">{{ displayRating }}</span>
-      @if (reviewCount > 0) {
+      @if (showReviewCount && reviewCount > 0) {
         <span class="review-count">({{ reviewCount }} reseña{{ reviewCount !== 1 ? 's' : '' }})</span>
       }
     </div>
