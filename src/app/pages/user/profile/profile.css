@@ -1,7 +1,6 @@
 :host {
   display: block;
   min-height: 100vh;
-  background-color: var(--background);
   position: relative;
   overflow-x: hidden;
 }
@@ -9,7 +8,6 @@
 .pattern-bg {
   position: fixed;
   inset: 0;
-  background-image: url('/assets/images/Patrones/patronhorizontal_toybox.svg');
   background-repeat: repeat;
   background-size: 30%;
   opacity: 0.08;
@@ -24,7 +22,6 @@
 
 .profile-container {
   min-height: 100vh;
-  background-color: var(--background);
   position: relative;
   overflow-x: hidden;
 }
