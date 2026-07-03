@@ -11,12 +11,11 @@ export class ReportsService {
 
   constructor(private http: HttpClient) {}
 
-  create(productId: number, reason: string): Observable<Report> {
-    return this.http.post<Report>(this.REPORTS_API, {
-      fk_items_id: productId,
-      reason
-    });
-  }
+create(productId: number, reason: string): Observable<Report> {
+  return this.http.post<Report>(`${environment.apiUrl}/products/${productId}/report`, {
+    reason
+  });
+}
 
   getPending(): Observable<any> {
     return this.http.get<any>(this.ADMIN_API);
