@@ -63,6 +63,13 @@ export class AuthService {
   }
 
   logout(): void {
+    // Mejor esfuerzo: le pedimos al backend que borre la cookie httpOnly de
+    // sesión. No bloqueamos el logout local por esto (si falla o tarda, el
+    // usuario igual sale de la app al instante, como hacía antes).
+    if (this.isBrowser) {
+      this.http.post(`${this.API}/logout`, {}, { withCredentials: true }).subscribe({ error: () => {} });
+    }
+
     if (this.isBrowser) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
