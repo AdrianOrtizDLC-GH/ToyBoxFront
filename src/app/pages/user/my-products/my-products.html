@@ -1,121 +1,234 @@
 <div class="pattern-bg"></div>
 
 <div class="breadcrumb-wrapper">
-  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+  <app-breadcrumb></app-breadcrumb>
 </div>
 
 <div class="container py-5 position-relative" style="z-index: 2;">
 
   <app-toast
-    [visible]="toastVisible"
-    [type]="toastType"
-    [title]="toastTitle"
-    [message]="toastMessage"
+    [visible]="toastVisible()"
+    [type]="toastType()"
+    [title]="toastTitle()"
+    [message]="toastMessage()"
     (dismissed)="onToastDismissed()">
   </app-toast>
 
   <section class="products-section">
-    <h2 class="section-title">
-      <span class="material-symbols-outlined">inventory_2</span>
-      Mis productos en venta
-    </h2>
+    
+    <!-- ========== TABS ========== -->
+    <div class="tabs-wrapper mb-4">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'published'"
+        (click)="switchTab('published')"
+        [disabled]="isLoadingProducts()">
+        <span class="material-symbols-outlined">inventory_2</span>
+        Mis productos en venta ({{ publishedProducts.length }})
+      </button>
 
-    @if (isLoadingProducts) {
-      <app-loading-spinner text="Cargando tus productos..."></app-loading-spinner>
-    } @else if (productsError) {
-      <app-empty-state
-        title="Error cargando productos"
-        [message]="productsError"
-        icon="⚠️"
-      ></app-empty-state>
-    } @else if (products.length === 0) {
-      <app-empty-state
-        icon="📦"
-        title="Sin productos en venta"
-        message="Aún no has publicado ningún producto. ¡Comienza a vender!"
-        [buttonText]="'Crear producto'"
-        [buttonLink]="'/product/create'">
-      </app-empty-state>
-    } @else {
-      <div class="product-list">
-        @for (product of products; track product.id_items) {
-          <div class="product-item">
-            
-            <div class="col-image">
-              @if (product.images && product.images.length > 0) {
-                <img [src]="product.images[0].photo_url" [alt]="product.title" class="product-image">
-              } @else {
-                <div class="placeholder-img">Sin imagen</div>
-              }
-            </div>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'drafts'"
+        (click)="switchTab('drafts')"
+        [disabled]="isLoadingProducts()">
+        <span class="material-symbols-outlined">draft</span>
+        Borradores ({{ draftProducts.length }})
+      </button>
+    </div>
 
-            <div class="col-basic-info">
-              <h5 class="product-title">{{ product.title }}</h5>
-              <p class="product-price">€{{ product.price | number:'1.2-2' }}</p>
-              <p class="product-location">
-                <span class="material-symbols-outlined">location_on</span>
-                {{ product.location }}
-              </p>
-            </div>
+    <!-- ========== TAB 1: PRODUCTOS PUBLICADOS ========== -->
+    @if (activeTab() === 'published') {
+      @if (isLoadingProducts()) {
+        <app-loading-spinner text="Cargando tus productos..."></app-loading-spinner>
+      } @else if (productsError()) {
+        <app-empty-state
+          title="Error cargando productos"
+          [message]="productsError()"
+          icon="⚠️"
+        ></app-empty-state>
+      } @else if (publishedProducts.length === 0) {
+        <app-empty-state
+          icon="📦"
+          title="Sin productos en venta"
+          message="Aún no has publicado ningún producto. ¡Comienza a vender!"
+          [buttonText]="'Crear producto'"
+          [buttonLink]="'/product/create'">
+        </app-empty-state>
+      } @else {
+        <div class="product-list">
+          @for (product of publishedProducts; track product.id_items) {
+            <div class="product-item">
 
-            <div class="col-meta-info">
-              @if (product.category) {
-                <p class="meta-item">
-                  <span class="category-badge">{{ product.category.name }}</span>
-                </p>
-              }
-              
-              <div class="meta-item">
-                <app-status-badge
-                  [status]="product.item_status === 'sold' ? 'sold' : 'available'"
-                  [label]="getStatusLabel(product.conservation_status)">
-                </app-status-badge>
+              <div class="col-image">
+                @if (product.images && product.images.length > 0) {
+                  <img
+                    [src]="product.images[0].photo_url"
+                    [alt]="product.title"
+                    class="product-image"
+                    loading="eager"
+                    decoding="async">
+                } @else {
+                  <div class="placeholder-img">Sin imagen</div>
+                }
               </div>
 
-              <p class="product-date">
-                {{ product.publication_date | date:'dd/MM/yyyy' }}
-              </p>
+              <div class="col-basic-info">
+                <h5 class="product-title">{{ product.title }}</h5>
+                <p class="product-price">€{{ product.price | number:'1.2-2' }}</p>
+                <p class="product-location">
+                  <span class="material-symbols-outlined">location_on</span>
+                  {{ product.location }}
+                </p>
+              </div>
+
+              <div class="col-meta-info">
+                @if (product.category) {
+                  <p class="meta-item">
+                    <span class="category-badge">{{ product.category.name }}</span>
+                  </p>
+                }
+
+                <div class="meta-item">
+                  <app-status-badge
+                    [status]="product.item_status === 'sold' ? 'sold' : 'available'"
+                    [label]="getStatusLabel(product.conservation_status)">
+                  </app-status-badge>
+                </div>
+
+                <p class="product-date">
+                  {{ product.publication_date | date:'dd/MM/yyyy' }}
+                </p>
+              </div>
+
+              <div class="col-actions">
+                <button class="icon-btn" title="Ver" (click)="viewProduct(product.id_items)">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+
+                <button
+                  class="icon-btn"
+                  title="Marcar como vendido"
+                  [disabled]="product.item_status === 'sold'"
+                  (click)="markAsSold(product)">
+                  <span class="material-symbols-outlined">check_circle</span>
+                </button>
+
+                <button class="icon-btn" title="Editar" (click)="editProduct(product.id_items)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+
+                <button class="icon-btn delete" title="Eliminar" (click)="confirmDelete(product)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+
             </div>
+          }
+        </div>
 
-            <div class="col-actions">
-              <button class="icon-btn" title="Ver" (click)="viewProduct(product.id_items)">
-                <span class="material-symbols-outlined">visibility</span>
-              </button>
-
-              <button 
-                class="icon-btn" 
-                title="Marcar como vendido" 
-                [disabled]="product.item_status === 'sold'"
-                (click)="markAsSold(product)">
-                <span class="material-symbols-outlined">check_circle</span>
-              </button>
-
-              <button class="icon-btn" title="Editar" (click)="editProduct(product.id_items)">
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-
-              <button class="icon-btn delete" title="Eliminar" (click)="confirmDelete(product)">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </div>
-
-          </div>
+        <!-- PAGINATION -->
+        @if (publishedProducts.length > 0) {
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="totalPages()"
+            (pageChange)="onPageChange($event)">
+          </app-pagination>
         }
-      </div>
+      }
+    }
 
-      <div class="mt-4">
-        <app-pagination
-          [currentPage]="currentPage"
-          [totalPages]="totalPages"
-          (pageChange)="onPageChange($event)">
-        </app-pagination>
-      </div>
+    <!-- ========== TAB 2: BORRADORES ========== -->
+    @if (activeTab() === 'drafts') {
+      @if (isLoadingProducts()) {
+        <app-loading-spinner text="Cargando borradores..."></app-loading-spinner>
+      } @else if (productsError()) {
+        <app-empty-state
+          title="Error cargando borradores"
+          [message]="productsError()"
+          icon="⚠️"
+        ></app-empty-state>
+      } @else if (draftProducts.length === 0) {
+        <app-empty-state
+          icon="📝"
+          title="Sin borradores"
+          message="No tienes productos en borrador. ¿Quieres crear uno?"
+          [buttonText]="'Crear producto'"
+          [buttonLink]="'/product/create'">
+        </app-empty-state>
+      } @else {
+        <div class="product-list">
+          @for (product of draftProducts; track product.id_items) {
+            <div class="product-item">
+
+              <div class="col-image">
+                @if (product.images && product.images.length > 0) {
+                  <img
+                    [src]="product.images[0].photo_url"
+                    [alt]="product.title"
+                    class="product-image"
+                    loading="eager"
+                    decoding="async">
+                } @else {
+                  <div class="placeholder-img">Sin imagen</div>
+                }
+              </div>
+
+              <div class="col-basic-info">
+                <h5 class="product-title">{{ product.title }}</h5>
+                <p class="product-price">€{{ product.price | number:'1.2-2' }}</p>
+                <p class="product-location">
+                  <span class="material-symbols-outlined">location_on</span>
+                  {{ product.location }}
+                </p>
+              </div>
+
+              <div class="col-meta-info">
+                @if (product.category) {
+                  <p class="meta-item">
+                    <span class="category-badge">{{ product.category.name }}</span>
+                  </p>
+                }
+
+                <div class="meta-item">
+                  <span class="draft-badge">Borrador</span>
+                </div>
+
+                <p class="product-date">
+                  {{ product.publication_date | date:'dd/MM/yyyy' }}
+                </p>
+              </div>
+
+              <div class="col-actions">
+                <button class="icon-btn" title="Editar" (click)="editProduct(product.id_items)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+
+                <button class="icon-btn delete" title="Eliminar" (click)="confirmDelete(product)">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+
+            </div>
+          }
+        </div>
+
+        <!-- PAGINATION -->
+        @if (draftProducts.length > 0) {
+          <app-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="totalPages()"
+            (pageChange)="onPageChange($event)">
+          </app-pagination>
+        }
+      }
     }
   </section>
 
 </div>
 
-@if (showSaleModal && productToSell) {
+<!-- ========== MODAL 1: VENTA (Seleccionar comprador) ========== -->
+@if (showSaleModal() && productToSell) {
   <div class="sale-modal-backdrop" (click)="cancelSale()">
     <div class="sale-modal" (click)="$event.stopPropagation()">
       <h3 class="modal-title">Marcar como vendido</h3>
@@ -128,19 +241,20 @@
 
         <div class="form-group">
           <label>Comprador (selecciona la conversación):</label>
-          @if (isLoadingConversations) {
+          @if (isLoadingConversations()) {
             <p class="text-muted">Cargando conversaciones...</p>
-          } @else if (conversations.length === 0) {
-            <p class="text-muted">No hay conversaciones disponibles</p>
+          } @else if (conversations().length === 0) {
+            <p class="text-muted">No hay conversaciones abiertas sobre este producto</p>
           } @else {
-            <select 
+            <select
               class="form-control"
               [(ngModel)]="selectedConversation"
+              [disabled]="conversations().length === 0"
               [compareWith]="(a, b) => a?.id_conversations === b?.id_conversations">
-              <option [ngValue]="null">-- Selecciona con quién se vende --</option>
-              @for (chat of conversations; track chat.id_conversations) {
+              <option [ngValue]="null">-- Selecciona comprador --</option>
+              @for (chat of conversations(); track chat.id_conversations) {
                 <option [ngValue]="chat">
-                  {{ chat.buyer?.first_name }} {{ chat.buyer?.last_name }}
+                  {{ chat.buyer?.username }}
                 </option>
               }
             </select>
@@ -149,8 +263,8 @@
 
         <div class="form-group">
           <label>Precio final (€):</label>
-          <input 
-            type="number" 
+          <input
+            type="number"
             class="form-control"
             [(ngModel)]="newPrice"
             step="0.01"
@@ -159,15 +273,15 @@
 
         <div class="modal-info">
           <span class="material-symbols-outlined">info</span>
-          <span>Una vez vendido, podrás dejar una reseña en el apartado de Compras</span>
+          <span>Después confirmar, verás el producto en Mis ventas para dejar reseña</span>
         </div>
       </div>
 
       <div class="modal-actions">
         <button class="btn-cancel" (click)="cancelSale()">Cancelar</button>
-        <button 
-          class="btn-confirm" 
-          [disabled]="!selectedConversation || !newPrice"
+        <button
+          class="btn-confirm"
+          [disabled]="!selectedConversation || !newPrice || conversations().length === 0"
           (click)="confirmSale()">
           Confirmar venta
         </button>
@@ -176,8 +290,11 @@
   </div>
 }
 
+<!-- ❌ ELIMINADO: Modal de reseña - se movió a my-purchases -->
+
+<!-- ========== MODAL 2: Confirmación de eliminación ========== -->
 <app-modal-confirm
-  [isOpen]="showDeleteModal"
+  [isOpen]="showDeleteModal()"
   title="¿Eliminar producto?"
   message="Esta acción no se puede deshacer. El producto será eliminado permanentemente."
   confirmText="Eliminar"
