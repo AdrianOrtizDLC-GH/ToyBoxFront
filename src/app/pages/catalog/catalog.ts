@@ -1,9 +1,13 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+
 import { ProductCardComponent } from '../../shared/components/product-card/product-card';
 import { SearchBarComponent } from '../../shared/components/search-bar/search-bar';
 import { FilterSidebarComponent } from '../../shared/components/filter-sidebar/filter-sidebar';
+import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb';
+
 import { ProductsService } from '../../core/services/products.service';
 import { CategoriesService } from '../../core/services/categories.service';
+
 import { Category } from '../../shared/interfaces/category.interface';
 import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
 
@@ -35,19 +39,32 @@ const CONDITION_LABELS: Record<string, string> = {
   very_good: 'Muy buen estado',
   good: 'Buen estado',
   fair: 'Usado',
+  'como nuevo': 'Como nuevo',
+  'muy buen estado': 'Muy buen estado',
+  'buen estado': 'Buen estado',
+  usado: 'Usado',
 };
 
-const BADGE_LABELS: Record<string, string> = {
+const PUBLICATION_LABELS: Record<string, string> = {
   available: 'Disponible',
+  published: 'Publicado',
   sold: 'Vendido',
   paused: 'Pausado',
   deleted: 'Eliminado',
+  draft: 'Borrador',
+  under_review: 'En revisión',
+  removed: 'Retirado',
 };
 
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [ProductCardComponent, SearchBarComponent, FilterSidebarComponent],
+  imports: [
+    ProductCardComponent,
+    SearchBarComponent,
+    FilterSidebarComponent,
+    BreadcrumbComponent
+  ],
   templateUrl: './catalog.html',
   styleUrl: './catalog.css'
 })
@@ -84,9 +101,9 @@ export class CatalogComponent implements OnInit {
             description: null,
             icon: ''
           },
-          ...cats.map(c => ({
-            ...c,
-            icon: CATEGORY_ICONS[c.id_categories] ?? ''
+          ...cats.map(category => ({
+            ...category,
+            icon: CATEGORY_ICONS[category.id_categories] ?? ''
           })),
         ];
 
@@ -109,18 +126,14 @@ export class CatalogComponent implements OnInit {
       next: (res) => {
         let items = res.items;
 
-        /**
-         * Filtro de seguridad en Front:
-         * Si el Back no filtra bien por categoría, aquí evitamos que se muestren
-         * productos de otra categoría distinta a la seleccionada.
-         */
         if (this.selectedCategoryId !== 0) {
           items = items.filter(item =>
             Number(item.category?.id_categories) === this.selectedCategoryId
           );
         }
 
-        this.products = items.map(this.toCardProduct);
+        this.products = items.map(item => this.toCardProduct(item));
+
         this.isLoading = false;
         this.cdr.markForCheck();
       },
@@ -138,18 +151,9 @@ export class CatalogComponent implements OnInit {
       ...this.activeFilters
     } as Record<string, unknown>;
 
-    /**
-     * Quitamos category por nombre para evitar que el Back filtre mal
-     * si espera un ID en vez de texto.
-     */
     delete filters['category'];
 
     if (this.selectedCategoryId !== 0) {
-      /**
-       * Enviamos varias posibilidades para adaptarnos al Back.
-       * Si el Back usa una de estas, filtrará correctamente.
-       * Si ignora alguna, no pasa nada.
-       */
       filters['fk_categories_id'] = this.selectedCategoryId;
       filters['categoryId'] = this.selectedCategoryId;
       filters['category_id'] = this.selectedCategoryId;
@@ -164,17 +168,50 @@ export class CatalogComponent implements OnInit {
   }
 
   private toCardProduct(card: ItemCard): CatalogProduct {
+    const rawCard = card as any;
+
+    const rawCondition =
+      rawCard.conservation_status ??
+      rawCard.condition_status ??
+      rawCard.condition ??
+      rawCard.item_condition ??
+      rawCard.conservationStatus ??
+      '';
+
+    const rawPublicationStatus =
+      rawCard.item_status ??
+      rawCard.publication_status ??
+      rawCard.publicationStatus ??
+      rawCard.badge ??
+      '';
+
     return {
       id: card.id_items,
       title: card.title,
       category: card.category?.name ?? 'Sin categoría',
       categoryId: Number(card.category?.id_categories ?? 0),
-      price: card.price,
-      location: card.location,
-      status: CONDITION_LABELS[card.conservation_status] ?? card.conservation_status,
+      price: Number(card.price),
+      location: card.location ?? 'Sin ubicación',
+      status: this.getConditionLabel(rawCondition),
       image: card.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
-      badge: BADGE_LABELS[card.item_status] ?? card.item_status,
+      badge: this.getPublicationLabel(rawPublicationStatus),
     };
+  }
+
+  private getConditionLabel(value: string): string {
+    const key = String(value ?? '').toLowerCase().trim();
+
+    if (!key) return 'Sin estado';
+
+    return CONDITION_LABELS[key] ?? value;
+  }
+
+  private getPublicationLabel(value: string): string {
+    const key = String(value ?? '').toLowerCase().trim();
+
+    if (!key) return 'Disponible';
+
+    return PUBLICATION_LABELS[key] ?? value;
   }
 
   onSearch(term: string): void {
