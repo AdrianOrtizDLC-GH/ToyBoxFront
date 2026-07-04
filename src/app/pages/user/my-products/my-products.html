@@ -15,8 +15,7 @@
   </app-toast>
 
   <section class="products-section">
-    
-    <!-- ========== TABS ========== -->
+
     <div class="tabs-wrapper mb-4">
       <button
         class="tab-btn"
@@ -37,7 +36,6 @@
       </button>
     </div>
 
-    <!-- ========== TAB 1: PRODUCTOS PUBLICADOS ========== -->
     @if (activeTab() === 'published') {
       @if (isLoadingProducts()) {
         <app-loading-spinner text="Cargando tus productos..."></app-loading-spinner>
@@ -127,7 +125,6 @@
           }
         </div>
 
-        <!-- PAGINATION -->
         @if (publishedProducts.length > 0) {
           <app-pagination
             [currentPage]="currentPage()"
@@ -138,7 +135,6 @@
       }
     }
 
-    <!-- ========== TAB 2: BORRADORES ========== -->
     @if (activeTab() === 'drafts') {
       @if (isLoadingProducts()) {
         <app-loading-spinner text="Cargando borradores..."></app-loading-spinner>
@@ -200,6 +196,10 @@
               </div>
 
               <div class="col-actions">
+                <button class="icon-btn" title="Ver" (click)="viewProduct(product.id_items)">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+
                 <button class="icon-btn" title="Editar" (click)="editProduct(product.id_items)">
                   <span class="material-symbols-outlined">edit</span>
                 </button>
@@ -213,7 +213,6 @@
           }
         </div>
 
-        <!-- PAGINATION -->
         @if (draftProducts.length > 0) {
           <app-pagination
             [currentPage]="currentPage()"
@@ -223,11 +222,11 @@
         }
       }
     }
+
   </section>
 
 </div>
 
-<!-- ========== MODAL 1: VENTA (Seleccionar comprador) ========== -->
 @if (showSaleModal() && productToSell) {
   <div class="sale-modal-backdrop" (click)="cancelSale()">
     <div class="sale-modal" (click)="$event.stopPropagation()">
@@ -254,7 +253,7 @@
               <option [ngValue]="null">-- Selecciona comprador --</option>
               @for (chat of conversations(); track chat.id_conversations) {
                 <option [ngValue]="chat">
-                  {{ chat.buyer?.username }}
+                  {{ getBuyerUsername(chat) }}
                 </option>
               }
             </select>
@@ -290,9 +289,6 @@
   </div>
 }
 
-<!-- ❌ ELIMINADO: Modal de reseña - se movió a my-purchases -->
-
-<!-- ========== MODAL 2: Confirmación de eliminación ========== -->
 <app-modal-confirm
   [isOpen]="showDeleteModal()"
   title="¿Eliminar producto?"

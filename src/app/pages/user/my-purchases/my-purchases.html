@@ -6,114 +6,233 @@
 
 <div class="container py-5">
 
+  <app-toast
+    [visible]="toastVisible()"
+    [type]="toastType()"
+    [title]="toastTitle()"
+    [message]="toastMessage()"
+    (dismissed)="onToastDismissed()">
+  </app-toast>
+
   <div class="tabs-wrapper mb-4">
     <button
       class="tab-btn"
-      [class.active]="activeTab === 'purchases'"
+      [class.active]="activeTab() === 'purchases'"
       (click)="switchTab('purchases')"
-      [disabled]="isLoading">
+      [disabled]="isLoading()">
       <span class="material-symbols-outlined">shopping_cart</span>
-      Mis compras
+      Mis compras ({{ myPurchasesConversations().length }})
     </button>
 
     <button
       class="tab-btn"
-      [class.active]="activeTab === 'sales'"
+      [class.active]="activeTab() === 'sales'"
       (click)="switchTab('sales')"
-      [disabled]="isLoading">
+      [disabled]="isLoading()">
       <span class="material-symbols-outlined">sell</span>
-      Mis ventas
+      Mis ventas ({{ mySalesConversations().length }})
     </button>
   </div>
 
-  <h2 class="page-title mb-3">
-    @if (activeTab === 'purchases') {
-      Reseñas que yo hice
-    } @else {
-      Reseñas sobre mis productos
-    }
-  </h2>
+  @if (activeTab() === 'purchases') {
+    <h2 class="page-title mb-3">Mis compras - Dejar reseña</h2>
 
-  @if (isLoading) {
-    <app-loading-spinner text="Cargando reseñas..."></app-loading-spinner>
-  } 
-  
-  @else if (errorMessage) {
-    <div class="error-alert">
-      <span class="material-symbols-outlined">error</span>
-      <div class="error-content">
-        <p class="error-title">Error</p>
-        <p class="error-message">{{ errorMessage }}</p>
+    @if (isLoading()) {
+      <app-loading-spinner text="Cargando..."></app-loading-spinner>
+    } @else if (errorMessage()) {
+      <div class="error-alert">
+        <span class="material-symbols-outlined">error</span>
+        <p>{{ errorMessage() }}</p>
       </div>
-    </div>
-  } 
-  
-  @else {
-    @if (paginatedReviews.length === 0) {
-      <app-empty-state
-        icon="⭐"
-        [title]="emptyStateTitle"
-        [message]="emptyStateMessage"
-        [buttonText]="activeTab === 'purchases' ? 'Explorar catálogo' : ''"
-        [buttonLink]="'/catalog'">
-      </app-empty-state>
-    } 
-    
-    @else {
-      <div class="reviews-grid">
-        @for (review of paginatedReviews; track review.id_reviews) {
-          <div class="review-card">
-            <div class="review-card-img-container">
-              @if (getProductImage(review)) {
-                <!-- ✏️ MEJORA: Optimizar carga de imágenes con atributos de performance -->
-                <img
-                  class="review-card-img"
-                  [src]="getProductImage(review)"
-                  [alt]="review.item?.title || 'Producto'"
-                  loading="eager"
-                  decoding="async"
-                  fetchpriority="low"
-                  width="400"
-                  height="300" />
-              } @else {
-                <div class="review-card-img-placeholder">
-                  <span class="material-symbols-outlined">image</span>
-                </div>
-              }
-            </div>
+    } @else {
+      @if (paginatedPurchases.length === 0) {
+        <app-empty-state
+          icon="🛒"
+          title="Sin compras aún"
+          message="Explora el catálogo y compra productos">
+        </app-empty-state>
+      } @else {
+        <div class="purchase-list">
+          @for (chat of paginatedPurchases; track chat.id_conversations) {
+            <div class="purchase-item">
 
-            <div class="review-card-content">
-              @if (review.item) {
-                <h5 class="review-card-title">{{ review.item.title }}</h5>
-                @if (review.item.price) {
-                  <p class="review-card-price">€{{ review.item.price | number:'1.2-2' }}</p>
+              <div class="col-image">
+                @if (getProductPhoto(chat)) {
+                  <img [src]="getProductPhoto(chat)" [alt]="getProductTitle(chat)" class="purchase-image">
+                } @else {
+                  <div class="placeholder-img"><span class="material-symbols-outlined">image</span></div>
                 }
-              }
-
-              <p class="review-card-user">{{ getReviewerName(review) }}</p>
-
-              <p class="review-card-date">{{ review.review_date | date:'dd/MM/yyyy' }}</p>
-
-              <div class="review-card-rating">
-                <app-star-rating [rating]="review.rating"></app-star-rating>
               </div>
 
-              @if (review.comment) {
-                <p class="review-card-comment">{{ review.comment }}</p>
-              }
+              <div class="col-info">
+                <h5 class="purchase-title">{{ getProductTitle(chat) }}</h5>
+                <p class="purchase-price">€{{ getProductPrice(chat) | number:'1.2-2' }}</p>
+                <p class="seller-name">Vendedor: <strong>{{ getSellerUsername(chat) }}</strong></p>
+              </div>
+
+              <div class="col-review">
+                @if (hasReview(chat)) {
+                  <div class="review-display">
+                    <div class="review-rating">
+                      <app-star-rating [rating]="getReviewForConversation(chat)!.rating" [readonly]="true"></app-star-rating>
+                    </div>
+                    <p class="review-text">{{ getReviewForConversation(chat)!.comment }}</p>
+                    <p class="review-date">{{ getReviewForConversation(chat)!.review_date | date:'dd/MM/yyyy' }}</p>
+                  </div>
+                } @else {
+                  <button
+                    class="icon-btn btn-review"
+                    title="Dejar reseña"
+                    (click)="openReviewModal(chat, 'buyer')">
+                    <span class="material-symbols-outlined">rate_review</span>
+                    Dejar reseña
+                  </button>
+                }
+              </div>
+
             </div>
+          }
+        </div>
+
+        @if (paginatedPurchases.length > 0) {
+          <div class="mt-4">
+            <app-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages"
+              (pageChange)="onPageChange($event)">
+            </app-pagination>
           </div>
         }
-      </div>
+      }
+    }
+  }
 
-      <div class="mt-4">
-        <app-pagination
-          [currentPage]="currentPage"
-          [totalPages]="totalPages"
-          (pageChange)="onPageChange($event)">
-        </app-pagination>
+  @if (activeTab() === 'sales') {
+    <h2 class="page-title mb-3">Mis ventas - Reseñas del comprador</h2>
+
+    @if (isLoading()) {
+      <app-loading-spinner text="Cargando..."></app-loading-spinner>
+    } @else if (errorMessage()) {
+      <div class="error-alert">
+        <span class="material-symbols-outlined">error</span>
+        <p>{{ errorMessage() }}</p>
       </div>
+    } @else {
+      @if (paginatedSales.length === 0) {
+        <app-empty-state
+          icon="📦"
+          title="Sin ventas aún"
+          message="Aún no has vendido ningún producto">
+        </app-empty-state>
+      } @else {
+        <div class="purchase-list">
+          @for (chat of paginatedSales; track chat.id_conversations) {
+            <div class="purchase-item">
+
+              <div class="col-image">
+                @if (getProductPhoto(chat)) {
+                  <img [src]="getProductPhoto(chat)" [alt]="getProductTitle(chat)" class="purchase-image">
+                } @else {
+                  <div class="placeholder-img"><span class="material-symbols-outlined">image</span></div>
+                }
+              </div>
+
+              <div class="col-info">
+                <h5 class="purchase-title">{{ getProductTitle(chat) }}</h5>
+                <p class="purchase-price">€{{ getProductPrice(chat) | number:'1.2-2' }}</p>
+                <p class="buyer-name">Comprador: <strong>{{ getBuyerUsername(chat) }}</strong></p>
+              </div>
+
+              <div class="col-review">
+                @if (hasReview(chat)) {
+                  <div class="review-display">
+                    <span class="badge-completed">✓ Reseña recibida</span>
+                    <div class="review-rating">
+                      <app-star-rating [rating]="getReviewForConversation(chat)!.rating" [readonly]="true"></app-star-rating>
+                    </div>
+                    <p class="review-text">{{ getReviewForConversation(chat)!.comment }}</p>
+                  </div>
+                } @else {
+                  <div class="review-pending">
+                    <span class="badge-pending">⏳ Pendiente de reseña del comprador</span>
+                  </div>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+
+        @if (paginatedSales.length > 0) {
+          <div class="mt-4">
+            <app-pagination
+              [currentPage]="currentPage()"
+              [totalPages]="totalPages"
+              (pageChange)="onPageChange($event)">
+            </app-pagination>
+          </div>
+        }
+      }
     }
   }
 
 </div>
+
+@if (showReviewModal() && selectedConversation) {
+  <div class="review-modal-backdrop" (click)="cancelReview()">
+    <div class="review-modal" (click)="$event.stopPropagation()">
+      <h3 class="modal-title">Dejar reseña</h3>
+
+      <div class="modal-content">
+        <div class="modal-product">
+          <strong>Producto:</strong>
+          <p>{{ getProductTitle(selectedConversation) }}</p>
+        </div>
+
+        <div class="modal-product">
+          <strong>{{ reviewerRole === 'buyer' ? 'Vendedor' : 'Comprador' }}:</strong>
+          <p>{{ reviewerRole === 'buyer' ? getSellerUsernameForReview() : getBuyerUsernameForReview() }}</p>
+        </div>
+
+        <div class="form-group">
+          <label>Puntuación *</label>
+          <div class="rating-container">
+            <app-star-rating
+              [rating]="newRating()"
+              [readonly]="false"
+              [size]="36"
+              (ratingChange)="newRating.set($event)">
+            </app-star-rating>
+            @if (newRating() > 0) {
+              <span class="rating-text">{{ newRating() }} de 5 estrellas</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Comentario (mínimo 10 caracteres) *</label>
+          <textarea
+            class="form-control textarea-review"
+            [(ngModel)]="newComment"
+            placeholder="Comparte tu experiencia..."
+            rows="4"
+            maxlength="500">
+          </textarea>
+          <div class="char-count">
+            {{ newComment().length }}/500
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" (click)="cancelReview()">Cancelar</button>
+        <button
+          class="btn-confirm"
+          [disabled]="!isReviewValid()"
+          (click)="submitReview()">
+          Enviar reseña
+        </button>
+      </div>
+    </div>
+  </div>
+}

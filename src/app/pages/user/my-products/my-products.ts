@@ -1,9 +1,9 @@
-// ✅ CAMBIO 1: Agregar forkJoin para cargas paralelas
+
 import { ChangeDetectorRef, Component, OnInit, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs'; // ✅ NUEVO IMPORT
+import { forkJoin } from 'rxjs'; 
 
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner';
@@ -56,7 +56,7 @@ export class MyProductsComponent implements OnInit {
   totalPages = signal(1);
 
   conversations = signal<Chat[]>([]);
-  isLoadingConversations = signal(false); // ✅ CORREGIDO: era "isLoadingConversaciones"
+  isLoadingConversations = signal(false); 
   showSaleModal = signal(false);
 
   toastVisible = signal(false);
@@ -64,7 +64,6 @@ export class MyProductsComponent implements OnInit {
   toastTitle = signal('');
   toastMessage = signal('');
 
-  // Propiedades normales para datos temporales
   productToSell: Item | null = null;
   selectedConversation: Chat | null = null;
   newPrice: number | null = null;
@@ -74,7 +73,6 @@ export class MyProductsComponent implements OnInit {
   currentUserId: number | undefined;
 
   constructor() {
-    // ✅ Effect debe estar en constructor para injection context
     effect(() => {
       const tab = this.activeTab();
       this.currentPage.set(1);
@@ -99,9 +97,6 @@ export class MyProductsComponent implements OnInit {
     this.loadAllMyItems();
   }
 
-  /**
-   * ✅ Cargar publicados Y borradores EN PARALELO con forkJoin
-   */
   private loadAllMyItems(): void {
     this.isLoadingProducts.set(true);
     this.productsError.set('');
@@ -111,7 +106,6 @@ export class MyProductsComponent implements OnInit {
       return;
     }
 
-    // ✅ Usar forkJoin para cargar TODO en paralelo
     forkJoin({
       published: this.productsService.getAll({
         sellerId: this.currentUserId
@@ -122,7 +116,6 @@ export class MyProductsComponent implements OnInit {
       })
     }).subscribe({
       next: (results) => {
-        // Mapear ambos resultados
         const publishedItems = (results.published.items || []).map((card: any) =>
           this.mapItemCard(card)
         );
@@ -130,15 +123,12 @@ export class MyProductsComponent implements OnInit {
           this.mapItemCard(card)
         );
 
-        // Combinar arrays
         const allItems = [...publishedItems, ...draftItems];
 
-        // Eliminar duplicados por id_items
         const uniqueItems = Array.from(new Map(
           allItems.map(item => [item.id_items, item])
         ).values());
 
-        // Actualizar estado
         this.allMyItems.set(uniqueItems);
         this.totalPages.set(results.published.totalPages || 1);
         this.isLoadingProducts.set(false);
@@ -211,11 +201,9 @@ export class MyProductsComponent implements OnInit {
     this.selectedConversation = null;
     this.newPrice = product.price;
 
-    // ✅ Cargar conversaciones
     this.isLoadingConversations.set(true);
     this.chatService.getMyChats().subscribe({
       next: (chats) => {
-        // Filtrar SOLO conversaciones de este producto específico
         const relevantChats = chats.filter(chat =>
           chat.fk_seller_id === this.currentUserId &&
           chat.fk_items_id === product.id_items
@@ -227,7 +215,7 @@ export class MyProductsComponent implements OnInit {
           console.log('✅ Chat disponible:', {
             id: chat.id_conversations,
             buyer_id: chat.fk_buyer_id,
-            buyer_username: chat.buyer?.username
+            buyer_username: (chat as any).buyer_username
           });
         });
 
@@ -243,10 +231,6 @@ export class MyProductsComponent implements OnInit {
     });
   }
 
-  /**
-   * ❌ CAMBIO IMPORTANTE: confirmSale() YA NO abre modal de reseña
-   * Ahora SOLO marca como vendido y cierra el modal
-   */
   confirmSale(): void {
     if (!this.productToSell || !this.selectedConversation || !this.newPrice) {
       this.showToast('warning', 'Advertencia', 'Debes seleccionar una conversación y precio');
@@ -257,8 +241,7 @@ export class MyProductsComponent implements OnInit {
       this.showToast('warning', 'Advertencia', 'El precio debe ser mayor a 0');
       return;
     }
-
-    this.productsService.markAsSold(this.productToSell.id_items).subscribe({
+    this.productsService.markAsSold(this.productToSell.id_items, this.selectedConversation.fk_buyer_id).subscribe({
       next: () => {
         const updatedItems = this.allMyItems().map(p =>
           p.id_items === this.productToSell!.id_items
@@ -275,7 +258,7 @@ export class MyProductsComponent implements OnInit {
         this.showToast('success', 'Éxito', 'Producto marcado como vendido');
         this.showSaleModal.set(false);
         this.cancelSale();
-        this.loadAllMyItems(); // Recargar lista
+        this.loadAllMyItems(); 
       },
       error: (err) => {
         console.error('Error marcando producto como vendido:', err);
@@ -290,11 +273,6 @@ export class MyProductsComponent implements OnInit {
     this.selectedConversation = null;
     this.newPrice = null;
   }
-
-  /**
-   * ❌ ELIMINADO: submitReview(), cancelReview(), isReviewValid()
-   * Estos ahora están en my-purchases.ts
-   */
 
   switchTab(tab: 'published' | 'drafts'): void {
     this.activeTab.set(tab);
@@ -341,6 +319,9 @@ export class MyProductsComponent implements OnInit {
       this.toastVisible.set(false);
     }, 3000);
   }
+  getBuyerUsername(chat: Chat): string {
+    return (chat as any).buyer_username || 'Comprador desconocido';
+  }
 
   onToastDismissed(): void {
     this.toastVisible.set(false);
@@ -349,4 +330,5 @@ export class MyProductsComponent implements OnInit {
   onPageChange(page: number): void {
     this.currentPage.set(page);
   }
+  
 }
