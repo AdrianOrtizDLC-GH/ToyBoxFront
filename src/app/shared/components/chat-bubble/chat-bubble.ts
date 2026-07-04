@@ -19,7 +19,6 @@ export class ChatBubbleComponent {
   get shouldShowAvatar(): boolean {
     return !this.isOwn && !!this.message.senderName && !!this.message.senderAvatar;
   }
-
   
   get displaySenderName(): string {
     return this.message.senderName || 'Usuario desconocido';
