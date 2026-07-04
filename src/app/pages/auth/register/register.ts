@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -11,7 +10,7 @@ import { ModalConfirmComponent } from "../../../shared/components/modal-confirm/
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, ToastComponent, ModalConfirmComponent],
+  imports: [ReactiveFormsModule, RouterModule, ToastComponent, ModalConfirmComponent],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
@@ -98,36 +97,30 @@ export class RegisterComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.provincias = await this.locationsService.getProvincias();
 
-    this.form.get('city')?.disable({ emitEvent: false });
-    this.form.get('postalCode')?.disable({ emitEvent: false });
-
     this.form.get('province')?.valueChanges.subscribe(async (provincia) => {
-      const cityControl = this.form.get('city');
-      const postalControl = this.form.get('postalCode');
-
       if (provincia) {
         this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(provincia);
-        cityControl?.enable({ emitEvent: false });
         this.form.patchValue({ city: '', postalCode: '' });
-        postalControl?.disable({ emitEvent: false });
+        this.ubicacionError = '';
       } else {
         this.ciudadesDisponibles = [];
-        cityControl?.disable({ emitEvent: false });
-        postalControl?.disable({ emitEvent: false });
+        this.codigosPostalesDisponibles = [];
+        this.form.patchValue({ city: '', postalCode: '' });
+        this.ubicacionError = '';
       }
     });
 
     this.form.get('city')?.valueChanges.subscribe(async (ciudad) => {
-      const postalControl = this.form.get('postalCode');
       const provincia = this.form.get('province')?.value;
 
       if (ciudad && provincia) {
         this.codigosPostalesDisponibles = await this.locationsService.getCodigosPostalesByCity(provincia, ciudad);
-        postalControl?.enable({ emitEvent: false });
         this.form.patchValue({ postalCode: '' });
+        this.ubicacionError = '';
       } else {
         this.codigosPostalesDisponibles = [];
-        postalControl?.disable({ emitEvent: false });
+        this.form.patchValue({ postalCode: '' });
+        this.ubicacionError = '';
       }
     });
 
@@ -155,7 +148,6 @@ export class RegisterComponent implements OnInit {
       this.toastVisible = false;
     }, 4000);
   }
-
 
   togglePassword(): void {
     this.showPassword = !this.showPassword;
@@ -221,8 +213,6 @@ export class RegisterComponent implements OnInit {
       error: (err: HttpErrorResponse) => {
           this.isLoading = false;
           this.form.enable({ emitEvent: false });
-          this.form.get('city')?.enable({ emitEvent: false });        
-          this.form.get('postalCode')?.enable({ emitEvent: false });  
           
           let errorMsg = 'Error al registrar usuario. Intenta de nuevo.';
           if (err.status === 409) {
@@ -231,8 +221,6 @@ export class RegisterComponent implements OnInit {
             errorMsg = 'Datos inválidos. Verifica todos los campos';
           }
           this.showToast('error', 'Error de registro', errorMsg);
-      
-        console.error('Error en registro:', err);
       }
     });
   }

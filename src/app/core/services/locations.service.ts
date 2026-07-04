@@ -29,7 +29,6 @@ export class LocationsService {
         next: (data) => {
           this.locationsData = data;
           this.loaded = true;
-          console.log('✅ Datos de ubicación cargados correctamente');
         },
         error: (error) => {
           console.error('❌ Error cargando datos de ubicación:', error);
@@ -90,13 +89,6 @@ export class LocationsService {
     return null;
   }
 
-  /**
-   * Obtiene las coordenadas geográficas (latitud y longitud) de una ciudad y provincia
-   * Utiliza Nominatim API de OpenStreetMap
-   * @param provincia Nombre de la provincia
-   * @param ciudad Nombre de la ciudad
-   * @returns { lat: number; lng: number } | null
-   */
   async getCoordinates(provincia: string, ciudad: string): Promise<{ lat: number; lng: number } | null> {
     const cacheKey = `${ciudad}-${provincia}`;
 
@@ -125,9 +117,8 @@ export class LocationsService {
           lat: parseFloat(response[0].lat),
           lng: parseFloat(response[0].lon)
         };
-        // Guardar en caché
+
         this.coordinatesCache[cacheKey] = result;
-        console.log(`✅ Coordenadas obtenidas para ${ciudad}, ${provincia}:`, result);
         return result;
       } else {
         console.warn(`⚠️ No se encontraron coordenadas para ${ciudad}, ${provincia}`);
@@ -143,7 +134,6 @@ export class LocationsService {
 
   clearCoordinatesCache(): void {
     this.coordinatesCache = {};
-    console.log('✅ Caché de coordenadas limpiado');
   }
 
   private async ensureLoaded(): Promise<void> {
