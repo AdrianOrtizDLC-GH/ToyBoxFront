@@ -17,7 +17,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-my-purchases',
   standalone: true,
-  imports: [ CommonModule, RouterModule, PaginationComponent, StarRatingComponent, LoadingSpinnerComponent,EmptyStateComponent,BreadcrumbComponent],
+  imports: [ CommonModule, RouterModule, PaginationComponent, StarRatingComponent, LoadingSpinnerComponent, EmptyStateComponent, BreadcrumbComponent],
   templateUrl: './my-purchases.html',
   styleUrl: './my-purchases.css',
 })
@@ -26,9 +26,6 @@ export class MyPurchasesComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly reviewsService = inject(ReviewsService);
   private readonly cdr = inject(ChangeDetectorRef);
-
-
-  breadcrumbItems: any[] = [];
 
   activeTab: 'purchases' | 'sales' = 'purchases';
 
@@ -42,25 +39,15 @@ export class MyPurchasesComponent implements OnInit {
   pageSize = 8; 
 
   ngOnInit(): void {
-    this.initializeBreadcrumbs();
-    this.loadReviews();
+    this.loadAllData();
   }
 
-  private initializeBreadcrumbs(): void {
-    const isLoggedIn = this.authService.isLoggedIn();
-    const homeRoute = isLoggedIn ? '/catalog' : '/home';
-    
-    this.breadcrumbItems = [
-      { label: 'Inicio', route: homeRoute, icon: 'home' },
-      { label: 'Mis Compras', icon: 'shopping_cart' }
-    ];
-  }
-
-  private loadReviews(): void {
+  private loadAllData(): void {
     const currentUser = this.authService.currentUser();
 
     if (!currentUser) {
       this.errorMessage = 'Debes estar autenticado para ver tus reseñas';
+      this.cdr.markForCheck();
       return;
     }
 
@@ -72,13 +59,13 @@ export class MyPurchasesComponent implements OnInit {
       sales: this.reviewsService.getBySeller(currentUser.id_users)
     }).subscribe({
       next: (result) => {
-        this.myPurchaseReviews = result.purchases;
-        this.mySalesReviews = result.sales;
+        this.myPurchaseReviews = result.purchases || [];
+        this.mySalesReviews = result.sales || [];
         this.isLoading = false;
+        this.errorMessage = '';
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
-        console.error('Error cargando reseñas:', err);
         this.handleError(err);
         this.isLoading = false;
         this.cdr.markForCheck();

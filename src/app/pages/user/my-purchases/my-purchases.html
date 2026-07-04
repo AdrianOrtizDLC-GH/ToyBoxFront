@@ -1,11 +1,10 @@
-
 <div class="pattern-bg"></div>
 
 <div class="breadcrumb-wrapper">
-  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+  <app-breadcrumb></app-breadcrumb>
 </div>
 
-<div class="container py-5 position-relative" style="z-index: 2;">
+<div class="container py-5">
 
   <div class="tabs-wrapper mb-4">
     <button
@@ -13,6 +12,7 @@
       [class.active]="activeTab === 'purchases'"
       (click)="switchTab('purchases')"
       [disabled]="isLoading">
+      <span class="material-symbols-outlined">shopping_cart</span>
       Mis compras
     </button>
 
@@ -21,10 +21,10 @@
       [class.active]="activeTab === 'sales'"
       (click)="switchTab('sales')"
       [disabled]="isLoading">
+      <span class="material-symbols-outlined">sell</span>
       Mis ventas
     </button>
   </div>
-
 
   <h2 class="page-title mb-3">
     @if (activeTab === 'purchases') {
@@ -65,10 +65,16 @@
           <div class="review-card">
             <div class="review-card-img-container">
               @if (getProductImage(review)) {
-                <img 
-                  class="review-card-img" 
-                  [src]="getProductImage(review)" 
-                  [alt]="review.item?.title || 'Producto'" />
+                <!-- ✏️ MEJORA: Optimizar carga de imágenes con atributos de performance -->
+                <img
+                  class="review-card-img"
+                  [src]="getProductImage(review)"
+                  [alt]="review.item?.title || 'Producto'"
+                  loading="eager"
+                  decoding="async"
+                  fetchpriority="low"
+                  width="400"
+                  height="300" />
               } @else {
                 <div class="review-card-img-placeholder">
                   <span class="material-symbols-outlined">image</span>
