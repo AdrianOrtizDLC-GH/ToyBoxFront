@@ -66,7 +66,7 @@ getById(id: number): Observable<any> {
     return this.http.patch<Item>(`${this.API}/${id}/publish`, {});
   }
 
-  markAsSold(id: number): Observable<Item> {
-    return this.http.patch<Item>(`${this.API}/${id}/sold`, {});
+  markAsSold(id: number, fk_buyer_id?: number): Observable<Item> {
+      return this.http.patch<Item>(`${this.API}/${id}/sold`, { fk_buyer_id });
   }
 }

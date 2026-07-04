@@ -7,6 +7,9 @@ export interface Chat {
   fk_seller_id: number;
   fk_buyer_id: number;
 
+  conservation_status?: string; // 'draft', 'published', 'sold', 'reserved', etc.
+  item_status?: string; // 'available', 'sold', etc.
+
     // optionals
   item?: {
     id_items: number;
