@@ -3,7 +3,12 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
+import { BreadcrumbComponent, BreadcrumbItem } from '../../../shared/components/breadcrumb/breadcrumb';
+
 import { ProductsService } from '../../../core/services/products.service';
+import { CategoriesService } from '../../../core/services/categories.service';
+import { LocationsService } from '../../../core/services/locations.service';
+
 import { Category } from '../../../shared/interfaces/category.interface';
 import { ItemFormData } from '../../../shared/interfaces/item.interface';
 
@@ -22,6 +27,16 @@ interface CurrentImage {
   label?: string;
 }
 
+interface EditProductFormData {
+  title: string;
+  price: number | null;
+  conservation_status: string;
+  province: string;
+  city: string;
+  description: string;
+  fk_categories_id: number | null;
+}
+
 type EditProductField =
   | 'title'
   | 'price'
@@ -32,64 +47,32 @@ type EditProductField =
   | 'fk_categories_id'
   | 'images';
 
+const CATEGORY_ICONS: Record<number, string> = {
+  1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
+  2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
+  3: '/assets/images/Iconos%20categorias/icono_bebes.svg',
+  4: '/assets/images/Iconos%20categorias/icono_juegosmesa.svg',
+  5: '/assets/images/Iconos%20categorias/icono_imaginacion.svg',
+  6: '/assets/images/Iconos%20categorias/icono_educativo.svg',
+  7: '/assets/images/Iconos%20categorias/icono_munecosycoches.svg',
+  8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
+};
+
 @Component({
   selector: 'app-edit-product',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BreadcrumbComponent],
   templateUrl: './edit-product.html',
   styleUrl: './edit-product.css'
 })
 export class EditProductComponent implements OnInit, OnDestroy {
-  categories: Category[] = [
-    {
-      id_categories: 1,
-      name: 'Videojuegos y consolas',
-      description: 'Juegos de PlayStation, Xbox, Nintendo y otras consolas',
-      icon: '/assets/images/Iconos%20categorias/icono_videojuegos.svg'
-    },
-    {
-      id_categories: 2,
-      name: 'Construcciones y bloques',
-      description: 'Juguetes tipo LEGO, bloques de construcción y sets creativos',
-      icon: '/assets/images/Iconos%20categorias/icono_construccion.svg'
-    },
-    {
-      id_categories: 3,
-      name: 'Muñecos y figuras',
-      description: 'Muñecas, figuras de acción y personajes coleccionables',
-      icon: '/assets/images/Iconos%20categorias/icono_bebes.svg'
-    },
-    {
-      id_categories: 4,
-      name: 'Puzzles y rompecabezas',
-      description: 'Puzzles de piezas, rompecabezas 2D y 3D',
-      icon: '/assets/images/Iconos%20categorias/icono_juegosmesa.svg'
-    },
-    {
-      id_categories: 5,
-      name: 'Juegos de mesa y cartas',
-      description: 'Juegos de tablero, cartas y party games',
-      icon: '/assets/images/Iconos%20categorias/icono_imaginacion.svg'
-    },
-    {
-      id_categories: 6,
-      name: 'Educativos y preescolar',
-      description: 'Juguetes sensoriales, educativos y seguros para bebés y peques',
-      icon: '/assets/images/Iconos%20categorias/icono_educativo.svg'
-    },
-    {
-      id_categories: 7,
-      name: 'Vehículos y circuitos',
-      description: 'Coches, trenes, pistas y circuitos',
-      icon: '/assets/images/Iconos%20categorias/icono_munecosycoches.svg'
-    },
-    {
-      id_categories: 8,
-      name: 'Arte y manualidades',
-      description: 'Kits creativos, pintura, plastilina y manualidades',
-      icon: '/assets/images/Iconos%20categorias/icono_airelibre.svg'
-    }
+  breadcrumbItems: BreadcrumbItem[] = [
+    { label: 'Inicio', route: '/catalog', icon: 'home' },
+    { label: 'Mis Productos', route: '/user/my-products', icon: 'store' },
+    { label: 'Editar Producto', icon: 'edit' }
   ];
+
+  categories: Category[] = [];
 
   productStates: ProductStateOption[] = [
     { label: 'Como nuevo', value: 'excellent' },
@@ -100,15 +83,18 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
   productId: number | null = null;
 
-  formData = {
+  formData: EditProductFormData = {
     title: '',
-    price: null as number | null,
+    price: null,
     conservation_status: '',
     province: '',
     city: '',
     description: '',
-    fk_categories_id: null as number | null
+    fk_categories_id: null
   };
+
+  provincias: string[] = [];
+  ciudadesDisponibles: string[] = [];
 
   currentImages: CurrentImage[] = [];
   selectedImages: SelectedImage[] = [];
@@ -120,11 +106,15 @@ export class EditProductComponent implements OnInit, OnDestroy {
   isWithdrawing = false;
   isDragOver = false;
   showValidationErrors = false;
+  isLoadingCategories = false;
+  isLoadingLocations = false;
+  isLoadingCities = false;
 
   showWithdrawModal = false;
 
   successMessage = '';
   errorMessage = '';
+  locationError = '';
 
   private readonly MAX_IMAGES = 5;
   private readonly MAX_IMAGE_SIZE_MB = 5;
@@ -145,22 +135,81 @@ export class EditProductComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private productsService: ProductsService,
+    private categoriesService: CategoriesService,
+    private locationsService: LocationsService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadCategories();
+    void this.initializeLocations();
+
     this.route.params.subscribe(params => {
       const id = Number(params['id']);
 
       if (!id) {
         this.errorMessage = 'No se ha encontrado el identificador del producto.';
         this.isLoading = false;
+        this.cdr.markForCheck();
         return;
       }
 
       this.productId = id;
       this.loadProduct(id);
     });
+  }
+
+  private loadCategories(): void {
+    this.isLoadingCategories = true;
+
+    this.categoriesService.getAll().subscribe({
+      next: (categories: Category[]) => {
+        this.categories = categories.map(category => this.withCategoryIcon(category));
+        this.isLoadingCategories = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isLoadingCategories = false;
+        this.errorMessage = 'No se han podido cargar las categorías.';
+        this.cdr.markForCheck();
+        console.error('Error cargando categorías:', err);
+      }
+    });
+  }
+
+  private async initializeLocations(): Promise<void> {
+    this.isLoadingLocations = true;
+    this.locationError = '';
+
+    try {
+      this.provincias = await this.locationsService.getProvincias();
+
+      if (this.formData.province) {
+        await this.loadCitiesForProvince(this.formData.province);
+      }
+    } catch (error) {
+      this.locationError = 'No se han podido cargar las provincias.';
+      console.error('Error cargando ubicaciones:', error);
+    } finally {
+      this.isLoadingLocations = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private async loadCitiesForProvince(province: string): Promise<void> {
+    this.isLoadingCities = true;
+    this.locationError = '';
+
+    try {
+      this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(province);
+    } catch (error) {
+      this.ciudadesDisponibles = [];
+      this.locationError = 'No se han podido cargar las ciudades de la provincia seleccionada.';
+      console.error('Error cargando ciudades:', error);
+    } finally {
+      this.isLoadingCities = false;
+      this.cdr.markForCheck();
+    }
   }
 
   loadProduct(id: number): void {
@@ -170,18 +219,44 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.showValidationErrors = false;
 
     this.productsService.getById(id).subscribe({
-      next: (raw: any) => {
+      next: async (raw: any) => {
+        const rawCategoryId =
+          raw.fk_categories_id ??
+          raw.fk_category_id ??
+          raw.category_id ??
+          raw.category?.id_categories ??
+          raw.category?.id ??
+          null;
+
+        const rawCondition =
+          raw.conservation_status ??
+          raw.condition_status ??
+          raw.condition ??
+          raw.item_condition ??
+          raw.conservationStatus ??
+          '';
+
         this.formData = {
           title: raw.title ?? '',
           price: raw.price ? Number(raw.price) : null,
-          conservation_status: raw.conservation_status ?? '',
-          province: raw.province ?? this.extractProvince(raw.location),
+          conservation_status: this.normalizeConservationStatus(rawCondition),
+          province: raw.province ?? raw.seller_province ?? this.extractProvince(raw.location),
           city: raw.city ?? raw.seller_city ?? this.extractCity(raw.location),
           description: raw.description ?? '',
-          fk_categories_id: raw.fk_categories_id ?? raw.category?.id_categories ?? null
+          fk_categories_id: rawCategoryId ? Number(rawCategoryId) : null
         };
 
-        this.currentBadge = this.getBadgeLabel(raw.item_status);
+        if (this.formData.province) {
+          await this.loadCitiesForProvince(this.formData.province);
+        }
+
+        this.currentBadge = this.getBadgeLabel(
+          raw.item_status ??
+          raw.publication_status ??
+          raw.publicationStatus ??
+          raw.status
+        );
+
         this.currentImages = this.mapCurrentImages(raw);
 
         this.isLoading = false;
@@ -199,12 +274,45 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectCategory(categoryId: number): void {
-    this.formData.fk_categories_id =
-      this.formData.fk_categories_id === categoryId ? null : categoryId;
+  async onProvinceChange(province: string): Promise<void> {
+    this.formData.province = province;
+    this.formData.city = '';
+    this.ciudadesDisponibles = [];
+    this.locationError = '';
 
+    this.markTouched('province');
+    this.touchedFields.city = false;
+
+    if (province) {
+      await this.loadCitiesForProvince(province);
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  onCityChange(city: string): void {
+    this.formData.city = city;
+    this.locationError = '';
+    this.markTouched('city');
+    this.cdr.markForCheck();
+  }
+
+  selectCategory(categoryId: number): void {
+    this.formData.fk_categories_id = categoryId;
     this.markTouched('fk_categories_id');
     this.errorMessage = '';
+  }
+
+  selectCategoryFromSelect(categoryIdValue: string | number): void {
+    const categoryId = Number(categoryIdValue);
+
+    if (!categoryId) {
+      this.formData.fk_categories_id = null;
+      this.markTouched('fk_categories_id');
+      return;
+    }
+
+    this.selectCategory(categoryId);
   }
 
   markTouched(field: EditProductField): void {
@@ -275,14 +383,17 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
     this.isSubmitting = true;
 
+    const city = this.formData.city.trim();
+    const province = this.formData.province.trim();
+
     const body = {
       title: this.formData.title.trim(),
       description: this.formData.description.trim(),
       price: Number(this.formData.price),
       conservation_status: this.formData.conservation_status,
-      province: this.formData.province.trim(),
-      city: this.formData.city.trim(),
-      location: `${this.formData.city.trim()}, ${this.formData.province.trim()}`,
+      province,
+      city,
+      location: `${city}, ${province}`,
       fk_categories_id: Number(this.formData.fk_categories_id)
     } as Partial<ItemFormData>;
 
@@ -373,21 +484,27 @@ export class EditProductComponent implements OnInit, OnDestroy {
           : 'Selecciona el estado del producto.';
 
       case 'province': {
-        const province = this.formData.province.trim();
+        if (!this.formData.province) return 'Selecciona una provincia.';
 
-        if (!province) return 'Introduce la provincia.';
-        if (province.length < 2) return 'La provincia debe tener al menos 2 caracteres.';
-        if (province.length > 60) return 'La provincia no puede superar los 60 caracteres.';
+        if (
+          this.provincias.length > 0 &&
+          !this.provincias.includes(this.formData.province)
+        ) {
+          return 'Selecciona una provincia válida.';
+        }
 
         return '';
       }
 
       case 'city': {
-        const city = this.formData.city.trim();
+        if (!this.formData.city) return 'Selecciona una ciudad.';
 
-        if (!city) return 'Introduce la ciudad.';
-        if (city.length < 2) return 'La ciudad debe tener al menos 2 caracteres.';
-        if (city.length > 60) return 'La ciudad no puede superar los 60 caracteres.';
+        if (
+          this.ciudadesDisponibles.length > 0 &&
+          !this.ciudadesDisponibles.includes(this.formData.city)
+        ) {
+          return 'Selecciona una ciudad válida para la provincia elegida.';
+        }
 
         return '';
       }
@@ -555,8 +672,19 @@ export class EditProductComponent implements OnInit, OnDestroy {
   }
 
   private mapCurrentImages(raw: any): CurrentImage[] {
-    const photos = (raw.photos ?? [])
-      .map((photo: any) => photo.photo_url)
+    const imageSources = [
+      ...(Array.isArray(raw.photos) ? raw.photos : []),
+      ...(Array.isArray(raw.images) ? raw.images : []),
+      ...(Array.isArray(raw.product_images) ? raw.product_images : [])
+    ];
+
+    const photos = imageSources
+      .map((photo: any) =>
+        photo.photo_url ??
+        photo.image_url ??
+        photo.url ??
+        photo.src
+      )
       .filter(Boolean)
       .map((url: string, index: number) => ({
         url,
@@ -565,10 +693,17 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
     if (photos.length) return photos;
 
-    if (raw.main_photo) {
+    const mainPhoto =
+      raw.main_photo ??
+      raw.mainPhoto ??
+      raw.image ??
+      raw.thumbnail ??
+      '';
+
+    if (mainPhoto) {
       return [
         {
-          url: raw.main_photo,
+          url: mainPhoto,
           label: 'Principal'
         }
       ];
@@ -577,7 +712,46 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return [];
   }
 
+  private normalizeConservationStatus(value: unknown): string {
+    const key = String(value ?? '').toLowerCase().trim();
+
+    const labels: Record<string, string> = {
+      excellent: 'excellent',
+      'como nuevo': 'excellent',
+      like_new: 'excellent',
+      new: 'excellent',
+
+      very_good: 'very_good',
+      'muy buen estado': 'very_good',
+      verygood: 'very_good',
+
+      good: 'good',
+      'buen estado': 'good',
+
+      fair: 'fair',
+      used: 'fair',
+      usado: 'fair'
+    };
+
+    const publicationStatuses = [
+      'available',
+      'published',
+      'sold',
+      'paused',
+      'deleted',
+      'draft',
+      'under_review',
+      'removed'
+    ];
+
+    if (publicationStatuses.includes(key)) return '';
+
+    return labels[key] ?? '';
+  }
+
   private getBadgeLabel(status: string): string {
+    const key = String(status ?? '').toLowerCase().trim();
+
     const labels: Record<string, string> = {
       available: 'Disponible',
       sold: 'Vendido',
@@ -589,7 +763,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
       removed: 'Retirado'
     };
 
-    return labels[status] ?? status ?? 'Publicado';
+    return labels[key] ?? status ?? 'Publicado';
   }
 
   private extractCity(location?: string): string {
@@ -602,6 +776,15 @@ export class EditProductComponent implements OnInit, OnDestroy {
     if (!location) return '';
 
     return location.split(',')[1]?.trim() ?? '';
+  }
+
+  private withCategoryIcon(category: Category): Category {
+    const categoryIcon = String((category as any).icon ?? '').trim();
+
+    return {
+      ...category,
+      icon: categoryIcon || CATEGORY_ICONS[category.id_categories] || '/assets/images/Iconos%20categorias/icono_educativo.svg'
+    };
   }
 
   ngOnDestroy(): void {

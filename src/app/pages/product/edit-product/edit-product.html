@@ -1,5 +1,9 @@
 <div class="pattern-bg"></div>
 
+<div class="edit-product-breadcrumb">
+  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+</div>
+
 <main class="edit-product-page relative-z-10">
   @if (isLoading) {
     <section class="edit-product-state card-toybox">
@@ -150,17 +154,25 @@
               Provincia <span class="required-star">*</span>
             </label>
 
-            <input
+            <select
               id="province"
               name="province"
               class="form-control"
               [class.form-control--invalid]="isFieldInvalid('province')"
-              type="text"
-              maxlength="60"
-              [(ngModel)]="formData.province"
+              [ngModel]="formData.province"
+              (ngModelChange)="onProvinceChange($event)"
               (blur)="markTouched('province')"
+              [disabled]="isLoadingLocations"
               required
-            />
+            >
+              <option value="">
+                {{ isLoadingLocations ? 'Cargando provincias...' : 'Selecciona provincia' }}
+              </option>
+
+              @for (province of provincias; track province) {
+                <option [value]="province">{{ province }}</option>
+              }
+            </select>
 
             @if (getFieldError('province')) {
               <small class="field-error">
@@ -174,17 +186,31 @@
               Ciudad <span class="required-star">*</span>
             </label>
 
-            <input
+            <select
               id="city"
               name="city"
               class="form-control"
               [class.form-control--invalid]="isFieldInvalid('city')"
-              type="text"
-              maxlength="60"
-              [(ngModel)]="formData.city"
+              [ngModel]="formData.city"
+              (ngModelChange)="onCityChange($event)"
               (blur)="markTouched('city')"
+              [disabled]="!formData.province || isLoadingCities"
               required
-            />
+            >
+              <option value="">
+                @if (!formData.province) {
+                  Primero selecciona provincia
+                } @else if (isLoadingCities) {
+                  Cargando ciudades...
+                } @else {
+                  Selecciona ciudad
+                }
+              </option>
+
+              @for (city of ciudadesDisponibles; track city) {
+                <option [value]="city">{{ city }}</option>
+              }
+            </select>
 
             @if (getFieldError('city')) {
               <small class="field-error">
@@ -192,6 +218,14 @@
               </small>
             }
           </div>
+
+          @if (locationError) {
+            <div class="form-field form-field--full">
+              <p class="field-error">
+                {{ locationError }}
+              </p>
+            </div>
+          }
 
           <div class="form-field form-field--full">
             <label for="description">
@@ -246,24 +280,52 @@
           </p>
         }
 
-        <div class="category-selector">
-          @for (category of categories; track category.id_categories) {
-            <button
-              class="category-option"
-              [class.category-option--active]="formData.fk_categories_id === category.id_categories"
-              type="button"
-              (click)="selectCategory(category.id_categories)"
-            >
-              <span class="category-option__icon">
-                <img [src]="category.icon" [alt]="category.name" />
-              </span>
+        @if (isLoadingCategories) {
+          <p class="text-on-surface-variant">
+            Cargando categorías...
+          </p>
+        } @else {
+          <div class="category-mobile-select">
+            <label for="mobileCategory">
+              Categoría <span class="required-star">*</span>
+            </label>
 
-              <span class="category-option__name">
-                {{ category.name }}
-              </span>
-            </button>
-          }
-        </div>
+            <select
+              id="mobileCategory"
+              name="mobileCategory"
+              class="form-control"
+              [class.form-control--invalid]="isFieldInvalid('fk_categories_id')"
+              [ngModel]="formData.fk_categories_id ?? ''"
+              (ngModelChange)="selectCategoryFromSelect($event)"
+              required
+            >
+              <option value="">Selecciona categoría</option>
+
+              @for (category of categories; track category.id_categories) {
+                <option [value]="category.id_categories">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="category-selector">
+            @for (category of categories; track category.id_categories) {
+              <button
+                class="category-option"
+                [class.category-option--active]="formData.fk_categories_id === category.id_categories"
+                type="button"
+                (click)="selectCategory(category.id_categories)"
+              >
+                <span class="category-option__icon">
+                  <img [src]="category.icon" [alt]="category.name" />
+                </span>
+
+                <span class="category-option__name">
+                  {{ category.name }}
+                </span>
+              </button>
+            }
+          </div>
+        }
       </section>
 
       <section class="form-panel card-toybox">

@@ -414,4 +414,10 @@
     width: 100%;
     justify-content: center;
   }
+.breadcrumb-wrapper {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
 }

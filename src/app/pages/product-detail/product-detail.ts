@@ -6,6 +6,7 @@ import { takeUntil } from 'rxjs/operators';
 
 import { ImageGalleryComponent } from '../../shared/components/image-gallery/image-gallery';
 import { ProductCardComponent } from '../../shared/components/product-card/product-card';
+import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb';
 
 import { ProductsService } from '../../core/services/products.service';
 import { ReportsService } from '../../core/services/reports.service';
@@ -71,7 +72,7 @@ interface RelatedProduct {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [ImageGalleryComponent, ProductCardComponent],
+  imports: [BreadcrumbComponent, ImageGalleryComponent, ProductCardComponent],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css'
 })
