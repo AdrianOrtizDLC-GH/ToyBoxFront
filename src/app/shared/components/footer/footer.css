@@ -133,19 +133,37 @@
 
 @media (max-width: 480px) {
     .footer {
-        padding: 24px 16px 0;
+        padding: 20px 16px 0;
+    }
+
+    .footer-content {
+        gap: 20px;
     }
 
     .footer-links {
-        flex-direction: column;
-        gap: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
     }
 
     .footer-col {
-        min-width: 100%;
+        min-width: unset;
+    }
+
+    .footer-col h4 {
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+
+    .footer-col a {
+        font-size: 12px;
     }
 
     .footer-social {
-        gap: 20px;
+        gap: 16px;
+    }
+
+    .logo-img {
+        height: 28px;
     }
 }
