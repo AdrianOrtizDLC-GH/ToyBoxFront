@@ -3,28 +3,29 @@
   [class.tb-bubble--own]="isOwn"
   [class.tb-bubble--other]="!isOwn"
 >
-
-  <!-- MODIFICADO - Usar UserAvatarComponent en lugar de avatar manual -->
+ 
   @if (shouldShowAvatar) {
+
     <app-user-avatar
-      [src]="message.senderAvatar"
-      [name]="message.senderName"
+      [src]="displaySenderAvatar"
+      [name]="displaySenderName"
       size="small"
-      [attr.aria-label]="'Avatar de ' + message.senderName">
+      [attr.aria-label]="'Avatar de ' + displaySenderName">
     </app-user-avatar>
   }
-
+  
   <div class="tb-bubble__content">
+    
     @if (!isOwn) {
       <span class="tb-bubble__sender">
-        {{ message.senderName }}
+        {{ displaySenderName }}
       </span>
     }
 
     <div class="tb-bubble__text">
       {{ message.content }}
     </div>
-
+    
     <div class="tb-bubble__meta">
       <time
         class="tb-bubble__time"
@@ -32,6 +33,7 @@
       >
         {{ message.sent_date | date:'HH:mm' }}
       </time>
+      
       @if (isOwn) {
         <span
           class="material-symbols-outlined tb-bubble__status"
@@ -46,3 +48,4 @@
   </div>
 
 </div>
+
