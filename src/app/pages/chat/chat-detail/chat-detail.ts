@@ -1,10 +1,11 @@
 import {
   Component, OnInit, OnDestroy, AfterViewChecked,
-  ViewChild, ElementRef, NgZone, ChangeDetectorRef
+  ViewChild, ElementRef, NgZone, ChangeDetectorRef, effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { ChatItem } from '../../../shared/interfaces/chat.interface';
 import { ChatMessageWithSender } from '../../../shared/interfaces/message.interface';
 import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
@@ -33,6 +34,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
 
   private conversationsLoaded$ = new Subject<void>();
   private socketSub: Subscription | null = null;
+  private routeParamsSub: Subscription | null = null;
 
   get selectedConversation(): ChatItem | undefined {
     return this.conversations.find(c => c.id_conversations === this.selectedConversationId);
@@ -46,7 +48,11 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     private ngZone: NgZone,
     private cdr: ChangeDetectorRef
   ) {
-    this.currentUserId = this.authService.currentUser()?.id_users ?? null;
+    // Reactivo: si el usuario aún no había cargado al construir el componente,
+    // esto se actualiza en cuanto el signal del AuthService tenga valor.
+    effect(() => {
+      this.currentUserId = this.authService.currentUser()?.id_users ?? null;
+    });
   }
 
   private initializeBreadcrumbs(): void {
@@ -68,7 +74,6 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
           !this.messages.some(m => m.id_messages === msg.id_messages)
         ) {
           this.messages.push(msg);
-          // Marcar como leído automáticamente al recibir el mensaje si estamos en esa conversación
           if (this.selectedConversationId) {
             this.chatService.markAsRead(this.selectedConversationId).subscribe({
               next: () => this.loadConversations(),
@@ -83,8 +88,10 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     this.loadConversations();
     this.initializeBreadcrumbs();
 
-    this.conversationsLoaded$.subscribe(() => {
-      this.route.params.subscribe(params => {
+    // FIX: solo escuchamos la PRIMERA vez que se cargan las conversaciones (take(1)).
+    // A partir de ahí, route.params se suscribe UNA sola vez, no en cada loadConversations().
+    this.conversationsLoaded$.pipe(take(1)).subscribe(() => {
+      this.routeParamsSub = this.route.params.subscribe(params => {
         if (params['id']) {
           const chatId = +params['id'];
           this.selectConversation(chatId);
@@ -106,6 +113,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
       this.socketService.leaveConversation(this.selectedConversationId);
     }
     this.socketSub?.unsubscribe();
+    this.routeParamsSub?.unsubscribe();
     this.socketService.disconnect();
   }
 
@@ -119,7 +127,6 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     this.loadMessages(id);
     this.loadConversationData(id);
 
-    // Marcar como leído al seleccionar conversación y recargar lista
     this.chatService.markAsRead(id).subscribe({
       next: () => this.loadConversations(),
       error: (err) => console.error('Error marcando como leído:', err)

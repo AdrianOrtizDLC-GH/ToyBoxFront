@@ -2,105 +2,91 @@
 
 <div class="relative-z-10">
 
-    <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
+  <app-breadcrumb [items]="breadcrumbItems" [autoGenerate]="false"></app-breadcrumb>
 
-    <div class="chat-detail-page">
+  <div class="chat-detail-page">
 
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2 class="sidebar-title">Buzón</h2>
-            </div>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Buzón</h2>
+      </div>
 
-            <div class="sidebar-list">
-                @for (conv of conversations; track conv.id_conversations) {
-                <div class="sidebar-item" [class.active]="selectedConversationId === conv.id_conversations"
-                    (click)="selectConversation(conv.id_conversations)">
-                    <div class="sidebar-img">
-                        <img [src]="conv.itemImage || 'assets/images/placeholder.png'" [alt]="conv.itemTitle" />
-                    </div>
-                    <div class="sidebar-info">
-                        <span class="sidebar-username">{{ conv.otherUserName }}</span>
-                        <span class="sidebar-product">{{ conv.itemTitle }}</span>
-                        <span class="sidebar-preview">{{ conv.lastMessage }}</span>
-                    </div>
-                    @if (conv.unreadCount > 0) {
-                    <span class="unread-badge">{{ conv.unreadCount }}</span>
-                    }
-                </div>
-                }
-            </div>
-        </div>
-
-        <div class="chat-main">
-  
-          @if (selectedConversationId) {
-            
-            <div class="chat-header">
-              <div class="chat-header-product">
-                <img 
-                  [src]="selectedConversation?.itemImage || 'assets/images/placeholder.png'"
-                  [alt]="(conversations.find(c => c.id_conversations === selectedConversationId))?.itemTitle || 'Producto'" 
-                  class="header-product-img" 
-                />
-                <div>
-                  <p class="header-product-title">
-                    {{ selectedConversation?.itemTitle || 'Cargando...' }}
-                  </p>
-                  <p class="header-username">
-                    {{ selectedConversation?.otherUserName || 'Cargando...' }}
-                </div>
-              </div>
-            </div>
-
-            <div class="messages-container" #messagesContainer>
-              @if (messages.length > 0) {
-                @for (msg of messages; track msg.id_messages) {
-                  <app-chat-bubble
-                    [message]="msg"
-                    [isOwn]="msg.fk_users_id_sent === currentUserId"
-                  ></app-chat-bubble>
-                }
-              } @else {
-
-                <div class="no-messages">
-                  <p>Cargando mensajes...</p>
-                </div>
-              }
-            </div>
-
-
-            <div class="chat-input-bar">
-              <input 
-                type="text" 
-                class="chat-input" 
-                placeholder="Escribe un mensaje..." 
-                [value]="newMessage"
-                (input)="newMessage = $any($event.target).value" 
-                (keyup.enter)="sendMessage()" 
-              />
-              <button 
-                class="send-btn" 
-                (click)="sendMessage()" 
-                [disabled]="!newMessage.trim()"
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <line x1="22" y1="2" x2="11" y2="13" />
-                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                </svg>
-              </button>
-            </div>
-
-          } @else {
-            <div class="no-conversation">
-              <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              <p>Selecciona una conversación para empezar</p>
-            </div>
+      <div class="sidebar-list">
+        @for (conv of conversations; track conv.id_conversations) {
+        <div class="sidebar-item" [class.active]="selectedConversationId === conv.id_conversations"
+          (click)="selectConversation(conv.id_conversations)">
+          <div class="sidebar-img">
+            <img [src]="conv.itemImage || 'assets/images/placeholder.png'" [alt]="conv.itemTitle" />
+          </div>
+          <div class="sidebar-info">
+            <span class="sidebar-username">{{ conv.otherUserName }}</span>
+            <span class="sidebar-product">{{ conv.itemTitle }}</span>
+            <span class="sidebar-preview">{{ conv.lastMessage }}</span>
+          </div>
+          @if (conv.unreadCount > 0) {
+          <span class="unread-badge">{{ conv.unreadCount }}</span>
           }
-
         </div>
+        }
+      </div>
+    </div>
+
+    <div class="chat-main">
+
+      @if (selectedConversationId) {
+
+      <div class="chat-header">
+        <div class="chat-header-product">
+          <img [src]="selectedConversation?.itemImage || 'assets/images/placeholder.png'"
+            [alt]="(conversations.find(c => c.id_conversations === selectedConversationId))?.itemTitle || 'Producto'"
+            class="header-product-img" />
+          <div>
+            <p class="header-product-title">
+              {{ selectedConversation?.itemTitle || 'Cargando...' }}
+            </p>
+            <p class="header-username">
+              {{ selectedConversation?.otherUserName || 'Cargando...' }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="messages-container" #messagesContainer>
+        @if (messages.length > 0) {
+        @for (msg of messages; track msg.id_messages) {
+        <app-chat-bubble [message]="msg" [isOwn]="msg.fk_users_id_sent === currentUserId"></app-chat-bubble>
+        }
+        } @else {
+
+        <div class="no-messages">
+          <p>Cargando mensajes...</p>
+        </div>
+        }
+      </div>
+
+
+      <div class="chat-input-bar">
+        <input type="text" class="chat-input" placeholder="Escribe un mensaje..." [value]="newMessage"
+          (input)="newMessage = $any($event.target).value" (keyup.enter)="sendMessage()" />
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!newMessage.trim()">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+
+      } @else {
+      <div class="no-conversation">
+        <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <p>Selecciona una conversación para empezar</p>
+      </div>
+      }
 
     </div>
+
+  </div>
 
 </div>
