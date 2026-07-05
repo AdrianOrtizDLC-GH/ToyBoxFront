@@ -14,6 +14,10 @@ import { FavoritesService } from '../../core/services/favorites.service';
 import { ChatService } from '../../core/services/chat.service';
 import { ReviewsService } from '../../core/services/reviews.service';
 import { AuthService } from '../../core/services/auth.service';
+import {
+  ProductCondition,
+  PRODUCT_CONDITION_LABELS
+} from '../../shared/enums/product-condition.enum';
 
 const CONDITION_LABELS: Record<string, string> = {
   excellent: 'Como nuevo',
@@ -41,6 +45,7 @@ interface DetailProduct {
   price: number;
   location: string;
   status: string;
+  product_condition?: ProductCondition | string | null;
   badge: string;
   image: string;
   category: string;
@@ -65,6 +70,7 @@ interface RelatedProduct {
   price: number;
   location: string;
   status: string;
+  product_condition?: ProductCondition | string | null;
   image: string;
   badge: string;
 }
@@ -210,7 +216,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
               category: item.category?.name ?? 'Sin categoría',
               price: item.price,
               location: item.location,
-              status: CONDITION_LABELS[item.conservation_status] ?? item.conservation_status,
+              product_condition: (item as any).product_condition ?? null,
+              status: this.getProductConditionLabel({ product_condition: (item as any).product_condition }),
               image: item.image || '/assets/images/Iconos%20categorias/icono_educativo.svg',
               badge: BADGE_LABELS[item.item_status] ?? item.item_status,
             }));
@@ -479,6 +486,16 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  getProductConditionLabel(product: Partial<DetailProduct> | any): string {
+    const condition = product?.product_condition as ProductCondition | string | null | undefined;
+
+    if (!condition) return 'Sin estado';
+
+    return PRODUCT_CONDITION_LABELS[condition as ProductCondition]
+      ?? CONDITION_LABELS[String(condition)]
+      ?? 'Sin estado';
+  }
+
   private mapProduct(raw: any): DetailProduct {
     return {
       id: raw.id_items,
@@ -487,7 +504,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       description: raw.description ?? null,
       price: Number(raw.price),
       location: raw.location ?? 'Sin ubicación',
-      status: CONDITION_LABELS[raw.conservation_status] ?? raw.conservation_status ?? '',
+      product_condition: raw.product_condition ?? null,
+      status: this.getProductConditionLabel({ product_condition: raw.product_condition }),
       badge: BADGE_LABELS[raw.item_status] ?? raw.item_status ?? '',
       image: raw.main_photo ?? '',
       category: raw.category_name ?? raw.category?.name ?? '',
@@ -518,7 +536,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       description: null,
       price: 0,
       location: '',
-      status: '',
+      status: 'Sin estado',
+      product_condition: null,
       badge: '',
       image: '',
       category: '',
