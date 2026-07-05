@@ -26,8 +26,8 @@
   --font-text: 'Schoolbell', cursive;
 
   /* Effects */
-  --shadow-card: 0 4px 16px rgba(0,0,0,.08);
-  --shadow-hover: 0 8px 24px rgba(0,0,0,.12);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, .08);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, .12);
 
   --radius-lg: 1rem;
   --radius-md: .75rem;
@@ -45,12 +45,16 @@ html,
 body {
   margin: 0;
   padding: 0;
+  height: 100%;
 }
 
 body {
   font-family: var(--font-text);
   color: var(--color-black);
   background-color: var(--color-white);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Global typography  */
@@ -117,7 +121,7 @@ button {
 
 .form-control:focus {
   border-color: var(--primary-toybox);
-  box-shadow: 0 0 0 .2rem rgba(216,69,101,.2);
+  box-shadow: 0 0 0 .2rem rgba(216, 69, 101, .2);
 }
 
 /* Wrapper for inputs with icons */
@@ -211,7 +215,7 @@ button {
 
 .btn-icon:hover {
   color: var(--primary-toybox);
-  background-color: rgba(0,0,0,.04);
+  background-color: rgba(0, 0, 0, .04);
 }
 
 /* Links  */
@@ -262,7 +266,7 @@ button {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0,0,0,.65);
+  background-color: rgba(0, 0, 0, .65);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,14 +285,27 @@ button {
 }
 
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @media (max-width: 768px) {
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.7rem; }
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.7rem;
+  }
 }
+
 .breadcrumb-wrapper {
   position: relative;
   z-index: 10;
