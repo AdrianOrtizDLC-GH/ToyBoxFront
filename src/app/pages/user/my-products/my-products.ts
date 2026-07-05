@@ -26,18 +26,8 @@ import { ConservationStatus } from '../../../shared/enums/conservation-status.en
 @Component({
   selector: 'app-my-products',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    PaginationComponent,
-    LoadingSpinnerComponent,
-    StatusBadgeComponent,
-    ModalConfirmComponent,
-    EmptyStateComponent,
-    BreadcrumbComponent,
-    ToastComponent
-  ],
+  imports: [CommonModule,RouterModule, FormsModule, PaginationComponent,LoadingSpinnerComponent, StatusBadgeComponent,
+    ModalConfirmComponent,EmptyStateComponent,BreadcrumbComponent,ToastComponent],
   templateUrl: './my-products.html',
   styleUrl: './my-products.css',
 })
@@ -197,6 +187,42 @@ export class MyProductsComponent implements OnInit, OnDestroy {
 
   editProduct(id: number): void {
     this.router.navigate(['/product/edit', id]);
+  }
+
+  publishDraft(product: Item): void {
+    if (!product) return;
+
+    this.isLoadingProducts.set(true);
+    this.productsService.publish(product.id_items)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.showToast('success', 'Publicado', 'El producto ha sido publicado correctamente.');
+          
+          const updatedItems = this.allMyItems().map(p =>
+            p.id_items === product.id_items
+              ? {
+                  ...p,
+                  conservation_status: ConservationStatus.Published, 
+                  publication_date: new Date().toISOString()
+                }
+              : p
+          );
+          this.allMyItems.set(updatedItems);
+
+          setTimeout(() => {
+            this.loadAllMyItems();
+          }, 500);
+        },
+        error: (err) => {
+          this.isLoadingProducts.set(false);
+          this.showToast('error', 'Error', 'No se pudo publicar el producto. Intenta de nuevo.');
+          console.error('Error publishing draft:', err);
+        },
+        complete: () => {
+          this.isLoadingProducts.set(false);
+        }
+      });
   }
 
   markAsSold(product: Item): void {

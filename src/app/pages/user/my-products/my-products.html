@@ -195,13 +195,13 @@
                 </p>
               </div>
 
-              <div class="col-actions">
-                <button class="icon-btn" title="Ver" (click)="viewProduct(product.id_items)">
-                  <span class="material-symbols-outlined">visibility</span>
-                </button>
-
-                <button class="icon-btn" title="Editar" (click)="editProduct(product.id_items)">
-                  <span class="material-symbols-outlined">edit</span>
+               <div class="col-actions">
+                <button 
+                  class="icon-btn publish" 
+                  title="Publicar" 
+                  [disabled]="isLoadingProducts()"
+                  (click)="publishDraft(product)">
+                  <span class="material-symbols-outlined">publish</span>
                 </button>
 
                 <button class="icon-btn delete" title="Eliminar" (click)="confirmDelete(product)">
