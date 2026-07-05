@@ -1,310 +1,400 @@
 {
   "Álava": {
-    "ciudades": ["Vitoria-Gasteiz", "Llodio", "Salvatierra", "Amurrio", "Oyón", "Laguardia"],
+    "ciudades": ["Vitoria-Gasteiz", "Llodio", "Salvatierra", "Amurrio", "Oyón", "Laguardia", "Labastida", "Villabuena"],
     "codigosPostales": {
-      "Vitoria-Gasteiz": ["01001", "01002", "01003", "01004", "01005", "01006", "01007", "01008", "01009"],
-      "Llodio": ["01400", "01401"],
-      "Salvatierra": ["01200", "01201"],
-      "Amurrio": ["01470", "01471"],
+      "Vitoria-Gasteiz": ["01001", "01002", "01003", "01004", "01005", "01006", "01007", "01008", "01009", "01010", "01011", "01012", "01013", "01014", "01015"],
+      "Llodio": ["01400", "01401", "01402"],
+      "Salvatierra": ["01200", "01201", "01202"],
+      "Amurrio": ["01470", "01471", "01472"],
       "Oyón": ["01340", "01341"],
-      "Laguardia": ["01300", "01301"]
+      "Laguardia": ["01300", "01301"],
+      "Labastida": ["01330", "01331"],
+      "Villabuena": ["01320", "01321"]
     }
   },
   "Albacete": {
-    "ciudades": ["Albacete", "Villarrobledo", "La Roda", "Hellín", "Almansa"],
+    "ciudades": ["Albacete", "Villarrobledo", "La Roda", "Hellín", "Almansa", "Pérez", "Balazote", "Tobarra"],
     "codigosPostales": {
-      "Albacete": ["02001", "02002", "02003", "02004", "02005"],
-      "Villarrobledo": ["02600", "02601"],
+      "Albacete": ["02001", "02002", "02003", "02004", "02005", "02006", "02007"],
+      "Villarrobledo": ["02600", "02601", "02602"],
       "La Roda": ["02630", "02631"],
-      "Hellín": ["02400", "02401"],
-      "Almansa": ["02640", "02641"]
+      "Hellín": ["02400", "02401", "02402"],
+      "Almansa": ["02640", "02641"],
+      "Pérez": ["02660", "02661"],
+      "Balazote": ["02590", "02591"],
+      "Tobarra": ["02560", "02561"]
     }
   },
   "Alicante": {
-    "ciudades": ["Alicante", "Elche", "Torrevieja", "Alcoy", "San Vicente del Raspeig", "Benidorm", "Dénia", "Orihuela", "Villena", "Jijona"],
+    "ciudades": ["Alicante", "Elche", "Torrevieja", "Alcoy", "San Vicente del Raspeig", "Benidorm", "Dénia", "Orihuela", "Villena", "Jijona", "Ondara", "Petrer"],
     "codigosPostales": {
-      "Alicante": ["03001", "03002", "03003", "03004", "03005", "03006"],
-      "Elche": ["03200", "03201", "03202"],
-      "Torrevieja": ["03180", "03181"],
-      "Alcoy": ["03801", "03802"],
+      "Alicante": ["03001", "03002", "03003", "03004", "03005", "03006", "03007", "03008", "03009", "03010", "03011", "03012", "03013"],
+      "Elche": ["03200", "03201", "03202", "03203"],
+      "Torrevieja": ["03180", "03181", "03182"],
+      "Alcoy": ["03801", "03802", "03803"],
       "San Vicente del Raspeig": ["03690", "03691"],
-      "Benidorm": ["03500", "03501"],
-      "Dénia": ["03700", "03701"],
-      "Orihuela": ["03300", "03301"],
-      "Villena": ["03400", "03401"],
-      "Jijona": ["03600", "03601"]
+      "Benidorm": ["03500", "03501", "03502"],
+      "Dénia": ["03700", "03701", "03702"],
+      "Orihuela": ["03300", "03301", "03302"],
+      "Villena": ["03400", "03401", "03402"],
+      "Jijona": ["03600", "03601"],
+      "Ondara": ["03760", "03761"],
+      "Petrer": ["03610", "03611"]
     }
   },
   "Almería": {
-    "ciudades": ["Almería", "El Ejido", "Roquetas de Mar", "Vera", "Adra", "Níjar"],
+    "ciudades": ["Almería", "El Ejido", "Roquetas de Mar", "Vera", "Adra", "Níjar", "Vícar", "Berja"],
     "codigosPostales": {
-      "Almería": ["04001", "04002", "04003", "04004"],
-      "El Ejido": ["04700", "04701"],
-      "Roquetas de Mar": ["04740", "04741"],
-      "Vera": ["04620", "04621"],
+      "Almería": ["04001", "04002", "04003", "04004", "04005", "04006", "04007"],
+      "El Ejido": ["04700", "04701", "04702"],
+      "Roquetas de Mar": ["04740", "04741", "04742"],
+      "Vera": ["04620", "04621", "04622"],
       "Adra": ["04400", "04401"],
-      "Níjar": ["04100", "04101"]
+      "Níjar": ["04100", "04101", "04102"],
+      "Vícar": ["04738", "04739"],
+      "Berja": ["04480", "04481"]
+    }
+  },
+  "Asturias": {
+    "ciudades": ["Oviedo", "Gijón", "Avilés", "Mieres", "Siero", "Llanera", "Langreo", "Morales"],
+    "codigosPostales": {
+      "Oviedo": ["33001", "33002", "33003", "33004", "33005", "33006", "33007", "33008", "33009", "33010", "33011"],
+      "Gijón": ["33200", "33201", "33202", "33203", "33204", "33205", "33206"],
+      "Avilés": ["33400", "33401", "33402", "33403"],
+      "Mieres": ["33600", "33601", "33602"],
+      "Siero": ["33510", "33511"],
+      "Llanera": ["33430", "33431"],
+      "Langreo": ["33950", "33951"],
+      "Morales": ["33460", "33461"]
     }
   },
   "Ávila": {
-    "ciudades": ["Ávila", "Arévalo", "Madrigal de las Altas Torres", "Piedrahita", "Candeleda"],
+    "ciudades": ["Ávila", "Arévalo", "Madrigal de las Altas Torres", "Piedrahita", "Candeleda", "Navaluenga", "San Juan de la Nava"],
     "codigosPostales": {
-      "Ávila": ["05001", "05002", "05003", "05004"],
+      "Ávila": ["05001", "05002", "05003", "05004", "05005", "05006"],
       "Arévalo": ["05200", "05201"],
       "Madrigal de las Altas Torres": ["05250", "05251"],
       "Piedrahita": ["05500", "05501"],
-      "Candeleda": ["05480", "05481"]
+      "Candeleda": ["05480", "05481"],
+      "Navaluenga": ["05430", "05431"],
+      "San Juan de la Nava": ["05330", "05331"]
     }
   },
   "Badajoz": {
-    "ciudades": ["Badajoz", "Mérida", "Almendralejo", "Olivenza", "Montijo", "Zafra", "Don Benito"],
+    "ciudades": ["Badajoz", "Mérida", "Almendralejo", "Olivenza", "Montijo", "Zafra", "Don Benito", "Fregenal"],
     "codigosPostales": {
-      "Badajoz": ["06001", "06002", "06003", "06004"],
-      "Mérida": ["06800", "06801"],
-      "Almendralejo": ["06700", "06701"],
+      "Badajoz": ["06001", "06002", "06003", "06004", "06005", "06006", "06007"],
+      "Mérida": ["06800", "06801", "06802"],
+      "Almendralejo": ["06700", "06701", "06702"],
       "Olivenza": ["06460", "06461"],
       "Montijo": ["06180", "06181"],
-      "Zafra": ["06300", "06301"],
-      "Don Benito": ["06400", "06401"]
+      "Zafra": ["06300", "06301", "06302"],
+      "Don Benito": ["06400", "06401"],
+      "Fregenal": ["06340", "06341"]
     }
   },
   "Barcelona": {
-    "ciudades": ["Barcelona", "Sabadell", "Terrassa", "Hospitalet de Llobregat", "Badalona", "Sant Cugat del Vallès", "Cornellá de Llobregat", "San Feliu de Llobregat", "Viladecans", "Castelldefels", "Rubí", "Martorell", "Manresa", "Granollers"],
+    "ciudades": ["Barcelona", "Sabadell", "Terrassa", "Hospitalet de Llobregat", "Badalona", "Sant Cugat del Vallès", "Cornellá de Llobregat", "San Feliu de Llobregat", "Viladecans", "Castelldefels", "Martorell", "Manresa", "Granollers", "Mataró", "Santa Coloma de Gramenet", "Sant Boi de Llobregat"],
     "codigosPostales": {
-      "Barcelona": ["08001", "08002", "08003", "08004", "08005", "08006", "08007", "08008", "08009", "08010", "08011", "08012", "08013", "08014"],
-      "Sabadell": ["08200", "08201"],
-      "Terrassa": ["08222", "08223"],
-      "Hospitalet de Llobregat": ["08901", "08902"],
-      "Badalona": ["08911", "08912"],
-      "Sant Cugat del Vallès": ["08190", "08191"],
+      "Barcelona": ["08001", "08002", "08003", "08004", "08005", "08006", "08007", "08008", "08009", "08010", "08011", "08012", "08013", "08014", "08015", "08016", "08017", "08018", "08019", "08020", "08021", "08022", "08023", "08024", "08025", "08026", "08027", "08028"],
+      "Sabadell": ["08200", "08201", "08202", "08203"],
+      "Terrassa": ["08222", "08223", "08224", "08225"],
+      "Hospitalet de Llobregat": ["08901", "08902", "08903", "08904"],
+      "Badalona": ["08911", "08912", "08913", "08914"],
+      "Sant Cugat del Vallès": ["08190", "08191", "08192"],
       "Cornellá de Llobregat": ["08940", "08941"],
       "San Feliu de Llobregat": ["08980", "08981"],
       "Viladecans": ["08840", "08841"],
       "Castelldefels": ["08860", "08861"],
-      "Rubí": ["08191", "08192"],
       "Martorell": ["08760", "08761"],
       "Manresa": ["08240", "08241"],
-      "Granollers": ["08400", "08401"]
+      "Granollers": ["08400", "08401"],
+      "Mataró": ["08300", "08301", "08302"],
+      "Santa Coloma de Gramenet": ["08921", "08922"],
+      "Sant Boi de Llobregat": ["08830", "08831"]
     }
   },
   "Burgos": {
-    "ciudades": ["Burgos", "Miranda de Ebro", "Aranda de Duero", "Briviesca", "Lerma"],
+    "ciudades": ["Burgos", "Miranda de Ebro", "Aranda de Duero", "Briviesca", "Lerma", "Belorado", "Quintanar"],
     "codigosPostales": {
-      "Burgos": ["09001", "09002", "09003", "09004"],
-      "Miranda de Ebro": ["09200", "09201"],
-      "Aranda de Duero": ["09400", "09401"],
+      "Burgos": ["09001", "09002", "09003", "09004", "09005", "09006", "09007"],
+      "Miranda de Ebro": ["09200", "09201", "09202"],
+      "Aranda de Duero": ["09400", "09401", "09402"],
       "Briviesca": ["09300", "09301"],
-      "Lerma": ["09340", "09341"]
+      "Lerma": ["09340", "09341"],
+      "Belorado": ["09250", "09251"],
+      "Quintanar": ["09670", "09671"]
     }
   },
   "Cáceres": {
-    "ciudades": ["Cáceres", "Plasencia", "Navalmoral de la Mata", "Hervás", "Jarandilla de la Vera"],
+    "ciudades": ["Cáceres", "Plasencia", "Navalmoral de la Mata", "Hervás", "Jarandilla de la Vera", "Trujillo", "Casar de Cáceres"],
     "codigosPostales": {
-      "Cáceres": ["10001", "10002", "10003"],
-      "Plasencia": ["10600", "10601"],
+      "Cáceres": ["10001", "10002", "10003", "10004", "10005"],
+      "Plasencia": ["10600", "10601", "10602"],
       "Navalmoral de la Mata": ["10500", "10501"],
       "Hervás": ["10430", "10431"],
-      "Jarandilla de la Vera": ["10450", "10451"]
+      "Jarandilla de la Vera": ["10450", "10451"],
+      "Trujillo": ["10200", "10201"],
+      "Casar de Cáceres": ["10050", "10051"]
     }
   },
   "Cádiz": {
-    "ciudades": ["Cádiz", "Jerez de la Frontera", "Algeciras", "Chiclana de la Frontera", "Puerto Real", "San Fernando", "Arcos de la Frontera", "Sanlúcar de Barrameda", "La Línea de la Concepción"],
+    "ciudades": ["Cádiz", "Jerez de la Frontera", "Algeciras", "Chiclana de la Frontera", "Puerto Real", "San Fernando", "Arcos de la Frontera", "Sanlúcar de Barrameda", "La Línea de la Concepción", "Conil"],
     "codigosPostales": {
-      "Cádiz": ["11001", "11002", "11003", "11004"],
-      "Jerez de la Frontera": ["11400", "11401"],
-      "Algeciras": ["11201", "11202"],
-      "Chiclana de la Frontera": ["11130", "11131"],
+      "Cádiz": ["11001", "11002", "11003", "11004", "11005", "11006"],
+      "Jerez de la Frontera": ["11400", "11401", "11402", "11403"],
+      "Algeciras": ["11201", "11202", "11203"],
+      "Chiclana de la Frontera": ["11130", "11131", "11132"],
       "Puerto Real": ["11510", "11511"],
-      "San Fernando": ["11100", "11101"],
+      "San Fernando": ["11100", "11101", "11102"],
       "Arcos de la Frontera": ["11630", "11631"],
-      "Sanlúcar de Barrameda": ["11540", "11541"],
-      "La Línea de la Concepción": ["11300", "11301"]
+      "Sanlúcar de Barrameda": ["11540", "11541", "11542"],
+      "La Línea de la Concepción": ["11300", "11301"],
+      "Conil": ["11140", "11141"]
+    }
+  },
+  "Cantabria": {
+    "ciudades": ["Santander", "Torrelavega", "Castro Urdiales", "Laredo", "Santoña", "Puente Viesgo", "Liérganes"],
+    "codigosPostales": {
+      "Santander": ["39001", "39002", "39003", "39004", "39005", "39006", "39007", "39008", "39009"],
+      "Torrelavega": ["39300", "39301", "39302"],
+      "Castro Urdiales": ["39700", "39701"],
+      "Laredo": ["39680", "39681"],
+      "Santoña": ["39740", "39741"],
+      "Puente Viesgo": ["39470", "39471"],
+      "Liérganes": ["39320", "39321"]
     }
   },
   "Castellón": {
-    "ciudades": ["Castellón de la Plana", "Villarreal", "Burriana", "Oropesa del Mar", "Nules"],
+    "ciudades": ["Castellón de la Plana", "Villarreal", "Burriana", "Oropesa del Mar", "Nules", "Peñíscola", "Benicasim"],
     "codigosPostales": {
-      "Castellón de la Plana": ["12001", "12002", "12003"],
-      "Villarreal": ["12500", "12501"],
+      "Castellón de la Plana": ["12001", "12002", "12003", "12004", "12005", "12006"],
+      "Villarreal": ["12500", "12501", "12502"],
       "Burriana": ["12530", "12531"],
       "Oropesa del Mar": ["12594", "12595"],
-      "Nules": ["12400", "12401"]
+      "Nules": ["12400", "12401"],
+      "Peñíscola": ["12598", "12599"],
+      "Benicasim": ["12560", "12561"]
     }
   },
   "Ciudad Real": {
-    "ciudades": ["Ciudad Real", "Puertollano", "Alcázar de San Juan", "Manzanares", "Valdepeñas"],
+    "ciudades": ["Ciudad Real", "Puertollano", "Alcázar de San Juan", "Manzanares", "Valdepeñas", "Daimiel", "Tomelloso"],
     "codigosPostales": {
-      "Ciudad Real": ["13001", "13002", "13003"],
-      "Puertollano": ["13500", "13501"],
-      "Alcázar de San Juan": ["13600", "13601"],
-      "Manzanares": ["13200", "13201"],
-      "Valdepeñas": ["13300", "13301"]
+      "Ciudad Real": ["13001", "13002", "13003", "13004", "13005"],
+      "Puertollano": ["13500", "13501", "13502"],
+      "Alcázar de San Juan": ["13600", "13601", "13602"],
+      "Manzanares": ["13200", "13201", "13202"],
+      "Valdepeñas": ["13300", "13301"],
+      "Daimiel": ["13250", "13251"],
+      "Tomelloso": ["13700", "13701"]
     }
   },
   "Córdoba": {
-    "ciudades": ["Córdoba", "Lucena", "Montilla", "Priego de Córdoba", "Pozoblanco"],
+    "ciudades": ["Córdoba", "Lucena", "Montilla", "Priego de Córdoba", "Pozoblanco", "Cabra", "Baena"],
     "codigosPostales": {
-      "Córdoba": ["14001", "14002", "14003", "14004"],
-      "Lucena": ["14900", "14901"],
-      "Montilla": ["14550", "14551"],
+      "Córdoba": ["14001", "14002", "14003", "14004", "14005", "14006", "14007"],
+      "Lucena": ["14900", "14901", "14902"],
+      "Montilla": ["14550", "14551", "14552"],
       "Priego de Córdoba": ["14800", "14801"],
-      "Pozoblanco": ["14400", "14401"]
+      "Pozoblanco": ["14400", "14401"],
+      "Cabra": ["14940", "14941"],
+      "Baena": ["14850", "14851"]
     }
   },
   "Cuenca": {
-    "ciudades": ["Cuenca", "Tarancón", "San Clemente", "Requena"],
+    "ciudades": ["Cuenca", "Tarancón", "San Clemente", "Requena", "Huete", "Motilla"],
     "codigosPostales": {
-      "Cuenca": ["16001", "16002", "16003"],
+      "Cuenca": ["16001", "16002", "16003", "16004"],
       "Tarancón": ["16400", "16401"],
       "San Clemente": ["16200", "16201"],
-      "Requena": ["16100", "16101"]
+      "Requena": ["16100", "16101"],
+      "Huete": ["16150", "16151"],
+      "Motilla": ["16200", "16201"]
     }
   },
-  "Gerona": {
-    "ciudades": ["Girona", "Salt", "Blanes", "Lloret de Mar", "Olot", "Figueres", "Roses"],
+  "Girona": {
+    "ciudades": ["Girona", "Salt", "Blanes", "Lloret de Mar", "Olot", "Figueres", "Roses", "Puigcerdà"],
     "codigosPostales": {
-      "Girona": ["17001", "17002", "17003"],
+      "Girona": ["17001", "17002", "17003", "17004", "17005"],
       "Salt": ["17190", "17191"],
       "Blanes": ["17300", "17301"],
       "Lloret de Mar": ["17310", "17311"],
       "Olot": ["17800", "17801"],
       "Figueres": ["17600", "17601"],
-      "Roses": ["17480", "17481"]
+      "Roses": ["17480", "17481"],
+      "Puigcerdà": ["17520", "17521"]
     }
   },
   "Granada": {
-    "ciudades": ["Granada", "Motril", "Almuñécar", "Loja", "Guadix", "Baza"],
+    "ciudades": ["Granada", "Motril", "Almuñécar", "Loja", "Guadix", "Baza", "Maracena", "Pinos Puente"],
     "codigosPostales": {
-      "Granada": ["18001", "18002", "18003", "18004"],
-      "Motril": ["18600", "18601"],
+      "Granada": ["18001", "18002", "18003", "18004", "18005", "18006", "18007"],
+      "Motril": ["18600", "18601", "18602"],
       "Almuñécar": ["18690", "18691"],
       "Loja": ["18300", "18301"],
       "Guadix": ["18500", "18501"],
-      "Baza": ["18800", "18801"]
+      "Baza": ["18800", "18801"],
+      "Maracena": ["18016", "18017"],
+      "Pinos Puente": ["18120", "18121"]
     }
   },
   "Guadalajara": {
-    "ciudades": ["Guadalajara", "Azuqueca de Henares", "Molina de Aragón", "Sigüenza"],
+    "ciudades": ["Guadalajara", "Azuqueca de Henares", "Molina de Aragón", "Sigüenza", "Atienza", "Cogolludo"],
     "codigosPostales": {
-      "Guadalajara": ["19001", "19002", "19003"],
-      "Azuqueca de Henares": ["19200", "19201"],
+      "Guadalajara": ["19001", "19002", "19003", "19004", "19005"],
+      "Azuqueca de Henares": ["19200", "19201", "19202"],
       "Molina de Aragón": ["19300", "19301"],
-      "Sigüenza": ["19250", "19251"]
+      "Sigüenza": ["19250", "19251"],
+      "Atienza": ["19260", "19261"],
+      "Cogolludo": ["19270", "19271"]
     }
   },
   "Guipúzcoa": {
-    "ciudades": ["San Sebastián", "Eibar", "Arrasate", "Irún", "Deba", "Tolosa"],
+    "ciudades": ["San Sebastián", "Eibar", "Arrasate", "Irún", "Deba", "Tolosa", "Lezo", "Oñati"],
     "codigosPostales": {
-      "San Sebastián": ["20001", "20002", "20003", "20004"],
-      "Eibar": ["20600", "20601"],
+      "San Sebastián": ["20001", "20002", "20003", "20004", "20005", "20006", "20007"],
+      "Eibar": ["20600", "20601", "20602"],
       "Arrasate": ["20570", "20571"],
-      "Irún": ["20301", "20302"],
+      "Irún": ["20301", "20302", "20303"],
       "Deba": ["20820", "20821"],
-      "Tolosa": ["20400", "20401"]
+      "Tolosa": ["20400", "20401", "20402"],
+      "Lezo": ["20140", "20141"],
+      "Oñati": ["20560", "20561"]
     }
   },
   "Huelva": {
-    "ciudades": ["Huelva", "Ayamonte", "Moguer", "Isla Cristina", "Lepe"],
+    "ciudades": ["Huelva", "Ayamonte", "Moguer", "Isla Cristina", "Lepe", "Nerva", "Valverde del Camino"],
     "codigosPostales": {
-      "Huelva": ["21001", "21002", "21003"],
+      "Huelva": ["21001", "21002", "21003", "21004", "21005"],
       "Ayamonte": ["21640", "21641"],
       "Moguer": ["21800", "21801"],
       "Isla Cristina": ["21410", "21411"],
-      "Lepe": ["21440", "21441"]
+      "Lepe": ["21440", "21441"],
+      "Nerva": ["21370", "21371"],
+      "Valverde del Camino": ["21340", "21341"]
     }
   },
   "Huesca": {
-    "ciudades": ["Huesca", "Barbastro", "Fraga", "Monzón", "Sabiñánigo"],
+    "ciudades": ["Huesca", "Barbastro", "Fraga", "Monzón", "Sabiñánigo", "Binéfar", "Jaca"],
     "codigosPostales": {
-      "Huesca": ["22001", "22002", "22003"],
-      "Barbastro": ["22300", "22301"],
+      "Huesca": ["22001", "22002", "22003", "22004", "22005"],
+      "Barbastro": ["22300", "22301", "22302"],
       "Fraga": ["22520", "22521"],
-      "Monzón": ["22400", "22401"],
-      "Sabiñánigo": ["22600", "22601"]
+      "Monzón": ["22400", "22401", "22402"],
+      "Sabiñánigo": ["22600", "22601"],
+      "Binéfar": ["22500", "22501"],
+      "Jaca": ["22700", "22701"]
+    }
+  },
+  "Islas Baleares": {
+    "ciudades": ["Palma", "Calvià", "Llucmayor", "Manacor", "Inca", "Alcúdia", "Ibiza", "Formentera"],
+    "codigosPostales": {
+      "Palma": ["07001", "07002", "07003", "07004", "07005", "07006", "07007", "07008", "07009", "07010"],
+      "Calvià": ["07160", "07161", "07162"],
+      "Llucmayor": ["07620", "07621"],
+      "Manacor": ["07500", "07501", "07502"],
+      "Inca": ["07300", "07301", "07302"],
+      "Alcúdia": ["07400", "07401"],
+      "Ibiza": ["07800", "07801", "07802"],
+      "Formentera": ["07870", "07871"]
     }
   },
   "Jaén": {
-    "ciudades": ["Jaén", "Linares", "Úbeda", "Baeza", "Andújar"],
+    "ciudades": ["Jaén", "Linares", "Úbeda", "Baeza", "Andújar", "La Carolina", "Martos"],
     "codigosPostales": {
-      "Jaén": ["23001", "23002", "23003"],
-      "Linares": ["23700", "23701"],
-      "Úbeda": ["23400", "23401"],
+      "Jaén": ["23001", "23002", "23003", "23004", "23005"],
+      "Linares": ["23700", "23701", "23702"],
+      "Úbeda": ["23400", "23401", "23402"],
       "Baeza": ["23440", "23441"],
-      "Andújar": ["23740", "23741"]
+      "Andújar": ["23740", "23741"],
+      "La Carolina": ["23200", "23201"],
+      "Martos": ["23600", "23601"]
     }
   },
   "La Coruña": {
-    "ciudades": ["A Coruña", "Ferrol", "Oleiros", "Sada", "Culleredo", "Arteixo"],
+    "ciudades": ["A Coruña", "Ferrol", "Oleiros", "Sada", "Culleredo", "Arteixo", "Noia", "Padrón"],
     "codigosPostales": {
-      "A Coruña": ["15001", "15002", "15003"],
-      "Ferrol": ["15401", "15402"],
+      "A Coruña": ["15001", "15002", "15003", "15004", "15005", "15006"],
+      "Ferrol": ["15401", "15402", "15403"],
       "Oleiros": ["15172", "15173"],
       "Sada": ["15140", "15141"],
       "Culleredo": ["15190", "15191"],
-      "Arteixo": ["15142", "15143"]
+      "Arteixo": ["15142", "15143"],
+      "Noia": ["15200", "15201"],
+      "Padrón": ["15900", "15901"]
     }
   },
   "La Rioja": {
-    "ciudades": ["Logroño", "Calahorra", "Arnedo", "Alfaro", "Haro"],
+    "ciudades": ["Logroño", "Calahorra", "Arnedo", "Alfaro", "Haro", "Nájera", "Santo Domingo de la Calzada"],
     "codigosPostales": {
-      "Logroño": ["26001", "26002", "26003", "26004"],
-      "Calahorra": ["26500", "26501"],
+      "Logroño": ["26001", "26002", "26003", "26004", "26005", "26006"],
+      "Calahorra": ["26500", "26501", "26502"],
       "Arnedo": ["26580", "26581"],
       "Alfaro": ["26540", "26541"],
-      "Haro": ["26200", "26201"]
+      "Haro": ["26200", "26201"],
+      "Nájera": ["26220", "26221"],
+      "Santo Domingo de la Calzada": ["26250", "26251"]
     }
   },
   "Las Palmas": {
-    "ciudades": ["Las Palmas de Gran Canaria", "Santa Lucía", "Telde", "Arrecife"],
+    "ciudades": ["Las Palmas de Gran Canaria", "Santa Lucía", "Telde", "Arrecife", "Maspalomas", "Puerto del Rosario"],
     "codigosPostales": {
-      "Las Palmas de Gran Canaria": ["35001", "35002", "35003"],
+      "Las Palmas de Gran Canaria": ["35001", "35002", "35003", "35004", "35005", "35006"],
       "Santa Lucía": ["35120", "35121"],
-      "Telde": ["35200", "35201"],
-      "Arrecife": ["35500", "35501"]
+      "Telde": ["35200", "35201", "35202"],
+      "Arrecife": ["35500", "35501"],
+      "Maspalomas": ["35100", "35101"],
+      "Puerto del Rosario": ["35600", "35601"]
     }
   },
   "León": {
-    "ciudades": ["León", "Ponferrada", "Astorga", "La Bañeza", "Villafranca del Bierzo"],
+    "ciudades": ["León", "Ponferrada", "Astorga", "La Bañeza", "Villafranca del Bierzo", "Sahagún", "La Vecilla"],
     "codigosPostales": {
-      "León": ["24001", "24002", "24003"],
-      "Ponferrada": ["24400", "24401"],
+      "León": ["24001", "24002", "24003", "24004", "24005", "24006"],
+      "Ponferrada": ["24400", "24401", "24402"],
       "Astorga": ["24700", "24701"],
       "La Bañeza": ["24750", "24751"],
-      "Villafranca del Bierzo": ["24500", "24501"]
+      "Villafranca del Bierzo": ["24500", "24501"],
+      "Sahagún": ["24320", "24321"],
+      "La Vecilla": ["24160", "24161"]
     }
   },
   "Lleida": {
-    "ciudades": ["Lleida", "Balaguer", "Tàrrega", "Cervera", "Mollerussa"],
+    "ciudades": ["Lleida", "Balaguer", "Tàrrega", "Cervera", "Mollerussa", "Solsona", "Vilagrassa"],
     "codigosPostales": {
-      "Lleida": ["25001", "25002", "25003"],
-      "Balaguer": ["25600", "25601"],
+      "Lleida": ["25001", "25002", "25003", "25004", "25005"],
+      "Balaguer": ["25600", "25601", "25602"],
       "Tàrrega": ["25300", "25301"],
       "Cervera": ["25200", "25201"],
-      "Mollerussa": ["25230", "25231"]
+      "Mollerussa": ["25230", "25231"],
+      "Solsona": ["25280", "25281"],
+      "Vilagrassa": ["25210", "25211"]
     }
   },
   "Lugo": {
-    "ciudades": ["Lugo", "Monforte de Lemos", "Guitiriz", "Chantada", "Sarria"],
+    "ciudades": ["Lugo", "Monforte de Lemos", "Guitiriz", "Chantada", "Sarria", "Viveiro", "Vilalba"],
     "codigosPostales": {
-      "Lugo": ["27001", "27002", "27003"],
+      "Lugo": ["27001", "27002", "27003", "27004"],
       "Monforte de Lemos": ["27400", "27401"],
       "Guitiriz": ["27300", "27301"],
       "Chantada": ["27500", "27501"],
-      "Sarria": ["27600", "27601"]
+      "Sarria": ["27600", "27601"],
+      "Viveiro": ["27850", "27851"],
+      "Vilalba": ["27800", "27801"]
     }
   },
   "Madrid": {
-    "ciudades": ["Madrid", "Alcalá de Henares", "Fuenlabrada", "Móstoles", "Alcorcón", "Leganés", "Torrejón de Ardoz", "Coslada", "Getafe", "San Sebastián de los Reyes", "Rivas-Vaciamadrid", "Aranjuez", "Collado Villalba", "Torrelodones", "Pozuelo de Alarcón", "Las Rozas", "Majadahonda", "Alcobendas"],
+    "ciudades": ["Madrid", "Alcalá de Henares", "Fuenlabrada", "Móstoles", "Alcorcón", "Leganés", "Torrejón de Ardoz", "Coslada", "Getafe", "San Sebastián de los Reyes", "Rivas-Vaciamadrid", "Aranjuez", "Collado Villalba", "Torrelodones", "Pozuelo de Alarcón", "Las Rozas", "Majadahonda", "Alcobendas", "Parla", "Villaviciosa de Odón"],
     "codigosPostales": {
-      "Madrid": ["28001", "28002", "28003", "28004", "28005", "28006", "28007", "28008", "28009", "28010"],
-      "Alcalá de Henares": ["28801", "28802"],
-      "Fuenlabrada": ["28941", "28942"],
-      "Móstoles": ["28930", "28931"],
-      "Alcorcón": ["28940", "28941"],
-      "Leganés": ["28910", "28911"],
+      "Madrid": ["28001", "28002", "28003", "28004", "28005", "28006", "28007", "28008", "28009", "28010", "28011", "28012", "28013", "28014", "28015", "28016", "28017", "28018", "28019", "28020", "28021", "28022", "28023", "28024", "28025", "28026", "28027", "28028", "28029", "28030", "28031", "28032", "28033", "28034", "28035", "28036", "28037", "28038", "28039", "28040", "28041", "28042", "28043", "28044", "28045", "28046", "28047"],
+      "Alcalá de Henares": ["28801", "28802", "28803"],
+      "Fuenlabrada": ["28941", "28942", "28943"],
+      "Móstoles": ["28930", "28931", "28932"],
+      "Alcorcón": ["28920", "28921"],
+      "Leganés": ["28910", "28911", "28912"],
       "Torrejón de Ardoz": ["28850", "28851"],
       "Coslada": ["28820", "28821"],
-      "Getafe": ["28900", "28901"],
+      "Getafe": ["28900", "28901", "28902"],
       "San Sebastián de los Reyes": ["28700", "28701"],
       "Rivas-Vaciamadrid": ["28500", "28501"],
       "Aranjuez": ["28300", "28301"],
@@ -313,14 +403,16 @@
       "Pozuelo de Alarcón": ["28224", "28225"],
       "Las Rozas": ["28230", "28231"],
       "Majadahonda": ["28220", "28221"],
-      "Alcobendas": ["28100", "28101"]
+      "Alcobendas": ["28100", "28101", "28102"],
+      "Parla": ["28981", "28982"],
+      "Villaviciosa de Odón": ["28670", "28671"]
     }
   },
   "Málaga": {
-    "ciudades": ["Málaga", "Marbella", "Torremolinos", "Benalmádena", "Fuengirola", "Ronda", "Vélez-Málaga", "Antequera", "Nerja", "Estepona"],
+    "ciudades": ["Málaga", "Marbella", "Torremolinos", "Benalmádena", "Fuengirola", "Ronda", "Vélez-Málaga", "Antequera", "Nerja", "Estepona", "Coín", "Alhaurín el Grande"],
     "codigosPostales": {
-      "Málaga": ["29001", "29002", "29003", "29004"],
-      "Marbella": ["29600", "29601"],
+      "Málaga": ["29001", "29002", "29003", "29004", "29005", "29006", "29007", "29008"],
+      "Marbella": ["29600", "29601", "29602"],
       "Torremolinos": ["29620", "29621"],
       "Benalmádena": ["29630", "29631"],
       "Fuengirola": ["29640", "29641"],
@@ -328,192 +420,221 @@
       "Vélez-Málaga": ["29700", "29701"],
       "Antequera": ["29200", "29201"],
       "Nerja": ["29780", "29781"],
-      "Estepona": ["29680", "29681"]
+      "Estepona": ["29680", "29681"],
+      "Coín": ["29100", "29101"],
+      "Alhaurín el Grande": ["29120", "29121"]
     }
   },
   "Murcia": {
-    "ciudades": ["Murcia", "Cartagena", "Lorca", "Molina de Segura", "San Javier", "Torre Pacheco"],
+    "ciudades": ["Murcia", "Cartagena", "Lorca", "Molina de Segura", "San Javier", "Torre Pacheco", "Caravaca de la Cruz"],
     "codigosPostales": {
-      "Murcia": ["30001", "30002", "30003"],
-      "Cartagena": ["30201", "30202"],
+      "Murcia": ["30001", "30002", "30003", "30004", "30005", "30006"],
+      "Cartagena": ["30201", "30202", "30203"],
       "Lorca": ["30800", "30801"],
       "Molina de Segura": ["30500", "30501"],
       "San Javier": ["30730", "30731"],
-      "Torre Pacheco": ["30700", "30701"]
+      "Torre Pacheco": ["30700", "30701"],
+      "Caravaca de la Cruz": ["30400", "30401"]
     }
   },
   "Navarra": {
-    "ciudades": ["Pamplona", "Tudela", "Estella-Lizarra", "Tafalla", "Sangüesa"],
+    "ciudades": ["Pamplona", "Tudela", "Estella-Lizarra", "Tafalla", "Sangüesa", "Olite", "Burlada"],
     "codigosPostales": {
-      "Pamplona": ["31001", "31002", "31003"],
-      "Tudela": ["31500", "31501"],
+      "Pamplona": ["31001", "31002", "31003", "31004", "31005", "31006"],
+      "Tudela": ["31500", "31501", "31502"],
       "Estella-Lizarra": ["31200", "31201"],
       "Tafalla": ["31300", "31301"],
-      "Sangüesa": ["31400", "31401"]
+      "Sangüesa": ["31400", "31401"],
+      "Olite": ["31390", "31391"],
+      "Burlada": ["31110", "31111"]
     }
   },
-  "Orense": {
-    "ciudades": ["Ourense", "O Barco de Valdeorras", "Ribadavia", "Allariz"],
+  "Ourense": {
+    "ciudades": ["Ourense", "O Barco de Valdeorras", "Ribadavia", "Allariz", "Celanova", "Carballino"],
     "codigosPostales": {
-      "Ourense": ["32001", "32002", "32003"],
+      "Ourense": ["32001", "32002", "32003", "32004"],
       "O Barco de Valdeorras": ["32300", "32301"],
       "Ribadavia": ["32400", "32401"],
-      "Allariz": ["32660", "32661"]
+      "Allariz": ["32660", "32661"],
+      "Celanova": ["32800", "32801"],
+      "Carballino": ["32500", "32501"]
     }
   },
   "Palencia": {
-    "ciudades": ["Palencia", "Guardo", "Saldaña"],
+    "ciudades": ["Palencia", "Guardo", "Saldaña", "Carrión de los Condes", "Herrera de Pisuerga"],
     "codigosPostales": {
-      "Palencia": ["34001", "34002"],
+      "Palencia": ["34001", "34002", "34003", "34004"],
       "Guardo": ["34200", "34201"],
-      "Saldaña": ["34800", "34801"]
-    }
-  },
-  "Palma de Mallorca": {
-    "ciudades": ["Palma", "Calvià", "Llucmayor", "Manacor", "Inca", "Alcúdia"],
-    "codigosPostales": {
-      "Palma": ["07001", "07002", "07003"],
-      "Calvià": ["07160", "07161"],
-      "Llucmayor": ["07620", "07621"],
-      "Manacor": ["07500", "07501"],
-      "Inca": ["07300", "07301"],
-      "Alcúdia": ["07400", "07401"]
+      "Saldaña": ["34800", "34801"],
+      "Carrión de los Condes": ["34300", "34301"],
+      "Herrera de Pisuerga": ["34350", "34351"]
     }
   },
   "Pontevedra": {
-    "ciudades": ["Pontevedra", "Vigo", "Vilagarcía de Arousa", "Cangas do Morrazo", "Marín", "O Porriño"],
+    "ciudades": ["Pontevedra", "Vigo", "Vilagarcía de Arousa", "Cangas do Morrazo", "Marín", "O Porriño", "Tui", "Bayona"],
     "codigosPostales": {
-      "Pontevedra": ["36001", "36002"],
-      "Vigo": ["36201", "36202"],
+      "Pontevedra": ["36001", "36002", "36003", "36004"],
+      "Vigo": ["36201", "36202", "36203", "36204"],
       "Vilagarcía de Arousa": ["36600", "36601"],
       "Cangas do Morrazo": ["36940", "36941"],
       "Marín": ["36960", "36961"],
-      "O Porriño": ["36160", "36161"]
+      "O Porriño": ["36160", "36161"],
+      "Tui": ["36700", "36701"],
+      "Bayona": ["36300", "36301"]
     }
   },
   "Salamanca": {
-    "ciudades": ["Salamanca", "Ciudad Rodrigo", "Béjar", "Alba de Tormes"],
+    "ciudades": ["Salamanca", "Ciudad Rodrigo", "Béjar", "Alba de Tormes", "Ledesma", "Vitigudino"],
     "codigosPostales": {
-      "Salamanca": ["37001", "37002", "37003"],
+      "Salamanca": ["37001", "37002", "37003", "37004", "37005", "37006"],
       "Ciudad Rodrigo": ["37500", "37501"],
       "Béjar": ["37700", "37701"],
-      "Alba de Tormes": ["37930", "37931"]
+      "Alba de Tormes": ["37930", "37931"],
+      "Ledesma": ["37800", "37801"],
+      "Vitigudino": ["37270", "37271"]
     }
   },
   "Santa Cruz de Tenerife": {
-    "ciudades": ["Santa Cruz de Tenerife", "San Cristóbal de La Laguna", "Icod de los Vinos", "La Orotava"],
+    "ciudades": ["Santa Cruz de Tenerife", "San Cristóbal de La Laguna", "Icod de los Vinos", "La Orotava", "Puerto de la Cruz", "Candelaria"],
     "codigosPostales": {
-      "Santa Cruz de Tenerife": ["38001", "38002"],
-      "San Cristóbal de La Laguna": ["38201", "38202"],
+      "Santa Cruz de Tenerife": ["38001", "38002", "38003", "38004", "38005"],
+      "San Cristóbal de La Laguna": ["38201", "38202", "38203"],
       "Icod de los Vinos": ["38430", "38431"],
-      "La Orotava": ["38300", "38301"]
+      "La Orotava": ["38300", "38301"],
+      "Puerto de la Cruz": ["38400", "38401"],
+      "Candelaria": ["38100", "38101"]
     }
   },
   "Segovia": {
-    "ciudades": ["Segovia", "Cuéllar", "Sepúlveda"],
+    "ciudades": ["Segovia", "Cuéllar", "Sepúlveda", "Santa María la Real de Nieva", "Carbonero el Mayor"],
     "codigosPostales": {
-      "Segovia": ["40001", "40002"],
+      "Segovia": ["40001", "40002", "40003", "40004"],
       "Cuéllar": ["40400", "40401"],
-      "Sepúlveda": ["40300", "40301"]
+      "Sepúlveda": ["40300", "40301"],
+      "Santa María la Real de Nieva": ["40350", "40351"],
+      "Carbonero el Mayor": ["40320", "40321"]
     }
   },
   "Sevilla": {
-    "ciudades": ["Sevilla", "Ecija", "Osuna", "Estepa", "Carmona", "Utrera"],
+    "ciudades": ["Sevilla", "Ecija", "Osuna", "Estepa", "Carmona", "Utrera", "Marchena", "Morón de la Frontera", "Dos Hermanas", "Camas", "Alcalá de Guadaíra"],
     "codigosPostales": {
-      "Sevilla": ["41001", "41002", "41003", "41004"],
-      "Ecija": ["41400", "41401"],
+      "Sevilla": ["41001", "41002", "41003", "41004", "41005", "41006", "41007", "41008"],
+      "Ecija": ["41400", "41401", "41402"],
       "Osuna": ["41640", "41641"],
       "Estepa": ["41560", "41561"],
       "Carmona": ["41410", "41411"],
-      "Utrera": ["41940", "41941"]
+      "Utrera": ["41940", "41941"],
+      "Marchena": ["41620", "41621"],
+      "Morón de la Frontera": ["41440", "41441"],
+      "Dos Hermanas": ["41701", "41702", "41703", "41704"],
+      "Camas": ["41900", "41910"],
+      "Alcalá de Guadaíra": ["41500", "41520"]
     }
   },
   "Soria": {
-    "ciudades": ["Soria", "Almazán", "El Burgo de Osma"],
+    "ciudades": ["Soria", "Almazán", "El Burgo de Osma", "San Leonardo de Yagüe"],
     "codigosPostales": {
-      "Soria": ["42001", "42002"],
+      "Soria": ["42001", "42002", "42003", "42004"],
       "Almazán": ["42200", "42201"],
-      "El Burgo de Osma": ["42300", "42301"]
+      "El Burgo de Osma": ["42300", "42301"],
+      "San Leonardo de Yagüe": ["42370", "42371"]
     }
   },
   "Tarragona": {
-    "ciudades": ["Tarragona", "Reus", "Tortosa", "El Vendrell", "Salou", "Cambrils"],
+    "ciudades": ["Tarragona", "Reus", "Tortosa", "El Vendrell", "Salou", "Cambrils", "Falset"],
     "codigosPostales": {
-      "Tarragona": ["43001", "43002"],
-      "Reus": ["43201", "43202"],
+      "Tarragona": ["43001", "43002", "43003", "43004", "43005"],
+      "Reus": ["43201", "43202", "43203"],
       "Tortosa": ["43500", "43501"],
       "El Vendrell": ["43700", "43701"],
       "Salou": ["43840", "43841"],
-      "Cambrils": ["43850", "43851"]
+      "Cambrils": ["43850", "43851"],
+      "Falset": ["43430", "43431"]
     }
   },
   "Teruel": {
-    "ciudades": ["Teruel", "Alcañiz", "Calamocha"],
+    "ciudades": ["Teruel", "Alcañiz", "Calamocha", "Beceite", "Mora de Rubielos"],
     "codigosPostales": {
-      "Teruel": ["44001", "44002"],
-      "Alcañiz": ["44600", "44601"],
-      "Calamocha": ["44200", "44201"]
+      "Teruel": ["44001", "44002", "44003", "44004"],
+      "Alcañiz": ["44600", "44601", "44602"],
+      "Calamocha": ["44200", "44201"],
+      "Beceite": ["44590", "44591"],
+      "Mora de Rubielos": ["44400", "44401"]
     }
   },
   "Toledo": {
-    "ciudades": ["Toledo", "Talavera de la Reina", "Consuegra", "Ocaña"],
+    "ciudades": ["Toledo", "Talavera de la Reina", "Consuegra", "Ocaña", "Illescas", "Puertollano"],
     "codigosPostales": {
-      "Toledo": ["45001", "45002"],
-      "Talavera de la Reina": ["45600", "45601"],
+      "Toledo": ["45001", "45002", "45003", "45004", "45005"],
+      "Talavera de la Reina": ["45600", "45601", "45602"],
       "Consuegra": ["45700", "45701"],
-      "Ocaña": ["45300", "45301"]
+      "Ocaña": ["45300", "45301"],
+      "Illescas": ["45200", "45201"],
+      "Puertollano": ["45500", "45501"]
     }
   },
   "Valencia": {
-    "ciudades": ["Valencia", "Sagunto", "Requena", "Gandia", "Cullera", "Paterna", "Liria", "Torrent"],
+    "ciudades": ["Valencia", "Sagunto", "Requena", "Gandía", "Cullera", "Paterna", "Liria", "Torrent", "Alzira", "Burjassot", "Ontinyent", "Mislata"],
     "codigosPostales": {
-      "Valencia": ["46001", "46002", "46003", "46004"],
-      "Sagunto": ["46500", "46501"],
+      "Valencia": ["46001", "46002", "46003", "46004", "46005", "46006", "46007", "46008", "46009", "46010", "46011", "46012", "46013", "46014", "46015", "46016", "46017", "46018", "46019", "46020", "46021", "46022", "46023", "46024", "46025", "46026", "46027", "46028"],
+      "Sagunto": ["46500", "46501", "46502"],
       "Requena": ["46340", "46341"],
-      "Gandia": ["46700", "46701"],
+      "Gandía": ["46700", "46701"],
       "Cullera": ["46400", "46401"],
       "Paterna": ["46980", "46981"],
       "Liria": ["46160", "46161"],
-      "Torrent": ["46900", "46901"]
+      "Torrent": ["46900", "46901"],
+      "Alzira": ["46600", "46601"],
+      "Burjassot": ["46100", "46101"],
+      "Ontinyent": ["46870", "46871"],
+      "Mislata": ["46920", "46921"]
     }
   },
   "Valladolid": {
-    "ciudades": ["Valladolid", "Medina del Campo", "Peñafiel", "Tordesillas"],
+    "ciudades": ["Valladolid", "Medina del Campo", "Peñafiel", "Tordesillas", "Íscar", "La Mota"],
     "codigosPostales": {
-      "Valladolid": ["47001", "47002"],
+      "Valladolid": ["47001", "47002", "47003", "47004", "47005", "47006"],
       "Medina del Campo": ["47400", "47401"],
       "Peñafiel": ["47300", "47301"],
-      "Tordesillas": ["47100", "47101"]
+      "Tordesillas": ["47100", "47101"],
+      "Íscar": ["47440", "47441"],
+      "La Mota": ["47200", "47201"]
     }
   },
-  "Vizcaya": {
-    "ciudades": ["Bilbao", "Getxo", "Baracaldo", "Basauri", "Santurtzi", "Galdácano", "Durango"],
+  "Bizkaia": {
+    "ciudades": ["Bilbao", "Getxo", "Barakaldo", "Basauri", "Santurtzi", "Galdácano", "Durango", "Erandio", "Sestao", "Ortuella", "Portugalete"],
     "codigosPostales": {
-      "Bilbao": ["48001", "48002", "48003"],
-      "Getxo": ["48930", "48931"],
-      "Baracaldo": ["48901", "48902"],
+      "Bilbao": ["48001", "48002", "48003", "48004", "48005", "48006", "48007", "48008", "48009"],
+      "Getxo": ["48930", "48931", "48932"],
+      "Barakaldo": ["48901", "48902", "48903"],
       "Basauri": ["48970", "48971"],
       "Santurtzi": ["48940", "48941"],
       "Galdácano": ["48960", "48961"],
-      "Durango": ["48200", "48201"]
+      "Durango": ["48200", "48201", "48202"],
+      "Erandio": ["48950", "48951"],
+      "Sestao": ["48910", "48911"],
+      "Ortuella": ["48470", "48471"],
+      "Portugalete": ["48920", "48921"]
     }
   },
   "Zamora": {
-    "ciudades": ["Zamora", "Toro", "Alcañices"],
+    "ciudades": ["Zamora", "Toro", "Alcañices", "Benavente"],
     "codigosPostales": {
-      "Zamora": ["49001", "49002"],
+      "Zamora": ["49001", "49002", "49003"],
       "Toro": ["49800", "49801"],
-      "Alcañices": ["49500", "49501"]
+      "Alcañices": ["49500", "49501"],
+      "Benavente": ["49600", "49601"]
     }
   },
   "Zaragoza": {
-    "ciudades": ["Zaragoza", "Calatayud", "Tarazona", "Ejea de los Caballeros", "Utebo"],
+    "ciudades": ["Zaragoza", "Calatayud", "Tarazona", "Ejea de los Caballeros", "Utebo", "La Muela"],
     "codigosPostales": {
-      "Zaragoza": ["50001", "50002", "50003"],
-      "Calatayud": ["50300", "50301"],
+      "Zaragoza": ["50001", "50002", "50003", "50004", "50005", "50006", "50007", "50008", "50009", "50010", "50011", "50012"],
+      "Calatayud": ["50300", "50301", "50302"],
       "Tarazona": ["50500", "50501"],
       "Ejea de los Caballeros": ["50600", "50601"],
-      "Utebo": ["50180", "50181"]
+      "Utebo": ["50180", "50181"],
+      "La Muela": ["50160", "50161"]
     }
   }
 }
