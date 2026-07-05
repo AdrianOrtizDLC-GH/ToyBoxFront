@@ -122,29 +122,29 @@
           </div>
 
           <div class="form-field">
-            <label for="state">
-              Estado <span class="required-star">*</span>
+            <label for="product_condition">
+              Estado del juguete <span class="required-star">*</span>
             </label>
 
             <select
-              id="state"
-              name="state"
+              id="product_condition"
+              name="product_condition"
               class="form-control"
-              [class.form-control--invalid]="isFieldInvalid('conservation_status')"
-              [(ngModel)]="formData.conservation_status"
-              (blur)="markTouched('conservation_status')"
+              [class.form-control--invalid]="isFieldInvalid('product_condition')"
+              [(ngModel)]="formData.product_condition"
+              (blur)="markTouched('product_condition')"
               required
             >
               <option value="">Selecciona estado</option>
 
-              @for (state of productStates; track state.value) {
-                <option [value]="state.value">{{ state.label }}</option>
+              @for (condition of productConditions; track condition.value) {
+                <option [value]="condition.value">{{ condition.label }}</option>
               }
             </select>
 
-            @if (getFieldError('conservation_status')) {
+            @if (getFieldError('product_condition')) {
               <small class="field-error">
-                {{ getFieldError('conservation_status') }}
+                {{ getFieldError('product_condition') }}
               </small>
             }
           </div>
@@ -162,17 +162,21 @@
               [ngModel]="formData.province"
               (ngModelChange)="onProvinceChange($event)"
               (blur)="markTouched('province')"
-              [disabled]="isLoadingLocations"
+              [disabled]="isUserLocationLocked || isLoadingLocations || isLoadingUserLocation"
               required
             >
               <option value="">
-                {{ isLoadingLocations ? 'Cargando provincias...' : 'Selecciona provincia' }}
+                {{ isLoadingUserLocation ? 'Cargando ubicación del perfil...' : 'Ubicación cargada desde tu perfil' }}
               </option>
 
               @for (province of provincias; track province) {
                 <option [value]="province">{{ province }}</option>
               }
             </select>
+
+            <small class="field-hint">
+              La provincia se toma automáticamente de tu perfil.
+            </small>
 
             @if (getFieldError('province')) {
               <small class="field-error">
@@ -194,16 +198,18 @@
               [ngModel]="formData.city"
               (ngModelChange)="onCityChange($event)"
               (blur)="markTouched('city')"
-              [disabled]="!formData.province || isLoadingCities"
+              [disabled]="isUserLocationLocked || !formData.province || isLoadingCities || isLoadingUserLocation"
               required
             >
               <option value="">
-                @if (!formData.province) {
-                  Primero selecciona provincia
+                @if (isLoadingUserLocation) {
+                  Cargando ubicación del perfil...
+                } @else if (!formData.province) {
+                  Provincia no disponible en tu perfil
                 } @else if (isLoadingCities) {
                   Cargando ciudades...
                 } @else {
-                  Selecciona ciudad
+                  Ubicación cargada desde tu perfil
                 }
               </option>
 
@@ -211,6 +217,10 @@
                 <option [value]="city">{{ city }}</option>
               }
             </select>
+
+            <small class="field-hint">
+              La ciudad se toma automáticamente de tu perfil.
+            </small>
 
             @if (getFieldError('city')) {
               <small class="field-error">

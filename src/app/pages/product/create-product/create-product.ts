@@ -8,13 +8,18 @@ import { BreadcrumbComponent, BreadcrumbItem } from '../../../shared/components/
 import { ProductsService } from '../../../core/services/products.service';
 import { CategoriesService } from '../../../core/services/categories.service';
 import { LocationsService } from '../../../core/services/locations.service';
+import { UsersService } from '../../../core/services/users.service';
 
 import { Category } from '../../../shared/interfaces/category.interface';
 import { ItemFormData } from '../../../shared/interfaces/item.interface';
+import {
+  ProductCondition,
+  PRODUCT_CONDITION_LABELS
+} from '../../../shared/enums/product-condition.enum';
 
-interface ProductStateOption {
+interface ProductConditionOption {
   label: string;
-  value: string;
+  value: ProductCondition;
 }
 
 interface SelectedImage {
@@ -25,7 +30,7 @@ interface SelectedImage {
 interface CreateProductFormData {
   title: string;
   price: number | null;
-  conservation_status: string;
+  product_condition: ProductCondition | '';
   province: string;
   city: string;
   description: string;
@@ -35,7 +40,7 @@ interface CreateProductFormData {
 type CreateProductField =
   | 'title'
   | 'price'
-  | 'conservation_status'
+  | 'product_condition'
   | 'province'
   | 'city'
   | 'description'
@@ -68,17 +73,29 @@ export class CreateProductComponent implements OnInit, OnDestroy {
 
   categories: Category[] = [];
 
-  productStates: ProductStateOption[] = [
-    { label: 'Como nuevo', value: 'excellent' },
-    { label: 'Muy buen estado', value: 'very_good' },
-    { label: 'Buen estado', value: 'good' },
-    { label: 'Usado', value: 'fair' }
+  productConditions: ProductConditionOption[] = [
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Excellent],
+      value: ProductCondition.Excellent
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.VeryGood],
+      value: ProductCondition.VeryGood
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Good],
+      value: ProductCondition.Good
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Fair],
+      value: ProductCondition.Fair
+    }
   ];
 
   formData: CreateProductFormData = {
     title: '',
     price: null,
-    conservation_status: '',
+    product_condition: '',
     province: '',
     city: '',
     description: '',
@@ -95,6 +112,8 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   isLoadingCategories = false;
   isLoadingLocations = false;
   isLoadingCities = false;
+  isLoadingUserLocation = false;
+  isUserLocationLocked = true;
   showValidationErrors = false;
 
   successMessage = '';
@@ -109,7 +128,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   private touchedFields: Record<CreateProductField, boolean> = {
     title: false,
     price: false,
-    conservation_status: false,
+    product_condition: false,
     province: false,
     city: false,
     description: false,
@@ -121,6 +140,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     private productsService: ProductsService,
     private categoriesService: CategoriesService,
     private locationsService: LocationsService,
+    private usersService: UsersService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -129,6 +149,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.loadCategories();
     this.loadLocalDraft();
     void this.initializeLocations();
+    this.loadUserLocationFromProfile();
   }
 
   private loadCategories(): void {
@@ -168,6 +189,49 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadUserLocationFromProfile(): void {
+    this.isLoadingUserLocation = true;
+
+    this.usersService.getMe().subscribe({
+      next: (user) => {
+        void this.applyUserLocationFromProfile(user);
+      },
+      error: (err) => {
+        this.isLoadingUserLocation = false;
+        this.locationError = 'No se ha podido cargar la ubicación desde tu perfil.';
+        this.cdr.markForCheck();
+        console.error('Error cargando ubicación del usuario:', err);
+      }
+    });
+  }
+
+  private async applyUserLocationFromProfile(user: any): Promise<void> {
+    const profileProvince =
+      user?.user_province ??
+      user?.province ??
+      '';
+
+    const profileCity =
+      user?.user_city ??
+      user?.city ??
+      '';
+
+    if (profileProvince) {
+      this.formData.province = profileProvince;
+    }
+
+    if (profileCity) {
+      this.formData.city = profileCity;
+    }
+
+    if (profileProvince) {
+      await this.loadCitiesForProvince(profileProvince);
+    }
+
+    this.isLoadingUserLocation = false;
+    this.cdr.markForCheck();
+  }
+
   private async loadCitiesForProvince(province: string): Promise<void> {
     this.isLoadingCities = true;
     this.locationError = '';
@@ -185,6 +249,8 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   }
 
   async onProvinceChange(province: string): Promise<void> {
+    if (this.isUserLocationLocked) return;
+
     this.formData.province = province;
     this.formData.city = '';
     this.ciudadesDisponibles = [];
@@ -201,6 +267,8 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   }
 
   onCityChange(city: string): void {
+    if (this.isUserLocationLocked) return;
+
     this.formData.city = city;
     this.locationError = '';
     this.markTouched('city');
@@ -325,25 +393,18 @@ export class CreateProductComponent implements OnInit, OnDestroy {
         return '';
       }
 
-      case 'conservation_status':
-        return this.formData.conservation_status
+      case 'product_condition':
+        return this.formData.product_condition
           ? ''
-          : 'Selecciona el estado del producto.';
+          : 'Selecciona el estado del juguete.';
 
       case 'province':
         return this.formData.province
           ? ''
-          : 'Selecciona una provincia.';
+          : 'La provincia debe estar definida en tu perfil.';
 
       case 'city':
-        if (!this.formData.city) return 'Selecciona una ciudad.';
-
-        if (
-          this.ciudadesDisponibles.length > 0 &&
-          !this.ciudadesDisponibles.includes(this.formData.city)
-        ) {
-          return 'Selecciona una ciudad válida para la provincia elegida.';
-        }
+        if (!this.formData.city) return 'La ciudad debe estar definida en tu perfil.';
 
         return '';
 
@@ -455,7 +516,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
       title: this.formData.title.trim(),
       description: this.formData.description.trim(),
       price: Number(this.formData.price),
-      conservation_status: this.formData.conservation_status,
+      product_condition: this.formData.product_condition as ProductCondition,
       province,
       city,
       location: `${city}, ${province}`,
@@ -532,7 +593,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     const fields: CreateProductField[] = [
       'title',
       'price',
-      'conservation_status',
+      'product_condition',
       'province',
       'city',
       'description',
@@ -561,9 +622,15 @@ export class CreateProductComponent implements OnInit, OnDestroy {
       const parsedDraft = JSON.parse(savedDraft);
 
       if (parsedDraft?.formData) {
+        const savedFormData = parsedDraft.formData;
+
         this.formData = {
           ...this.formData,
-          ...parsedDraft.formData
+          ...savedFormData,
+          product_condition:
+            savedFormData.product_condition ??
+            savedFormData.conservation_status ??
+            this.formData.product_condition
         };
 
         this.successMessage = 'Hemos recuperado el borrador guardado en este navegador.';

@@ -4,7 +4,7 @@ import { ConservationStatus } from '../enums/conservation-status.enum';
 import { ItemStatus } from '../enums/item-status.enum';
 import { Category } from "./category.interface";
 import { Review } from "./review.interface";
-
+import { ProductCondition } from '../enums/product-condition.enum';
 
 
 export interface Item {
@@ -13,6 +13,7 @@ export interface Item {
   description: string | null;
   price: number;
   conservation_status: ConservationStatus;
+  product_condition?: ProductCondition;
   item_status: ItemStatus;
   location: string;
   publication_date: DateString;
@@ -34,12 +35,14 @@ export interface ItemCard {
   location: string;
   category: Category; 
   conservation_status: ConservationStatus;
+  product_condition?: ProductCondition;
   item_status: ItemStatus;
   publication_date: DateString;
   image: string;
   badge: string; 
   rating?: number; 
 }
+
 
 export interface ItemDetail extends Item {
   seller: User; 
@@ -66,11 +69,12 @@ export interface ItemFormData {
   title: string;
   description?: string | null;
   price: number;
-  conservation_status: ConservationStatus;
+  conservation_status?: ConservationStatus;
+  product_condition: ProductCondition;
   item_status?: ItemStatus;
   location: string;
   fk_categories_id: number;
-  images?: ItemPhoto[]; // Optional
+  images?: ItemPhoto[];
 }
 
 export interface Itemfilters {

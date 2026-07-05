@@ -2,19 +2,26 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../../shared/components/breadcrumb/breadcrumb';
 
 import { ProductsService } from '../../../core/services/products.service';
 import { CategoriesService } from '../../../core/services/categories.service';
 import { LocationsService } from '../../../core/services/locations.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { UsersService } from '../../../core/services/users.service';
 
 import { Category } from '../../../shared/interfaces/category.interface';
 import { ItemFormData } from '../../../shared/interfaces/item.interface';
+import {
+  ProductCondition,
+  PRODUCT_CONDITION_LABELS
+} from '../../../shared/enums/product-condition.enum';
 
-interface ProductStateOption {
+interface ProductConditionOption {
   label: string;
-  value: string;
+  value: ProductCondition;
 }
 
 interface SelectedImage {
@@ -30,7 +37,7 @@ interface CurrentImage {
 interface EditProductFormData {
   title: string;
   price: number | null;
-  conservation_status: string;
+  product_condition: ProductCondition | '';
   province: string;
   city: string;
   description: string;
@@ -40,7 +47,7 @@ interface EditProductFormData {
 type EditProductField =
   | 'title'
   | 'price'
-  | 'conservation_status'
+  | 'product_condition'
   | 'province'
   | 'city'
   | 'description'
@@ -74,11 +81,23 @@ export class EditProductComponent implements OnInit, OnDestroy {
 
   categories: Category[] = [];
 
-  productStates: ProductStateOption[] = [
-    { label: 'Como nuevo', value: 'excellent' },
-    { label: 'Muy buen estado', value: 'very_good' },
-    { label: 'Buen estado', value: 'good' },
-    { label: 'Usado', value: 'fair' }
+  productConditions: ProductConditionOption[] = [
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Excellent],
+      value: ProductCondition.Excellent
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.VeryGood],
+      value: ProductCondition.VeryGood
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Good],
+      value: ProductCondition.Good
+    },
+    {
+      label: PRODUCT_CONDITION_LABELS[ProductCondition.Fair],
+      value: ProductCondition.Fair
+    }
   ];
 
   productId: number | null = null;
@@ -86,7 +105,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
   formData: EditProductFormData = {
     title: '',
     price: null,
-    conservation_status: '',
+    product_condition: '',
     province: '',
     city: '',
     description: '',
@@ -109,6 +128,8 @@ export class EditProductComponent implements OnInit, OnDestroy {
   isLoadingCategories = false;
   isLoadingLocations = false;
   isLoadingCities = false;
+  isLoadingUserLocation = false;
+  isUserLocationLocked = true;
 
   showWithdrawModal = false;
 
@@ -123,7 +144,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
   private touchedFields: Record<EditProductField, boolean> = {
     title: false,
     price: false,
-    conservation_status: false,
+    product_condition: false,
     province: false,
     city: false,
     description: false,
@@ -137,6 +158,8 @@ export class EditProductComponent implements OnInit, OnDestroy {
     private productsService: ProductsService,
     private categoriesService: CategoriesService,
     private locationsService: LocationsService,
+    private authService: AuthService,
+    private usersService: UsersService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -157,6 +180,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
       this.productId = id;
       this.loadProduct(id);
     });
+  }
+
+  private isBrowser(): boolean {
+    return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
   }
 
   private loadCategories(): void {
@@ -196,6 +223,190 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  private async loadUserLocationFromProfile(): Promise<void> {
+    this.isLoadingUserLocation = true;
+    this.locationError = '';
+
+    const currentUser = this.getCurrentUserFromAuth();
+
+    if (this.hasUserLocation(currentUser)) {
+      await this.applyUserLocationFromProfile(currentUser);
+      return;
+    }
+
+    const userId = this.getCurrentUserId(currentUser);
+
+    if (!userId) {
+      this.isLoadingUserLocation = false;
+      this.locationError = 'No se ha podido identificar el usuario autenticado.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    try {
+      const user = await firstValueFrom(this.usersService.getById(userId));
+      await this.applyUserLocationFromProfile(user);
+    } catch (err) {
+      this.isLoadingUserLocation = false;
+      this.locationError = 'No se ha podido cargar la ubicación desde tu perfil.';
+      this.cdr.markForCheck();
+      console.error('Error cargando ubicación del perfil:', err);
+    }
+  }
+
+  private getCurrentUserFromAuth(): any {
+    const authService = this.authService as any;
+
+    if (typeof authService.currentUser === 'function') {
+      const userFromMethod = authService.currentUser();
+
+      if (userFromMethod) {
+        return userFromMethod;
+      }
+    }
+
+    const userFromService =
+      authService.currentUser ??
+      authService.user ??
+      authService.currentUserValue ??
+      authService.userValue ??
+      null;
+
+    if (userFromService) {
+      return userFromService;
+    }
+
+    return this.getCurrentUserFromLocalStorage();
+  }
+
+  private getCurrentUserFromLocalStorage(): any {
+    if (!this.isBrowser()) return null;
+
+    const possibleUserKeys = [
+      'currentUser',
+      'user',
+      'authUser',
+      'toybox-user',
+      'toybox_current_user'
+    ];
+
+    for (const key of possibleUserKeys) {
+      const value = window.localStorage.getItem(key);
+
+      if (!value) continue;
+
+      try {
+        const parsed = JSON.parse(value);
+        return parsed?.user ?? parsed;
+      } catch {
+        continue;
+      }
+    }
+
+    return this.getUserFromStoredToken();
+  }
+
+  private getUserFromStoredToken(): any {
+    if (!this.isBrowser()) return null;
+
+    const possibleTokenKeys = [
+      'token',
+      'authToken',
+      'access_token',
+      'accessToken',
+      'toybox-token',
+      'toybox_token'
+    ];
+
+    for (const key of possibleTokenKeys) {
+      const token = window.localStorage.getItem(key);
+      const decodedUser = this.decodeJwtPayload(token);
+
+      if (decodedUser) {
+        return decodedUser;
+      }
+    }
+
+    return null;
+  }
+
+  private decodeJwtPayload(token: string | null): any {
+    if (!token || !this.isBrowser()) return null;
+
+    try {
+      const payload = token.split('.')[1];
+
+      if (!payload) return null;
+
+      const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decodedPayload = window.atob(normalizedPayload);
+
+      return JSON.parse(decodedPayload);
+    } catch {
+      return null;
+    }
+  }
+
+  private getCurrentUserId(user: any): number | null {
+    const rawId =
+      user?.id_users ??
+      user?.id ??
+      user?.user_id ??
+      user?.sub ??
+      user?.user?.id_users ??
+      user?.user?.id ??
+      null;
+
+    const userId = Number(rawId);
+
+    return Number.isFinite(userId) && userId > 0 ? userId : null;
+  }
+
+  private hasUserLocation(user: any): boolean {
+    const province =
+      user?.user_province ??
+      user?.province ??
+      '';
+
+    const city =
+      user?.user_city ??
+      user?.city ??
+      '';
+
+    return Boolean(province && city);
+  }
+
+  private async applyUserLocationFromProfile(user: any): Promise<void> {
+    const profileProvince =
+      user?.user_province ??
+      user?.province ??
+      '';
+
+    const profileCity =
+      user?.user_city ??
+      user?.city ??
+      '';
+
+    if (!profileProvince || !profileCity) {
+      this.isLoadingUserLocation = false;
+      this.locationError = 'Completa provincia y ciudad en tu perfil antes de editar este producto.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.formData.province = profileProvince;
+    this.formData.city = profileCity;
+
+    try {
+      await this.loadCitiesForProvince(profileProvince);
+    } catch (error) {
+      console.error('Error cargando ciudades desde perfil:', error);
+    }
+
+    this.isLoadingUserLocation = false;
+    this.cdr.markForCheck();
+  }
+
   private async loadCitiesForProvince(province: string): Promise<void> {
     this.isLoadingCities = true;
     this.locationError = '';
@@ -229,26 +440,26 @@ export class EditProductComponent implements OnInit, OnDestroy {
           null;
 
         const rawCondition =
-          raw.conservation_status ??
+          raw.product_condition ??
           raw.condition_status ??
           raw.condition ??
           raw.item_condition ??
+          raw.productCondition ??
+          raw.conservation_status ??
           raw.conservationStatus ??
           '';
 
         this.formData = {
           title: raw.title ?? '',
           price: raw.price ? Number(raw.price) : null,
-          conservation_status: this.normalizeConservationStatus(rawCondition),
+          product_condition: this.normalizeProductCondition(rawCondition),
           province: raw.province ?? raw.seller_province ?? this.extractProvince(raw.location),
           city: raw.city ?? raw.seller_city ?? this.extractCity(raw.location),
           description: raw.description ?? '',
           fk_categories_id: rawCategoryId ? Number(rawCategoryId) : null
         };
 
-        if (this.formData.province) {
-          await this.loadCitiesForProvince(this.formData.province);
-        }
+        await this.loadUserLocationFromProfile();
 
         this.currentBadge = this.getBadgeLabel(
           raw.item_status ??
@@ -275,6 +486,8 @@ export class EditProductComponent implements OnInit, OnDestroy {
   }
 
   async onProvinceChange(province: string): Promise<void> {
+    if (this.isUserLocationLocked) return;
+
     this.formData.province = province;
     this.formData.city = '';
     this.ciudadesDisponibles = [];
@@ -291,6 +504,8 @@ export class EditProductComponent implements OnInit, OnDestroy {
   }
 
   onCityChange(city: string): void {
+    if (this.isUserLocationLocked) return;
+
     this.formData.city = city;
     this.locationError = '';
     this.markTouched('city');
@@ -390,7 +605,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
       title: this.formData.title.trim(),
       description: this.formData.description.trim(),
       price: Number(this.formData.price),
-      conservation_status: this.formData.conservation_status,
+      product_condition: this.formData.product_condition as ProductCondition,
       province,
       city,
       location: `${city}, ${province}`,
@@ -478,36 +693,20 @@ export class EditProductComponent implements OnInit, OnDestroy {
         return '';
       }
 
-      case 'conservation_status':
-        return this.formData.conservation_status
+      case 'product_condition':
+        return this.formData.product_condition
           ? ''
-          : 'Selecciona el estado del producto.';
+          : 'Selecciona el estado del juguete.';
 
-      case 'province': {
-        if (!this.formData.province) return 'Selecciona una provincia.';
+      case 'province':
+        return this.formData.province
+          ? ''
+          : 'La provincia debe estar definida en tu perfil.';
 
-        if (
-          this.provincias.length > 0 &&
-          !this.provincias.includes(this.formData.province)
-        ) {
-          return 'Selecciona una provincia válida.';
-        }
-
-        return '';
-      }
-
-      case 'city': {
-        if (!this.formData.city) return 'Selecciona una ciudad.';
-
-        if (
-          this.ciudadesDisponibles.length > 0 &&
-          !this.ciudadesDisponibles.includes(this.formData.city)
-        ) {
-          return 'Selecciona una ciudad válida para la provincia elegida.';
-        }
-
-        return '';
-      }
+      case 'city':
+        return this.formData.city
+          ? ''
+          : 'La ciudad debe estar definida en tu perfil.';
 
       case 'description': {
         const description = this.formData.description.trim();
@@ -549,9 +748,9 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return selected?.name ?? 'Sin categoría seleccionada';
   }
 
-  get selectedStateLabel(): string {
-    const selected = this.productStates.find(
-      state => state.value === this.formData.conservation_status
+  get selectedConditionLabel(): string {
+    const selected = this.productConditions.find(
+      condition => condition.value === this.formData.product_condition
     );
 
     return selected?.label ?? 'Sin estado seleccionado';
@@ -651,7 +850,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     const fields: EditProductField[] = [
       'title',
       'price',
-      'conservation_status',
+      'product_condition',
       'province',
       'city',
       'description',
@@ -712,25 +911,25 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return [];
   }
 
-  private normalizeConservationStatus(value: unknown): string {
+  private normalizeProductCondition(value: unknown): ProductCondition | '' {
     const key = String(value ?? '').toLowerCase().trim();
 
-    const labels: Record<string, string> = {
-      excellent: 'excellent',
-      'como nuevo': 'excellent',
-      like_new: 'excellent',
-      new: 'excellent',
+    const labels: Record<string, ProductCondition> = {
+      excellent: ProductCondition.Excellent,
+      'como nuevo': ProductCondition.Excellent,
+      like_new: ProductCondition.Excellent,
+      new: ProductCondition.Excellent,
 
-      very_good: 'very_good',
-      'muy buen estado': 'very_good',
-      verygood: 'very_good',
+      very_good: ProductCondition.VeryGood,
+      'muy buen estado': ProductCondition.VeryGood,
+      verygood: ProductCondition.VeryGood,
 
-      good: 'good',
-      'buen estado': 'good',
+      good: ProductCondition.Good,
+      'buen estado': ProductCondition.Good,
 
-      fair: 'fair',
-      used: 'fair',
-      usado: 'fair'
+      fair: ProductCondition.Fair,
+      used: ProductCondition.Fair,
+      usado: ProductCondition.Fair
     };
 
     const publicationStatuses = [
