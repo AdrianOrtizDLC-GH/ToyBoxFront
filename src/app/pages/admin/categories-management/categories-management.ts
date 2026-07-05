@@ -17,16 +17,7 @@ interface CategoryRow {
   icon: string;
 }
 
-const CATEGORY_ICON_OPTIONS = [
-  { label: 'Videojuegos', value: '/assets/images/Iconos%20categorias/icono_videojuegos.svg' },
-  { label: 'Construcción', value: '/assets/images/Iconos%20categorias/icono_construccion.svg' },
-  { label: 'Bebés', value: '/assets/images/Iconos%20categorias/icono_bebes.svg' },
-  { label: 'Juegos de mesa', value: '/assets/images/Iconos%20categorias/icono_juegosmesa.svg' },
-  { label: 'Imaginación', value: '/assets/images/Iconos%20categorias/icono_imaginacion.svg' },
-  { label: 'Educativo', value: '/assets/images/Iconos%20categorias/icono_educativo.svg' },
-  { label: 'Muñecos y coches', value: '/assets/images/Iconos%20categorias/icono_munecosycoches.svg' },
-  { label: 'Aire libre', value: '/assets/images/Iconos%20categorias/icono_airelibre.svg' },
-] as const;
+const DEFAULT_CATEGORY_ICON = '/assets/images/Iconos%20categorias/icono_educativo.svg';
 
 @Component({
   selector: 'app-categories-management',
@@ -44,7 +35,6 @@ export class CategoriesManagementComponent implements OnInit {
   readonly searchTerm = signal('');
   readonly currentPage = signal(1);
   readonly pageSize = 8;
-  readonly iconOptions = CATEGORY_ICON_OPTIONS;
   readonly editingId = signal<number | null>(null);
   readonly categoryToDelete = signal<CategoryRow | null>(null);
   readonly toast = signal({ visible: false, type: 'success' as ToastType, title: '', message: '' });
@@ -52,8 +42,10 @@ export class CategoriesManagementComponent implements OnInit {
   form: { name: string; description: string; icon: string } = {
     name: '',
     description: '',
-    icon: CATEGORY_ICON_OPTIONS[0].value,
+    icon: '',
   };
+  selectedIconFile: File | null = null;
+  readonly iconPreview = signal('');
 
   readonly filteredCategories = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -97,36 +89,27 @@ export class CategoriesManagementComponent implements OnInit {
   saveCategory(): void {
     const name = this.form.name.trim();
     const description = this.form.description.trim();
-    const icon = this.form.icon;
 
-    if (!name || !description) {
-      this.showToast('warning', 'Faltan campos', 'El nombre y la descripción son obligatorios.');
+    if (!name || !description || (!this.editingId() && !this.selectedIconFile)) {
+      this.showToast('warning', 'Faltan campos', 'El nombre, la descripción y el icono son obligatorios.');
       return;
     }
 
     const editingId = this.editingId();
 
     if (editingId) {
-      this.categoriesService.update(editingId, { name, description, icon }).subscribe({
+      this.categoriesService.update(editingId, { name, description }).subscribe({
         next: category => {
-          const updated = this.mapCategory(category);
-          this.categories.update(categories => categories.map(current =>
-            current.id === editingId ? { ...updated, items: current.items } : current
-          )
-          );
-          this.showToast('success', 'Categoría actualizada', `${name} se ha actualizado correctamente.`);
-          this.resetForm();
+          this.finishSave(category, 'Categoría actualizada', `${name} se ha actualizado correctamente.`);
         },
         error: error => this.showCategoryError(error, 'No se pudo actualizar'),
       });
       return;
     }
 
-    this.categoriesService.create({ name, description, icon }).subscribe({
+    this.categoriesService.create({ name, description }).subscribe({
       next: category => {
-        this.categories.update(categories => [...categories, this.mapCategory(category)]);
-        this.showToast('success', 'Categoría creada', `${name} se ha añadido correctamente.`);
-        this.resetForm();
+        this.finishSave(category, 'Categoría creada', `${name} se ha añadido correctamente.`);
       },
       error: error => this.showCategoryError(error, 'No se pudo crear la categoría'),
     });
@@ -139,6 +122,27 @@ export class CategoriesManagementComponent implements OnInit {
       description: category.description,
       icon: category.icon,
     };
+    this.selectedIconFile = null;
+    this.iconPreview.set(category.icon);
+  }
+
+  onIconSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/') || file.size > 5 * 1024 * 1024) {
+      input.value = '';
+      this.showToast('warning', 'Icono no válido', 'Selecciona una imagen de hasta 5 MB.');
+      return;
+    }
+
+    this.selectedIconFile = file;
+    const reader = new FileReader();
+    reader.onload = () => this.iconPreview.set(String(reader.result ?? ''));
+    reader.readAsDataURL(file);
   }
 
   askDelete(category: CategoryRow): void {
@@ -163,7 +167,9 @@ export class CategoriesManagementComponent implements OnInit {
 
   resetForm(): void {
     this.editingId.set(null);
-    this.form = { name: '', description: '', icon: CATEGORY_ICON_OPTIONS[0].value };
+    this.form = { name: '', description: '', icon: '' };
+    this.selectedIconFile = null;
+    this.iconPreview.set('');
   }
 
   updateSearch(term: string): void {
@@ -181,12 +187,42 @@ export class CategoriesManagementComponent implements OnInit {
       name: category.name,
       description: category.description ?? 'Sin descripción',
       items: Number(category.total_items ?? 0),
-      icon: category.icon ?? CATEGORY_ICON_OPTIONS[0].value,
+      icon: category.icon ?? DEFAULT_CATEGORY_ICON,
     };
   }
 
   private showToast(type: ToastType, title: string, message: string): void {
     this.toast.set({ visible: true, type, title, message });
+  }
+
+  private finishSave(category: Category, title: string, message: string): void {
+    if (!this.selectedIconFile) {
+      this.applySavedCategory(category);
+      this.showToast('success', title, message);
+      this.resetForm();
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('icon', this.selectedIconFile);
+    this.categoriesService.uploadIcon(category.id_categories, formData).subscribe({
+      next: categoryWithIcon => {
+        this.applySavedCategory(categoryWithIcon);
+        this.showToast('success', title, message);
+        this.resetForm();
+      },
+      error: error => this.showCategoryError(error, 'La categoría se guardó, pero el icono no pudo subirse'),
+    });
+  }
+
+  private applySavedCategory(category: Category): void {
+    const saved = this.mapCategory(category);
+    this.categories.update(categories => {
+      const current = categories.find(item => item.id === saved.id);
+      return current
+        ? categories.map(item => item.id === saved.id ? { ...saved, items: current.items } : item)
+        : [...categories, saved];
+    });
   }
 
   private showCategoryError(error: unknown, title: string): void {
