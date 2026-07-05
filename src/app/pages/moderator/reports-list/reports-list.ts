@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { ReportsService } from '../../../core/services/reports.service';
 import { ReportStatus } from '../../../shared/enums/report-status.enum';
 import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 
 interface ReportRow {
   id: number;
@@ -23,7 +24,7 @@ const REPORT_STATUS_LABELS: Record<ReportRow['status'], string> = {
 @Component({
   selector: 'app-reports-list',
   standalone: true,
-  imports: [FormsModule, RouterLink, AdminNavigationComponent],
+  imports: [FormsModule, RouterLink, AdminNavigationComponent, BreadcrumbComponent],
   templateUrl: './reports-list.html',
   styleUrl: './reports-list.css'
 })

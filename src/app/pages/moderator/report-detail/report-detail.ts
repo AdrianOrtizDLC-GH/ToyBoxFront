@@ -4,6 +4,8 @@ import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/
 import { ToastComponent, ToastType } from '../../../shared/components/toast/toast';
 import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
 import { ReportsService, ReportApi } from '../../../core/services/reports.service';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
+import { HttpErrorResponse } from '@angular/common/http';
 
 type ReportAction = 'resolve' | 'withdraw' | 'reactivate';
 
@@ -22,7 +24,7 @@ interface ReportDetail {
 @Component({
   selector: 'app-report-detail',
   standalone: true,
-  imports: [RouterLink, ModalConfirmComponent, ToastComponent, AdminNavigationComponent],
+  imports: [RouterLink, ModalConfirmComponent, ToastComponent, AdminNavigationComponent, BreadcrumbComponent],
   templateUrl: './report-detail.html',
   styleUrl: './report-detail.css'
 })
@@ -54,7 +56,8 @@ export class ReportDetailComponent implements OnInit {
         this.isLoading = false;
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        const apiMessage = error.error?.error;
         this.error = 'No se pudo cargar el reporte.';
         this.isLoading = false;
         this.cdr.markForCheck();
@@ -114,12 +117,13 @@ export class ReportDetailComponent implements OnInit {
         this.pendingAction = null;
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: (error: HttpErrorResponse) => {
+        const apiMessage = error.error?.error;
         this.toast = {
           visible: true,
           type: 'error',
           title: 'No se pudo completar la acción',
-          message: 'Comprueba tus permisos e inténtalo de nuevo.',
+          message: apiMessage ?? 'La acción ya no está disponible. Actualiza el reporte e inténtalo de nuevo.',
         };
         this.pendingAction = null;
         this.cdr.markForCheck();

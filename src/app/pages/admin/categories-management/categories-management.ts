@@ -6,18 +6,32 @@ import { Category } from '../../../shared/interfaces/category.interface';
 import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
 import { ToastComponent, ToastType } from '../../../shared/components/toast/toast';
 import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 
 interface CategoryRow {
   id: number;
   name: string;
   description: string;
   items: number;
+  icon: string;
 }
+
+const CATEGORY_ICON_OPTIONS = [
+  { label: 'Videojuegos', value: '/assets/images/Iconos%20categorias/icono_videojuegos.svg' },
+  { label: 'Construcción', value: '/assets/images/Iconos%20categorias/icono_construccion.svg' },
+  { label: 'Bebés', value: '/assets/images/Iconos%20categorias/icono_bebes.svg' },
+  { label: 'Juegos de mesa', value: '/assets/images/Iconos%20categorias/icono_juegosmesa.svg' },
+  { label: 'Imaginación', value: '/assets/images/Iconos%20categorias/icono_imaginacion.svg' },
+  { label: 'Educativo', value: '/assets/images/Iconos%20categorias/icono_educativo.svg' },
+  { label: 'Muñecos y coches', value: '/assets/images/Iconos%20categorias/icono_munecosycoches.svg' },
+  { label: 'Aire libre', value: '/assets/images/Iconos%20categorias/icono_airelibre.svg' },
+] as const;
 
 @Component({
   selector: 'app-categories-management',
   standalone: true,
-  imports: [FormsModule, ModalConfirmComponent, ToastComponent, AdminNavigationComponent],
+  imports: [FormsModule, ModalConfirmComponent, ToastComponent, AdminNavigationComponent, PaginationComponent, BreadcrumbComponent],
   templateUrl: './categories-management.html',
   styleUrl: './categories-management.css'
 })
@@ -28,13 +42,17 @@ export class CategoriesManagementComponent implements OnInit {
   readonly isLoading = signal(false);
 
   readonly searchTerm = signal('');
+  readonly currentPage = signal(1);
+  readonly pageSize = 8;
+  readonly iconOptions = CATEGORY_ICON_OPTIONS;
   readonly editingId = signal<number | null>(null);
   readonly categoryToDelete = signal<CategoryRow | null>(null);
   readonly toast = signal({ visible: false, type: 'success' as ToastType, title: '', message: '' });
 
-  form = {
+  form: { name: string; description: string; icon: string } = {
     name: '',
     description: '',
+    icon: CATEGORY_ICON_OPTIONS[0].value,
   };
 
   readonly filteredCategories = computed(() => {
@@ -48,6 +66,13 @@ export class CategoriesManagementComponent implements OnInit {
       category.name.toLowerCase().includes(term) ||
       category.description.toLowerCase().includes(term)
     );
+  });
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredCategories().length / this.pageSize)));
+
+  readonly paginatedCategories = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredCategories().slice(start, start + this.pageSize);
   });
 
   ngOnInit(): void {
@@ -72,6 +97,7 @@ export class CategoriesManagementComponent implements OnInit {
   saveCategory(): void {
     const name = this.form.name.trim();
     const description = this.form.description.trim();
+    const icon = this.form.icon;
 
     if (!name || !description) {
       this.showToast('warning', 'Faltan campos', 'El nombre y la descripción son obligatorios.');
@@ -81,7 +107,7 @@ export class CategoriesManagementComponent implements OnInit {
     const editingId = this.editingId();
 
     if (editingId) {
-      this.categoriesService.update(editingId, { name, description }).subscribe({
+      this.categoriesService.update(editingId, { name, description, icon }).subscribe({
         next: category => {
           const updated = this.mapCategory(category);
           this.categories.update(categories => categories.map(current =>
@@ -96,7 +122,7 @@ export class CategoriesManagementComponent implements OnInit {
       return;
     }
 
-    this.categoriesService.create({ name, description }).subscribe({
+    this.categoriesService.create({ name, description, icon }).subscribe({
       next: category => {
         this.categories.update(categories => [...categories, this.mapCategory(category)]);
         this.showToast('success', 'Categoría creada', `${name} se ha añadido correctamente.`);
@@ -111,6 +137,7 @@ export class CategoriesManagementComponent implements OnInit {
     this.form = {
       name: category.name,
       description: category.description,
+      icon: category.icon,
     };
   }
 
@@ -136,7 +163,16 @@ export class CategoriesManagementComponent implements OnInit {
 
   resetForm(): void {
     this.editingId.set(null);
-    this.form = { name: '', description: '' };
+    this.form = { name: '', description: '', icon: CATEGORY_ICON_OPTIONS[0].value };
+  }
+
+  updateSearch(term: string): void {
+    this.searchTerm.set(term);
+    this.currentPage.set(1);
+  }
+
+  changePage(page: number): void {
+    this.currentPage.set(page);
   }
 
   private mapCategory(category: Category & { id?: number; total_items?: number | string }): CategoryRow {
@@ -145,6 +181,7 @@ export class CategoriesManagementComponent implements OnInit {
       name: category.name,
       description: category.description ?? 'Sin descripción',
       items: Number(category.total_items ?? 0),
+      icon: category.icon ?? CATEGORY_ICON_OPTIONS[0].value,
     };
   }
 

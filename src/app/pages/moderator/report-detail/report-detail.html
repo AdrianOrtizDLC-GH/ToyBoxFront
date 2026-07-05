@@ -1,6 +1,7 @@
 <div class="pattern-bg"></div>
 
 <main class="detail-page relative-z-10">
+  <app-breadcrumb />
   <app-admin-navigation />
 
   <a routerLink="/moderator/reports" class="back-link">Volver a reportes</a>
@@ -43,9 +44,13 @@
       <h2>Decisión</h2>
       <p>{{ report.reason }}</p>
       <div class="decision-actions">
+        @if (report.status === 'pending') {
         <button type="button" class="btn btn--ghost" (click)="openAction('resolve')">Resolver reporte</button>
         <button type="button" class="btn btn--danger" (click)="openAction('withdraw')">Retirar artículo</button>
         <button type="button" class="btn btn--primary" (click)="openAction('reactivate')">Reactivar artículo</button>
+        } @else {
+          <p>Este reporte ya está resuelto y no admite nuevas acciones.</p>
+        }
       </div>
     </aside>
   </section>
