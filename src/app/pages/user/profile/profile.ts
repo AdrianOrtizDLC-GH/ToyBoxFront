@@ -53,8 +53,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   showDeleteModal = false;
   showLogoutModal = false;
 
-  currentUserId: number | null = null;
-
   userLatitude: number | null = null;
   userLongitude: number | null = null;
 
@@ -84,8 +82,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const currentUser = this.authService.currentUser();
-    this.currentUserId = currentUser?.id_users ?? null;
     this.loadUserProfile();
   }
 
@@ -216,9 +212,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
       if (coordinates) {
         this.userLatitude = coordinates.lat;
         this.userLongitude = coordinates.lng;
+      } else {
+        this.userLatitude = null;
+        this.userLongitude = null;
       }
-    } catch {
+    } catch (error) {
+      this.userLatitude = null;
+      this.userLongitude = null;
     }
+    this.cdr.markForCheck();
   }
 
   updateBreadcrumb(): void {

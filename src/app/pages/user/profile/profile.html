@@ -165,9 +165,8 @@
                 </app-map-static>
               </button>
             } @else {
-              <div class="map-loading-placeholder">
-                <p>Cargando ubicación...</p>
-                <small>{{ user.user_city }}, {{ user.user_province }}</small>
+              <div class="map-skeleton-container">
+                <div class="map-skeleton"></div>
               </div>
             }
           </div>
