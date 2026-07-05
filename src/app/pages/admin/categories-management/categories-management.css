@@ -100,46 +100,60 @@ form {
   font-weight: 400;
 }
 
-.icon-picker {
+.icon-uploader {
   margin: 0;
   border: 0;
   padding: 0;
 }
 
-.icon-picker legend {
+.icon-uploader legend {
   margin-bottom: 8px;
   color: var(--on-surface);
   font-family: var(--font-title);
   font-weight: 600;
 }
 
-.icon-options {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
-  gap: 10px;
+.icon-upload-control {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
 }
 
-.icon-option {
-  display: grid;
-  place-items: center;
-  min-height: 64px;
-  border: 1.5px solid var(--outline-variant);
-  border-radius: var(--radius-sm);
-  background: var(--color-white);
-  cursor: pointer;
-}
-
-.icon-option:hover,
-.icon-option.selected {
-  border-color: var(--primary-toybox);
-  background: rgba(217, 65, 99, 0.08);
-}
-
-.icon-option img,
+.icon-preview,
 .category-icon {
   width: 42px;
   height: 42px;
   object-fit: contain;
+}
+
+.icon-preview {
+  padding: 6px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+}
+
+.file-button {
+  display: inline-flex;
+  grid-auto-flow: column;
+  align-items: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1.5px solid var(--secondary-toybox);
+  border-radius: var(--radius-sm);
+  color: var(--secondary-toybox);
+  background: var(--color-white);
+  cursor: pointer;
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 label {
