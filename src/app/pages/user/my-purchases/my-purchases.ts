@@ -96,9 +96,11 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (chats) => {
-          const purchasesChats = chats.filter(chat =>
-            chat.fk_buyer_id === this.currentUserId
-          );
+          const purchasesChats = chats.filter(chat => {
+            const amBuyer = chat.fk_buyer_id === this.currentUserId;
+            const isSold = chat.conservation_status === 'sold' || chat.item_status === 'sold';
+            return amBuyer && isSold;  // ← Además de buyer ID, verifica sold status
+          });
 
           const salesChats = chats.filter(chat => {
             const amSeller = chat.fk_seller_id === this.currentUserId;
