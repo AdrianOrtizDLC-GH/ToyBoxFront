@@ -5,9 +5,9 @@
 }
 
 .management-page {
-  width: min(100% - 32px, 1120px);
+  width: min(100% - 32px, 1320px);
   margin: 0 auto;
-  padding: 48px 0;
+  padding: 12px 0 48px;
 }
 
 .page-header,
@@ -134,7 +134,7 @@ td span {
 
 @media (max-width: 760px) {
   .management-page {
-    width: min(100% - 24px, 1120px);
+    width: min(100% - 24px, 1320px);
     padding: 28px 0;
   }
 
