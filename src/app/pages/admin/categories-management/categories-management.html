@@ -1,6 +1,7 @@
 <div class="pattern-bg"></div>
 
 <main class="management-page relative-z-10">
+  <app-breadcrumb />
   <app-admin-navigation />
 
   <header class="page-header">
@@ -12,7 +13,7 @@
       type="search"
       placeholder="Buscar categorías"
       [ngModel]="searchTerm()"
-      (ngModelChange)="searchTerm.set($event)"
+      (ngModelChange)="updateSearch($event)"
     />
   </header>
 
@@ -33,6 +34,23 @@
         ></textarea>
         <small class="form-help">Esta descripción se mostrará asociada a la categoría.</small>
       </label>
+      <fieldset class="icon-picker">
+        <legend>Icono</legend>
+        <div class="icon-options">
+          @for (icon of iconOptions; track icon.value) {
+            <button
+              type="button"
+              class="icon-option"
+              [class.selected]="form.icon === icon.value"
+              [attr.aria-pressed]="form.icon === icon.value"
+              [title]="icon.label"
+              (click)="form.icon = icon.value"
+            >
+              <img [src]="icon.value" [alt]="icon.label" />
+            </button>
+          }
+        </div>
+      </fieldset>
       <div class="form-actions">
         @if (editingId()) {
           <button type="button" class="btn btn--ghost" (click)="resetForm()">Cancelar</button>
@@ -56,6 +74,7 @@
       <thead>
         <tr>
           <th>Nombre</th>
+          <th>Icono</th>
           <th>Descripción</th>
           <th>Artículos</th>
           <th>Acciones</th>
@@ -64,12 +83,13 @@
       <tbody>
         @if (isLoading()) {
           <tr>
-            <td colspan="4">Cargando categorías...</td>
+            <td colspan="5">Cargando categorías...</td>
           </tr>
         } @else {
-          @for (category of filteredCategories(); track category.id) {
+          @for (category of paginatedCategories(); track category.id) {
           <tr>
             <td data-label="Nombre">{{ category.name }}</td>
+            <td data-label="Icono"><img class="category-icon" [src]="category.icon" [alt]="category.name" /></td>
             <td data-label="Descripción">{{ category.description }}</td>
             <td data-label="Artículos">{{ category.items }}</td>
             <td data-label="Acciones" class="actions">
@@ -79,13 +99,14 @@
           </tr>
           } @empty {
             <tr>
-              <td colspan="4">No hay categorías para mostrar.</td>
+              <td colspan="5">No hay categorías para mostrar.</td>
             </tr>
           }
         }
       </tbody>
     </table>
   </section>
+  <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="changePage($event)" />
 </main>
 
 <app-modal-confirm

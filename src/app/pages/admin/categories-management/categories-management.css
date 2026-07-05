@@ -100,6 +100,48 @@ form {
   font-weight: 400;
 }
 
+.icon-picker {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.icon-picker legend {
+  margin-bottom: 8px;
+  color: var(--on-surface);
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+
+.icon-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 10px;
+}
+
+.icon-option {
+  display: grid;
+  place-items: center;
+  min-height: 64px;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  cursor: pointer;
+}
+
+.icon-option:hover,
+.icon-option.selected {
+  border-color: var(--primary-toybox);
+  background: rgba(217, 65, 99, 0.08);
+}
+
+.icon-option img,
+.category-icon {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
 label {
   display: grid;
   gap: 8px;

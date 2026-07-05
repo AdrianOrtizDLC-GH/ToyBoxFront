@@ -5,6 +5,8 @@ import { ToastComponent, ToastType } from '../../../shared/components/toast/toas
 import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
 import { UsersService } from '../../../core/services/users.service';
 import { User } from '../../../shared/interfaces/user.interface';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 
 interface UserRow {
   id: number;
@@ -18,7 +20,7 @@ interface UserRow {
 @Component({
   selector: 'app-users-management',
   standalone: true,
-  imports: [FormsModule, ModalConfirmComponent, ToastComponent, AdminNavigationComponent],
+  imports: [FormsModule, ModalConfirmComponent, ToastComponent, AdminNavigationComponent, PaginationComponent, BreadcrumbComponent],
   templateUrl: './users-management.html',
   styleUrl: './users-management.css'
 })
@@ -29,6 +31,8 @@ export class UsersManagementComponent implements OnInit {
 
   searchTerm = '';
   statusFilter: 'all' | 'active' | 'blocked' = 'all';
+  currentPage = 1;
+  readonly pageSize = 10;
   selectedUser: UserRow | null = null;
   toast = { visible: false, type: 'success' as ToastType, title: '', message: '' };
 
@@ -102,6 +106,23 @@ export class UsersManagementComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  get paginatedUsers(): UserRow[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredUsers.slice(start, start + this.pageSize);
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredUsers.length / this.pageSize));
+  }
+
+  resetPagination(): void {
+    this.currentPage = 1;
+  }
+
+  changePage(page: number): void {
+    this.currentPage = page;
   }
 
   roleLabel(role: UserRow['role']): string {

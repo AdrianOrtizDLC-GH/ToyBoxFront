@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { AdminNavigationComponent } from '../../../shared/components/admin-navigation/admin-navigation';
+import { BreadcrumbComponent } from '../../../shared/components/breadcrumb/breadcrumb';
 
 interface DashboardMetric {
   label: string;
@@ -25,7 +26,7 @@ interface ChartItem {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [AdminNavigationComponent],
+  imports: [AdminNavigationComponent, BreadcrumbComponent],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -53,6 +54,8 @@ export class AdminDashboardComponent implements OnInit {
         const publishedItems = this.findTotal(stats.items_by_status, 'conservation_status', 'published');
         const pendingReports = stats.pending_reports ?? 0;
         const pendingReservations = stats.pending_reservations ?? 0;
+        const totalReservations = stats.total_reservations ?? 0;
+        const completedReservations = stats.total_completed_sales ?? 0;
         const topCategories = stats.top_categories ?? [];
 
         this.metrics = [
@@ -63,9 +66,9 @@ export class AdminDashboardComponent implements OnInit {
             tone: 'blue',
           },
           {
-            label: 'Artículos publicados',
-            value: publishedItems,
-            detail: `${pendingReservations} reservas pendientes`,
+            label: 'Reservas realizadas',
+            value: totalReservations,
+            detail: `${pendingReservations} pendientes · ${completedReservations} completadas`,
             tone: 'green',
           },
           {
@@ -83,7 +86,7 @@ export class AdminDashboardComponent implements OnInit {
         ];
 
         this.tasks = this.buildTasks(pendingReports, pendingReservations, blockedUsers);
-        this.chartItems = this.buildChartItems(activeUsers, publishedItems, pendingReports);
+        this.chartItems = this.buildChartItems(activeUsers, publishedItems, totalReservations, pendingReports);
         this.isLoading = false;
         this.cdr.markForCheck();
       },
@@ -126,12 +129,13 @@ export class AdminDashboardComponent implements OnInit {
     return tasks.length ? tasks : [{ title: 'Sin tareas pendientes', owner: 'Sistema', status: 'OK' }];
   }
 
-  private buildChartItems(activeUsers: number, publishedItems: number, pendingReports: number): ChartItem[] {
-    const maxValue = Math.max(activeUsers, publishedItems, pendingReports, 1);
+  private buildChartItems(activeUsers: number, publishedItems: number, totalReservations: number, pendingReports: number): ChartItem[] {
+    const maxValue = Math.max(activeUsers, publishedItems, totalReservations, pendingReports, 1);
 
     return [
       { label: 'Usuarios', value: activeUsers, percent: this.toPercent(activeUsers, maxValue) },
       { label: 'Artículos', value: publishedItems, percent: this.toPercent(publishedItems, maxValue) },
+      { label: 'Reservas', value: totalReservations, percent: this.toPercent(totalReservations, maxValue) },
       { label: 'Reportes', value: pendingReports, percent: this.toPercent(pendingReports, maxValue) },
     ];
   }
