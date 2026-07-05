@@ -6,6 +6,7 @@ import { ProductsService } from '../../core/services/products.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { Category } from '../../shared/interfaces/category.interface';
 import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
+import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb';
 
 interface HomeProduct {
   id: number;
@@ -47,7 +48,7 @@ const BADGE_LABELS: Record<string, string> = {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ProductCardComponent, SearchBarComponent, FilterSidebarComponent],
+  imports: [ProductCardComponent, SearchBarComponent, FilterSidebarComponent, BreadcrumbComponent],
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })

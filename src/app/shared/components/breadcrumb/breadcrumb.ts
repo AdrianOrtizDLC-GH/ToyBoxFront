@@ -45,7 +45,12 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
 
   'dashboard': { label: 'Dashboard', icon: 'dashboard' },
   'users': { label: 'Gestión de Usuarios', icon: 'people' },
-  'categories': { label: 'Gestión de Categorías', icon: 'category' }
+  'categories': { label: 'Gestión de Categorías', icon: 'category' },
+
+  'privacy': { label: 'Política de Privacidad', icon: 'privacy_tip' },
+  'terms': { label: 'Términos y Condiciones', icon: 'gavel' },
+  'contact': { label: 'Contacto', icon: 'mail' },
+  'home': { label: 'Inicio', icon: 'home' }
   };
 
   constructor(
@@ -77,13 +82,12 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   private generateBreadcrumbs(): void {
     const breadcrumbs: BreadcrumbItem[] = [];
 
-    // ← AGREGAR ESTO:
     const isLoggedIn = this.authService.isLoggedIn();
-    const homeRoute = isLoggedIn ? '/catalog' : '/home';
+    const homeRoute = isLoggedIn ? '/catalog' : '/';
 
     breadcrumbs.push({
       label: 'Inicio',
-      route: homeRoute,  // ← Dinámico según login
+      route: homeRoute, 
       icon: 'home'
     });
 
