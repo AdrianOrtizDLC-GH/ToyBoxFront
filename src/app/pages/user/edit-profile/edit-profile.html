@@ -36,25 +36,35 @@
       }
 
       <form [formGroup]="editProfileForm" (ngSubmit)="onSaveProfile()" class="edit-form">
+
+
         <div class="form-section">
-          <h2 class="section-title">Foto de Perfil</h2>
+            <h2 class="section-title">Foto de Perfil</h2>
 
-          <div class="profile-picture-section">
-            <app-user-avatar
-              [src]="profilePicturePreview"
-              [name]="avatarDisplayName"
-              size="extra-large"
-              [editable]="true"
-              (imageChanged)="onAvatarFileChanged($event)"
-              (imageDeleted)="onAvatarImageDeleted()"
-            ></app-user-avatar>
+            <div class="profile-picture-section">
+              <app-user-avatar
+                [src]="profilePicturePreview"
+                [name]="avatarDisplayName"
+                size="extra-large"
+                [editable]="true"
+                (imageChanged)="onAvatarFileChanged($event)"
+                (imageDeleted)="onAvatarImageDeleted()"
+                (imageError)="onAvatarError($event)"
+              ></app-user-avatar>
 
-            <p class="form-text text-muted">
-              Pasa el ratón por encima para cambiar o eliminar la foto. Máximo 5MB.
-              Formatos: JPG, PNG, GIF, WEBP.
-            </p>
+              <div class="profile-picture-info">
+                <p class="form-text-header">
+                  <strong>📸 Requisitos:</strong>
+                </p>
+                <ul class="form-text-list">
+                  <li>JPG, PNG, GIF, WEBP</li>
+                  <li>Máximo 5 MB</li>
+                  <li>200x200 hasta 5000x5000 píxeles</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
+
 
         <div class="form-section">
           <h2 class="section-title">Información Personal</h2>
