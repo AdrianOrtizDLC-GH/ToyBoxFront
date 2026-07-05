@@ -22,12 +22,6 @@
   margin-bottom: 0.5rem;
 }
 
-.input-group-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
 .password-toggle {
   position: absolute;
   right: 10px;

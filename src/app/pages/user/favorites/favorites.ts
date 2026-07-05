@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, OnDestroy } from '@angular/core'; 
 import { RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card';
@@ -12,6 +12,8 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/modal-confirm';
 import { ToastComponent } from '../../../shared/components/toast/toast';
 import { Item } from '../../../shared/interfaces/item.interface';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-favorites',
@@ -20,10 +22,12 @@ import { Item } from '../../../shared/interfaces/item.interface';
   templateUrl: './favorites.html',
   styleUrl: './favorites.css',
 })
-export class FavoritesComponent implements OnInit {
+export class FavoritesComponent implements OnInit, OnDestroy {  
   private favoritesService = inject(FavoritesService);
   private cdr = inject(ChangeDetectorRef);
   private authService = inject(AuthService); 
+
+  private destroy$ = new Subject<void>();
 
   favorites: Item[] = []; 
   currentPage = 1;
@@ -46,6 +50,11 @@ export class FavoritesComponent implements OnInit {
     this.loadFavorites();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private initializeBreadcrumbs(): void {
     const isLoggedIn = this.authService.isLoggedIn();
     const homeRoute = isLoggedIn ? '/catalog' : '/home';
@@ -59,37 +68,38 @@ export class FavoritesComponent implements OnInit {
   loadFavorites(): void {
     this.isLoading = true;
 
-    this.favoritesService.getMyFavorites().subscribe({
-      next: (response: any) => {
+    this.favoritesService.getMyFavorites()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: any) => {
 
-        this.favorites = response.map((item: any) => ({
-          id_items: item.id_items,
-          title: item.title,
-          price: item.price,
-          location: item.location || 'Sin especificar',
-          conservation_status: item.conservation_status || 'published',
-          publication_date: item.added_at || new Date().toISOString(),
-          
-          images: item.images || [],
-          
-          description: null,
-          item_status: 'available',
-          fk_seller_id: 0,
-          fk_categories_id: 0,
-          item_update: null
-        } as Item));
+          this.favorites = response.map((item: any) => ({
+            id_items: item.id_items,
+            title: item.title,
+            price: item.price,
+            location: item.location || 'Sin especificar',
+            conservation_status: item.conservation_status || 'published',
+            publication_date: item.added_at || new Date().toISOString(),
+            
+            images: item.images || [],
+            
+            description: null,
+            item_status: 'available',
+            fk_seller_id: 0,
+            fk_categories_id: 0,
+            item_update: null
+          } as Item));
 
-        this.updatePagination();
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err: HttpErrorResponse) => {
-        this.isLoading = false;
-        this.handleError(err, 'Error al cargar favoritos');
-        console.error('Error cargando favoritos:', err);
-        this.cdr.markForCheck();
-      }
-    });
+          this.updatePagination();
+          this.isLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.isLoading = false;
+          this.handleError(err, 'Error al cargar favoritos');
+          this.cdr.markForCheck();
+        }
+      });
   }
 
   public getStatusText(conservationStatus: string): string {
@@ -140,7 +150,7 @@ export class FavoritesComponent implements OnInit {
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
   }
 
-    requestRemoveFavorite(productId: number): void {
+  requestRemoveFavorite(productId: number): void {
     this.productToDeleteId = productId;
     this.modalConfirmOpen = true;
   }
@@ -153,20 +163,21 @@ export class FavoritesComponent implements OnInit {
   confirmRemove(): void {
     if (!this.productToDeleteId) return;
 
-    this.favoritesService.remove(this.productToDeleteId).subscribe({
-      next: () => {
-        this.favorites = this.favorites.filter(f => f.id_items !== this.productToDeleteId);
-        this.updatePagination();
-        this.showToast('success', 'Eliminado', 'Juguete eliminado de favoritos');
+    this.favoritesService.remove(this.productToDeleteId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.favorites = this.favorites.filter(f => f.id_items !== this.productToDeleteId);
+          this.updatePagination();
+          this.showToast('success', 'Eliminado', 'Juguete eliminado de favoritos');
 
-        this.modalConfirmOpen = false;
-        this.productToDeleteId = null;
-      },
-      error: (err: HttpErrorResponse) => {
-        this.handleError(err, 'Error al eliminar de favoritos');
-        console.error('Error eliminando favorito:', err);
-      }
-    });
+          this.modalConfirmOpen = false;
+          this.productToDeleteId = null;
+        },
+        error: (err: HttpErrorResponse) => {
+          this.handleError(err, 'Error al eliminar de favoritos');
+        }
+      });
   }
 
   onPageChange(page: number): void {

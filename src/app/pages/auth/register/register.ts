@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, Validators, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -6,6 +6,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { LocationsService } from '../../../core/services/locations.service';
 import { ToastComponent } from "../../../shared/components/toast/toast";
 import { ModalConfirmComponent } from "../../../shared/components/modal-confirm/modal-confirm";
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register',
@@ -14,10 +16,12 @@ import { ModalConfirmComponent } from "../../../shared/components/modal-confirm/
   templateUrl: './register.html',
   styleUrl: './register.css',
 })
-export class RegisterComponent implements OnInit {
+export class RegisterComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private locationsService = inject(LocationsService);
   public router = inject(Router);
+
+  private destroy$ = new Subject<void>();
 
   showPassword = false;
   showConfirmPassword = false;
@@ -97,45 +101,56 @@ export class RegisterComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.provincias = await this.locationsService.getProvincias();
 
-    this.form.get('province')?.valueChanges.subscribe(async (provincia) => {
-      if (provincia) {
-        this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(provincia);
-        this.form.patchValue({ city: '', postalCode: '' });
-        this.ubicacionError = '';
-      } else {
-        this.ciudadesDisponibles = [];
-        this.codigosPostalesDisponibles = [];
-        this.form.patchValue({ city: '', postalCode: '' });
-        this.ubicacionError = '';
-      }
-    });
-
-    this.form.get('city')?.valueChanges.subscribe(async (ciudad) => {
-      const provincia = this.form.get('province')?.value;
-
-      if (ciudad && provincia) {
-        this.codigosPostalesDisponibles = await this.locationsService.getCodigosPostalesByCity(provincia, ciudad);
-        this.form.patchValue({ postalCode: '' });
-        this.ubicacionError = '';
-      } else {
-        this.codigosPostalesDisponibles = [];
-        this.form.patchValue({ postalCode: '' });
-        this.ubicacionError = '';
-      }
-    });
-
-    this.form.get('postalCode')?.valueChanges.subscribe(async (codigo) => {
-      if (codigo && codigo.length === 5) {
-        const ubicacion = await this.locationsService.findUbicacionByCodigoPostal(codigo);
-        if (ubicacion) {
-          this.form.patchValue({ province: ubicacion.provincia, city: ubicacion.ciudad }, { emitEvent: false });
-          this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(ubicacion.provincia);
-          this.codigosPostalesDisponibles = await this.locationsService.getCodigosPostalesByCity(ubicacion.provincia, ubicacion.ciudad);
-          this.ubicacionValidada = true;
+    this.form.get('province')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (provincia) => {
+        if (provincia) {
+          this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(provincia);
+          this.form.patchValue({ city: '', postalCode: '' });
+          this.ubicacionError = '';
+        } else {
+          this.ciudadesDisponibles = [];
+          this.codigosPostalesDisponibles = [];
+          this.form.patchValue({ city: '', postalCode: '' });
           this.ubicacionError = '';
         }
-      }
-    });
+      });
+
+    this.form.get('city')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (ciudad) => {
+        const provincia = this.form.get('province')?.value;
+
+        if (ciudad && provincia) {
+          this.codigosPostalesDisponibles = await this.locationsService.getCodigosPostalesByCity(provincia, ciudad);
+          this.form.patchValue({ postalCode: '' });
+          this.ubicacionError = '';
+        } else {
+          this.codigosPostalesDisponibles = [];
+          this.form.patchValue({ postalCode: '' });
+          this.ubicacionError = '';
+        }
+      });
+
+    this.form.get('postalCode')?.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(async (codigo) => {
+        if (codigo && codigo.length === 5) {
+          const ubicacion = await this.locationsService.findUbicacionByCodigoPostal(codigo);
+          if (ubicacion) {
+            this.form.patchValue({ province: ubicacion.provincia, city: ubicacion.ciudad }, { emitEvent: false });
+            this.ciudadesDisponibles = await this.locationsService.getCiudadesByProvincia(ubicacion.provincia);
+            this.codigosPostalesDisponibles = await this.locationsService.getCodigosPostalesByCity(ubicacion.provincia, ubicacion.ciudad);
+            this.ubicacionValidada = true;
+            this.ubicacionError = '';
+          }
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   showToast(type: 'success' | 'error', title: string, message: string): void {

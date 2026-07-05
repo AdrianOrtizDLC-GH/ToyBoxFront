@@ -23,17 +23,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
   selector: 'app-my-purchases',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    FormsModule,
-    PaginationComponent,
-    StarRatingComponent,
-    LoadingSpinnerComponent,
-    EmptyStateComponent,
-    BreadcrumbComponent,
-    ToastComponent
-  ],
+  imports: [CommonModule,RouterModule,FormsModule,PaginationComponent,StarRatingComponent,LoadingSpinnerComponent,EmptyStateComponent,BreadcrumbComponent,ToastComponent],
   templateUrl: './my-purchases.html',
   styleUrl: './my-purchases.css',
 })
@@ -43,33 +33,26 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
   private readonly reviewsService = inject(ReviewsService);
   private readonly chatService = inject(ChatService);
 
-  // ✅ NUEVO: Subject para cleanup
   private destroy$ = new Subject<void>();
 
-  // ✅ Signals
   activeTab = signal<'purchases' | 'sales'>('purchases');
   currentPage = signal(1);
   pageSize = 8;
 
-  // ✅ Conversaciones
   myPurchasesConversations = signal<Chat[]>([]);
   mySalesConversations = signal<Chat[]>([]);
 
-  // ✅ Map de reseñas para verificar si existen
-  // Formato: "buyer_id_item_id" → Review | null
   reviewsMap = signal<Map<string, Review | null>>(new Map());
 
   isLoading = signal(false);
   errorMessage = signal('');
 
-  // ✅ Para modal de reseña
   showReviewModal = signal(false);
   selectedConversation: Chat | null = null;
   reviewerRole: 'seller' | 'buyer' = 'seller';
   newRating = signal(0);
   newComment = signal('');
 
-  // Toast
   toastVisible = signal(false);
   toastType = signal<'success' | 'error' | 'warning' | 'info'>('success');
   toastTitle = signal('');
@@ -88,7 +71,6 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     this.loadCurrentUser();
   }
 
-  // ✅ NUEVO: OnDestroy para limpiar
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -104,33 +86,22 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * ✅ CAMBIO: Cargar conversaciones + verificar reseñas
-   * Ahora filtra "Mis ventas" usando conservation_status del backend
-   */
   private loadAllData(): void {
     if (!this.currentUserId) return;
 
     this.isLoading.set(true);
     this.errorMessage.set('');
 
-    // ✅ CAMBIO: Agregar takeUntil para limpiar subscripción
     this.chatService.getMyChats()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (chats) => {
-          // ✅ MIS COMPRAS: Conversaciones donde soy COMPRADOR
           const purchasesChats = chats.filter(chat =>
             chat.fk_buyer_id === this.currentUserId
           );
 
-          // ✅ MIS VENTAS: SOLO conversaciones donde:
-          // 1. Soy el VENDEDOR (fk_seller_id === currentUserId)
-          // 2. El producto ESTÁ MARCADO como VENDIDO (conservation_status === 'sold')
-          // ✅ CAMBIO CRÍTICO: Ahora usa conservation_status que viene del backend
           const salesChats = chats.filter(chat => {
             const amSeller = chat.fk_seller_id === this.currentUserId;
-            // ✅ CAMBIO: Acceder a conservation_status como CAMPO PLANO (no anidado)
             const isSold = chat.conservation_status === 'sold' || chat.item_status === 'sold';
 
             return amSeller && isSold;
@@ -139,7 +110,6 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
           this.myPurchasesConversations.set(purchasesChats);
           this.mySalesConversations.set(salesChats);
 
-          // ✅ Cargar reseñas para cada conversación
           this.loadReviewsForConversations(purchasesChats);
           this.loadReviewsForConversations(salesChats);
 
@@ -152,35 +122,25 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * ✅ NUEVO: Cargar reseñas para cada conversación
-   * Verifica si existe reseña del comprador en cada producto
-   * ✅ CAMBIO: Agregar takeUntil para limpiar todas las subscripciones
-   */
   private loadReviewsForConversations(chats: Chat[]): void {
     if (!this.currentUserId) return;
 
     chats.forEach(chat => {
-      // ✅ Para cada conversación, verificar si YA EXISTE reseña
-      // ✅ CAMBIO: Agregar takeUntil para evitar memory leak
       this.reviewsService.getByProduct(chat.fk_items_id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: (reviews) => {
-            // Buscar si hay reseña del comprador hacia el vendedor
             const buyerReview = reviews.find(r =>
               r.fk_reviewer_id === chat.fk_buyer_id &&
               r.fk_reviewed_id === chat.fk_seller_id
             ) || null;
 
-            // Guardar en el map: "buyerId_itemId" → review o null
             const key = `${chat.fk_buyer_id}_${chat.fk_items_id}`;
             const newMap = new Map(this.reviewsMap());
             newMap.set(key, buyerReview);
             this.reviewsMap.set(newMap);
           },
           error: () => {
-            // Si error, asumir que no existe reseña
             const key = `${chat.fk_buyer_id}_${chat.fk_items_id}`;
             const newMap = new Map(this.reviewsMap());
             newMap.set(key, null);
@@ -224,27 +184,15 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     return Math.ceil(list.length / this.pageSize);
   }
 
-  /**
-   * ✅ NUEVO: Obtener reseña para una conversación
-   * Retorna Review si existe, null si no existe
-   */
   getReviewForConversation(chat: Chat): Review | null {
     const key = `${chat.fk_buyer_id}_${chat.fk_items_id}`;
     return this.reviewsMap().get(key) || null;
   }
 
-  /**
-   * ✅ NUEVO: Verificar si ya existe reseña
-   */
   hasReview(chat: Chat): boolean {
     return this.getReviewForConversation(chat) !== null;
   }
 
-  /**
-   * ✅ CAMBIO: Acceder a estructura PLANA (NO anidada)
-   * Antes: chat.item.title
-   * Ahora: chat.item_title
-   */
   getProductTitle(chat: Chat): string {
     return (chat as any).item_title || 'Producto sin título';
   }
@@ -257,43 +205,24 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     return (chat as any).item_photo || null;
   }
 
-  /**
-   * ✅ CAMBIO: Acceder a estructura PLANA para seller
-   * Antes: chat.seller.username
-   * Ahora: chat.seller_username
-   */
   getSellerUsername(chat: Chat): string {
     return (chat as any).seller_username || 'Vendedor';
   }
 
-  /**
-   * ✅ CAMBIO: Acceder a estructura PLANA para buyer
-   * Antes: chat.buyer.username
-   * Ahora: chat.buyer_username
-   */
   getBuyerUsername(chat: Chat): string {
     return (chat as any).buyer_username || 'Comprador';
   }
 
-  /**
-   * ✅ MÉTODO HELPER: Obtener nombre del vendedor
-   */
   getSellerUsernameForReview(): string {
     if (!this.selectedConversation) return 'Vendedor';
     return (this.selectedConversation as any).seller_username || 'Vendedor';
   }
 
-  /**
-   * ✅ MÉTODO HELPER: Obtener nombre del comprador
-   */
   getBuyerUsernameForReview(): string {
     if (!this.selectedConversation) return 'Comprador';
     return (this.selectedConversation as any).buyer_username || 'Comprador';
   }
 
-  /**
-   * ✅ NUEVO: Abrir modal de reseña
-   */
   openReviewModal(conversation: Chat, role: 'seller' | 'buyer'): void {
     this.selectedConversation = conversation;
     this.reviewerRole = role;
@@ -302,48 +231,31 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     this.showReviewModal.set(true);
   }
 
-  /**
-   * ✅ Validar reseña
-   */
   isReviewValid(): boolean {
     const rating = this.newRating();
     const comment = this.newComment().trim();
     return rating >= 1 && rating <= 5 && comment.length >= 10;
   }
 
-  /**
-   * ✅✅✅ ENVIAR RESEÑA - LÓGICA CORREGIDA ✅✅✅
-   * ANTES (INCORRECTO):
-   *   fk_reviewed_id: this.reviewerRole === 'seller'
-   *     ? this.selectedConversation.fk_seller_id      // ❌ Se reseña a sí mismo
-   *     : this.selectedConversation.fk_buyer_id       // ❌ Se reseña a sí mismo
-   *
-   * AHORA (CORRECTO):
-   *   fk_reviewed_id: this.reviewerRole === 'seller'
-   *     ? this.selectedConversation.fk_buyer_id       // ✅ Vendedor reseña al COMPRADOR
-   *     : this.selectedConversation.fk_seller_id      // ✅ Comprador reseña al VENDEDOR
-   */
   submitReview(): void {
     if (!this.isReviewValid() || !this.selectedConversation || !this.currentUserId) return;
 
-    // ✅ CAMBIO CRÍTICO CORREGIDO: Enviar fk_reviewed_id CORRECTO
     const reviewData = {
       rating: this.newRating(),
       comment: this.newComment().trim(),
       fk_items_id: this.selectedConversation.fk_items_id,
       fk_reviewed_id: this.reviewerRole === 'seller'
-        ? this.selectedConversation.fk_buyer_id        // ✅ Si soy vendedor, reseño al COMPRADOR
-        : this.selectedConversation.fk_seller_id       // ✅ Si soy comprador, reseño al VENDEDOR
+        ? this.selectedConversation.fk_buyer_id       
+        : this.selectedConversation.fk_seller_id       
     };
 
-    // ✅ CAMBIO: Agregar takeUntil para limpiar
     this.reviewsService.create(reviewData)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
           this.showToast('success', 'Éxito', 'Reseña enviada correctamente');
           this.showReviewModal.set(false);
-          this.loadAllData(); // ✅ Recargar todo
+          this.loadAllData(); 
         },
         error: (err) => {
           console.error('Error al guardar reseña:', err);
@@ -352,9 +264,6 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * ✅ Cancelar reseña
-   */
   cancelReview(): void {
     this.showReviewModal.set(false);
     this.newRating.set(0);

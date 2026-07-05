@@ -40,25 +40,6 @@
   font-family: var(--font-text);
 }
 
-.input-group-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon-right {
-  position: absolute;
-  right: 12px;
-  font-size: 22px;
-  color: var(--secondary-toybox);
-  pointer-events: none;
-  transition: color .2s ease;
-}
-
-.input-icon-right:hover {
-  color: var(--primary-toybox);
-}
-
 .form-control {
   padding-right: 42px;
 }
@@ -66,27 +47,6 @@
 .form-control::placeholder {
   color: #aaa;
   letter-spacing: 2px;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 10px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  color: var(--secondary-toybox);
-  transition: color .2s ease, opacity .2s ease;
-}
-
-.password-toggle:hover:not(:disabled) {
-  color: var(--primary-toybox);
-  opacity: 0.85;
-}
-
-.password-toggle:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .spinner-border {

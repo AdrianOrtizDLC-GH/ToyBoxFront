@@ -133,6 +133,7 @@ button {
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  font-size: 22px;
   color: var(--secondary-toybox);
   pointer-events: none;
   transition: color .2s ease;
