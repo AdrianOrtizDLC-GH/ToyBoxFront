@@ -292,6 +292,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
+  onAvatarError(errorMessage: string): void {
+    this.errorMessage = errorMessage;
+    this.cdr.markForCheck();
+  }
+
   onAvatarImageDeleted(): void {
     this.selectedFile = null;
     this.profilePicturePreview = null;
