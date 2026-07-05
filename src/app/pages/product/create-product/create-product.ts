@@ -12,11 +12,8 @@ import { UsersService } from '../../../core/services/users.service';
 
 import { Category } from '../../../shared/interfaces/category.interface';
 import { ItemFormData } from '../../../shared/interfaces/item.interface';
-import {
-  ProductCondition,
-  PRODUCT_CONDITION_LABELS
-} from '../../../shared/enums/product-condition.enum';
-
+import { ProductCondition, PRODUCT_CONDITION_LABELS} from '../../../shared/enums/product-condition.enum';
+import { ConservationStatus } from '../../../shared/enums/conservation-status.enum';
 interface ProductConditionOption {
   label: string;
   value: ProductCondition;
@@ -353,18 +350,113 @@ export class CreateProductComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const draft = {
-      formData: this.formData,
-      savedAt: new Date().toISOString()
+    // 🆕 NUEVO: Validar que haya al menos una imagen
+    if (this.selectedImages.length === 0) {
+      this.errorMessage = 'Debes subir al menos una imagen para guardar el borrador.';
+      this.markTouched('images');
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    const city = this.formData.city.trim();
+    const province = this.formData.province.trim();
+
+    const body: ItemFormData = {
+      title: this.formData.title.trim(),
+      description: this.formData.description.trim(),
+      price: Number(this.formData.price),
+      product_condition: this.formData.product_condition as ProductCondition,
+      location: `${city}, ${province}`,
+      fk_categories_id: Number(this.formData.fk_categories_id),
+      conservation_status: ConservationStatus.Draft
     };
 
-    localStorage.setItem(this.DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    this.productsService.create(body).subscribe({
+      next: (createdProduct: any) => {
+        const productId =
+          createdProduct.id_items ??
+          createdProduct.id ??
+          createdProduct.item?.id_items;
 
-    this.successMessage = 'Borrador guardado correctamente en este navegador. No se ha publicado ningún producto.';
+        if (!productId) {
+          this.isSubmitting = false;
+          this.errorMessage = 'El borrador se ha creado, pero no se recibió su identificador.';
+          return;
+        }
+
+        this.uploadDraftImages(productId);
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.errorMessage = 'Error al guardar el borrador. Intenta de nuevo.';
+        console.error('Error saving draft:', err);
+      }
+    });
   }
 
   publishProduct(): void {
     this.submitProduct();
+  }
+
+  private uploadDraftImages(productId: number): void {
+    const imagesFormData = new FormData();
+
+    this.selectedImages.forEach(image => {
+      imagesFormData.append('images', image.file);
+    });
+
+    this.productsService.uploadImages(productId, imagesFormData).subscribe({
+      next: () => {
+        this.isSubmitting = false;
+        this.successMessage = 'Borrador guardado correctamente con imágenes.';
+
+        this.clearForm();
+
+        setTimeout(() => {
+          this.router.navigate(['/user/my-products']);
+        }, 1500);
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        this.errorMessage = 'El borrador se creó pero no se pudieron subir las imágenes.';
+        console.error('Error uploading draft images:', err);
+      }
+    });
+  }
+
+  private clearForm(): void {
+    this.formData = {
+      title: '',
+      price: null,
+      product_condition: '',
+      province: '',
+      city: '',
+      description: '',
+      fk_categories_id: null
+    };
+
+    this.selectedImages.forEach(image => {
+      URL.revokeObjectURL(image.preview);
+    });
+    this.selectedImages = [];
+
+    this.touchedFields = {
+      title: false,
+      price: false,
+      product_condition: false,
+      province: false,
+      city: false,
+      description: false,
+      fk_categories_id: false,
+      images: false
+    };
+
+    localStorage.removeItem(this.DRAFT_STORAGE_KEY);
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.showValidationErrors = false;
   }
 
   getFieldError(field: CreateProductField): string {
