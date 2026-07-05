@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 
 interface LocationData {
   ciudades: string[];
@@ -109,7 +110,7 @@ export class LocationsService {
               'User-Agent': 'ToyBox-App/1.0'
             }
           }
-        )
+        ).pipe(timeout(5000))
       );
 
       if (response && response.length > 0) {
@@ -121,12 +122,10 @@ export class LocationsService {
         this.coordinatesCache[cacheKey] = result;
         return result;
       } else {
-        console.warn(`⚠️ No se encontraron coordenadas para ${ciudad}, ${provincia}`);
         this.coordinatesCache[cacheKey] = null;
         return null;
       }
     } catch (error) {
-      console.error(`❌ Error obteniendo coordenadas para ${ciudad}, ${provincia}:`, error);
       this.coordinatesCache[cacheKey] = null;
       return null;
     }
