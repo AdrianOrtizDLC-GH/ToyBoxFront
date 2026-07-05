@@ -1,9 +1,10 @@
-
-import { ChangeDetectorRef, Component, OnInit, inject, signal, effect } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, inject, signal, effect } from '@angular/core';  
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs'; 
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { PaginationComponent } from '../../../shared/components/pagination/pagination';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner';
@@ -40,14 +41,15 @@ import { ConservationStatus } from '../../../shared/enums/conservation-status.en
   templateUrl: './my-products.html',
   styleUrl: './my-products.css',
 })
-export class MyProductsComponent implements OnInit {
+export class MyProductsComponent implements OnInit, OnDestroy {  
   private readonly productsService = inject(ProductsService);
   private readonly chatService = inject(ChatService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  // Signals para estado reactivo
+  private destroy$ = new Subject<void>();
+
   activeTab = signal<'published' | 'drafts'>('published');
   allMyItems = signal<Item[]>([]);
   isLoadingProducts = signal(false);
@@ -83,6 +85,11 @@ export class MyProductsComponent implements OnInit {
     this.loadCurrentUser();
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   private loadCurrentUser(): void {
     const user = this.authService.currentUser();
     if (user) {
@@ -114,31 +121,32 @@ export class MyProductsComponent implements OnInit {
         sellerId: this.currentUserId,
         conservation_status: 'draft' as any
       })
-    }).subscribe({
-      next: (results) => {
-        const publishedItems = (results.published.items || []).map((card: any) =>
-          this.mapItemCard(card)
-        );
-        const draftItems = (results.drafts.items || []).map((card: any) =>
-          this.mapItemCard(card)
-        );
+    })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (results) => {
+          const publishedItems = (results.published.items || []).map((card: any) =>
+            this.mapItemCard(card)
+          );
+          const draftItems = (results.drafts.items || []).map((card: any) =>
+            this.mapItemCard(card)
+          );
 
-        const allItems = [...publishedItems, ...draftItems];
+          const allItems = [...publishedItems, ...draftItems];
 
-        const uniqueItems = Array.from(new Map(
-          allItems.map(item => [item.id_items, item])
-        ).values());
+          const uniqueItems = Array.from(new Map(
+            allItems.map(item => [item.id_items, item])
+          ).values());
 
-        this.allMyItems.set(uniqueItems);
-        this.totalPages.set(results.published.totalPages || 1);
-        this.isLoadingProducts.set(false);
-      },
-      error: (err) => {
-        console.error('Error cargando productos:', err);
-        this.productsError.set('Error al cargar los productos. Intenta de nuevo.');
-        this.isLoadingProducts.set(false);
-      }
-    });
+          this.allMyItems.set(uniqueItems);
+          this.totalPages.set(results.published.totalPages || 1);
+          this.isLoadingProducts.set(false);
+        },
+        error: (err) => {
+          this.productsError.set('Error al cargar los productos. Intenta de nuevo.');
+          this.isLoadingProducts.set(false);
+        }
+      });
   }
 
   get publishedProducts(): Item[] {
@@ -202,33 +210,24 @@ export class MyProductsComponent implements OnInit {
     this.newPrice = product.price;
 
     this.isLoadingConversations.set(true);
-    this.chatService.getMyChats().subscribe({
-      next: (chats) => {
-        const relevantChats = chats.filter(chat =>
-          chat.fk_seller_id === this.currentUserId &&
-          chat.fk_items_id === product.id_items
-        );
+    this.chatService.getMyChats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (chats) => {
+          const relevantChats = chats.filter(chat =>
+            chat.fk_seller_id === this.currentUserId &&
+            chat.fk_items_id === product.id_items
+          );
 
-        console.log('✅ Conversaciones filtradas para el producto:', product.id_items);
-        console.log('✅ Total de conversaciones:', relevantChats.length);
-        relevantChats.forEach(chat => {
-          console.log('✅ Chat disponible:', {
-            id: chat.id_conversations,
-            buyer_id: chat.fk_buyer_id,
-            buyer_username: (chat as any).buyer_username
-          });
-        });
-
-        this.conversations.set(relevantChats);
-        this.isLoadingConversations.set(false);
-        this.showSaleModal.set(true);
-      },
-      error: (err) => {
-        console.error('Error cargando conversaciones:', err);
-        this.showToast('error', 'Error', 'No se pudieron cargar las conversaciones');
-        this.isLoadingConversations.set(false);
-      }
-    });
+          this.conversations.set(relevantChats);
+          this.isLoadingConversations.set(false);
+          this.showSaleModal.set(true);
+        },
+        error: (err) => {
+          this.showToast('error', 'Error', 'No se pudieron cargar las conversaciones');
+          this.isLoadingConversations.set(false);
+        }
+      });
   }
 
   confirmSale(): void {
@@ -241,30 +240,31 @@ export class MyProductsComponent implements OnInit {
       this.showToast('warning', 'Advertencia', 'El precio debe ser mayor a 0');
       return;
     }
-    this.productsService.markAsSold(this.productToSell.id_items, this.selectedConversation.fk_buyer_id).subscribe({
-      next: () => {
-        const updatedItems = this.allMyItems().map(p =>
-          p.id_items === this.productToSell!.id_items
-            ? {
-                ...p,
-                item_status: ItemStatus.Sold,
-                price: this.newPrice!,
-                conservation_status: ConservationStatus.Sold
-              }
-            : p
-        );
-        this.allMyItems.set(updatedItems);
+    this.productsService.markAsSold(this.productToSell.id_items, this.selectedConversation.fk_buyer_id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          const updatedItems = this.allMyItems().map(p =>
+            p.id_items === this.productToSell!.id_items
+              ? {
+                  ...p,
+                  item_status: ItemStatus.Sold,
+                  price: this.newPrice!,
+                  conservation_status: ConservationStatus.Sold
+                }
+              : p
+          );
+          this.allMyItems.set(updatedItems);
 
-        this.showToast('success', 'Éxito', 'Producto marcado como vendido');
-        this.showSaleModal.set(false);
-        this.cancelSale();
-        this.loadAllMyItems(); 
-      },
-      error: (err) => {
-        console.error('Error marcando producto como vendido:', err);
-        this.showToast('error', 'Error', 'No se pudo marcar el producto como vendido');
-      }
-    });
+          this.showToast('success', 'Éxito', 'Producto marcado como vendido');
+          this.showSaleModal.set(false);
+          this.cancelSale();
+          this.loadAllMyItems(); 
+        },
+        error: (err) => {
+          this.showToast('error', 'Error', 'No se pudo marcar el producto como vendido');
+        }
+      });
   }
 
   cancelSale(): void {
@@ -292,21 +292,22 @@ export class MyProductsComponent implements OnInit {
   deleteProductConfirmed(): void {
     if (!this.productToDelete) return;
 
-    this.productsService.delete(this.productToDelete.id_items).subscribe({
-      next: () => {
-        this.allMyItems.set(this.allMyItems().filter(
-          p => p.id_items !== this.productToDelete!.id_items
-        ));
+    this.productsService.delete(this.productToDelete.id_items)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.allMyItems.set(this.allMyItems().filter(
+            p => p.id_items !== this.productToDelete!.id_items
+          ));
 
-        this.showToast('success', 'Eliminado', 'Producto eliminado correctamente');
-        this.showDeleteModal.set(false);
-        this.productToDelete = null;
-      },
-      error: (err) => {
-        console.error('Error eliminando producto:', err);
-        this.showToast('error', 'Error', 'No se pudo eliminar el producto');
-      }
-    });
+          this.showToast('success', 'Eliminado', 'Producto eliminado correctamente');
+          this.showDeleteModal.set(false);
+          this.productToDelete = null;
+        },
+        error: (err) => {
+          this.showToast('error', 'Error', 'No se pudo eliminar el producto');
+        }
+      });
   }
 
   private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
@@ -319,6 +320,7 @@ export class MyProductsComponent implements OnInit {
       this.toastVisible.set(false);
     }, 3000);
   }
+
   getBuyerUsername(chat: Chat): string {
     return (chat as any).buyer_username || 'Comprador desconocido';
   }
@@ -330,5 +332,4 @@ export class MyProductsComponent implements OnInit {
   onPageChange(page: number): void {
     this.currentPage.set(page);
   }
-  
 }

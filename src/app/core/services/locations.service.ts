@@ -31,8 +31,7 @@ export class LocationsService {
           this.locationsData = data;
           this.loaded = true;
         },
-        error: (error) => {
-          console.error('❌ Error cargando datos de ubicación:', error);
+        error: (_error) => {
           this.loaded = true;
         }
       });

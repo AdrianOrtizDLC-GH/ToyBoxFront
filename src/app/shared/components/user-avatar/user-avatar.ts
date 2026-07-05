@@ -12,7 +12,7 @@ type AvatarSize = 'tiny' | 'small' | 'medium' | 'large' | 'extra-large';
   templateUrl: './user-avatar.html',
   styleUrl: './user-avatar.css'
 })
-// 🔴 CAMBIO 1: Implementar OnInit para detectar si está dentro de navegación
+
 export class UserAvatarComponent implements OnInit {
   @Input() user: User | null = null;
   @Input() src: string | null = null;
@@ -26,24 +26,19 @@ export class UserAvatarComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   showModal = signal(false);
-  // 🔴 CAMBIO 2: Nueva propiedad para detectar si está dentro de un elemento de navegación
   isInsideNavigation = false;
 
   showDeleteConfirm = signal(false);
 
-  // 🔴 CAMBIO 3: Inyectar ElementRef para acceder al elemento del DOM
   constructor(private elementRef: ElementRef) {}
 
-  // 🔴 CAMBIO 4: Método del ciclo de vida para detectar navegación
   ngOnInit(): void {
     this.isInsideNavigation = this.detectInsideNavigation();
   }
 
-  // 🔴 CAMBIO 5: Método privado que detecta si el avatar está dentro de un <a> o <button routerLink>
   private detectInsideNavigation(): boolean {
-    // Usa closest() para buscar si hay un elemento padre que sea un anchor o button con routerLink
     const parent = this.elementRef.nativeElement.closest('a, button[routerLink]');
-    return !!parent; // Retorna true si encuentra un padre de navegación
+    return !!parent; 
   }
 
   get finalSrc(): string | null {
@@ -98,9 +93,7 @@ export class UserAvatarComponent implements OnInit {
     return Math.round(this.sizePixels * 0.35);
   }
 
-  // 🔴 CAMBIO 6: Modificar openModal para NO abrir si está dentro de navegación
   openModal(event?: Event): void {
-    // !this.isInsideNavigation previene que se abra el modal cuando está en el navbar
     if (!this.editable && !this.disableModal && !this.isInsideNavigation) {
       event?.stopPropagation();
       this.showModal.set(true);
