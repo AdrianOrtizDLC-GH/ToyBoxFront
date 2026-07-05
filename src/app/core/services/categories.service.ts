@@ -22,6 +22,10 @@ export class CategoriesService {
     return this.http.put<Category>(`${this.API}/${id}`, body);
   }
 
+  uploadIcon(id: number, file: FormData): Observable<Category> {
+    return this.http.patch<Category>(`${this.API}/${id}/icon`, file);
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.API}/${id}`);
   }

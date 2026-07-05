@@ -37,22 +37,19 @@
         ></textarea>
         <small class="form-help">Esta descripción se mostrará asociada a la categoría.</small>
       </label>
-      <fieldset class="icon-picker">
+      <fieldset class="icon-uploader">
         <legend>Icono</legend>
-        <div class="icon-options">
-          @for (icon of iconOptions; track icon.value) {
-            <button
-              type="button"
-              class="icon-option"
-              [class.selected]="form.icon === icon.value"
-              [attr.aria-pressed]="form.icon === icon.value"
-              [title]="icon.label"
-              (click)="form.icon = icon.value"
-            >
-              <img [src]="icon.value" [alt]="icon.label" />
-            </button>
+        <div class="icon-upload-control">
+          @if (iconPreview()) {
+            <img class="icon-preview" [src]="iconPreview()" alt="Vista previa del icono" />
           }
+          <label class="file-button">
+            <span class="material-symbols-outlined" aria-hidden="true">upload</span>
+            {{ iconPreview() ? 'Cambiar icono' : 'Subir icono' }}
+            <input type="file" accept="image/*" (change)="onIconSelected($event)" />
+          </label>
         </div>
+        <small class="form-help">Imagen JPG, PNG, WEBP o SVG de hasta 5 MB. Se almacenará en Cloudinary.</small>
       </fieldset>
       <div class="form-actions">
         @if (editingId()) {
