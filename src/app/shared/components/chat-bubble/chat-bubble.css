@@ -22,15 +22,6 @@
   gap: .2rem;
 }
 
-.tb-bubble__sender {
-  font-family: var(--font-title);
-  font-size: .85rem;
-  font-weight: 700;
-  color: var(--secondary-toybox);
-  padding: 0 .5rem;
-  transition: color .2s ease;
-}
-
 .tb-bubble__text {
   font-family: var(--font-text);
   font-size: 1rem;
@@ -97,11 +88,6 @@
 
   .tb-bubble--own {
     margin-left: auto;
-  }
-
-  .tb-bubble__sender {
-    font-size: .75rem;
-    padding: 0 .4rem;
   }
 
   .tb-bubble__text {

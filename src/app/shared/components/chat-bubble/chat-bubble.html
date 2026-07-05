@@ -8,20 +8,14 @@
 
     <app-user-avatar
       [src]="displaySenderAvatar"
-      [name]="displaySenderName"
+      [name]="message.senderName"
       size="small"
-      [attr.aria-label]="'Avatar de ' + displaySenderName">
+      [attr.aria-label]="'Avatar de ' + message.senderName">
     </app-user-avatar>
   }
   
   <div class="tb-bubble__content">
     
-    @if (!isOwn) {
-      <span class="tb-bubble__sender">
-        {{ displaySenderName }}
-      </span>
-    }
-
     <div class="tb-bubble__text">
       {{ message.content }}
     </div>
