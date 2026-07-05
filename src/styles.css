@@ -288,3 +288,17 @@ button {
   h1 { font-size: 2rem; }
   h2 { font-size: 1.7rem; }
 }
+.breadcrumb-wrapper {
+  position: relative;
+  z-index: 10;
+  width: min(100% - 32px, 1320px);
+  margin: 0 auto;
+  padding-top: 32px;
+}
+
+@media (max-width: 760px) {
+  .breadcrumb-wrapper {
+    width: min(100% - 24px, 1320px);
+    padding-top: 20px;
+  }
+}
