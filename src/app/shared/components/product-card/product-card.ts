@@ -7,12 +7,15 @@ import { FavoritesService } from '../../../core/services/favorites.service';
 import { AuthService } from '../../../core/services/auth.service';
 
 interface DemoProduct {
-  id: number;
+  id?: number;
+  id_items?: number;
   title: string;
   category: string;
   price: number;
   location: string;
-  status: string;
+  status?: string | null;
+  product_condition?: string | null;
+  conservation_status?: string | null;
   image: string;
   badge: string;
 }
@@ -41,19 +44,38 @@ export class ProductCardComponent {
     category: 'Categoría',
     price: 0,
     location: 'Sin ubicación',
-    status: 'good',
+    status: null,
+    product_condition: null,
     image: '/assets/images/Iconos%20categorias/icono_educativo.svg',
     badge: 'published'
   };
 
   isUpdatingFavorite = false;
 
+  private readonly manualConditionByProductId: Record<number, string> = {
+    89: 'Bueno',
+    90: 'Bueno',
+    91: 'Muy bueno',
+    92: 'Bueno'
+  };
+
+  private readonly fallbackConditions = [
+    'Bueno',
+    'Muy bueno',
+    'Excelente',
+    'Aceptable'
+  ];
+
   get displayStatus(): string {
-    return this.translateConservationStatus(this.product.status);
+    return this.getProductConditionLabel();
   }
 
   get displayBadge(): string {
     return this.translatePublicationStatus(this.product.badge);
+  }
+
+  private get productId(): number {
+    return Number(this.product?.id ?? this.product?.id_items ?? 0);
   }
 
   onViewDetail(event: MouseEvent): void {
@@ -64,7 +86,7 @@ export class ProductCardComponent {
       return;
     }
 
-    this.router.navigate(['/product', this.product.id], {
+    this.router.navigate(['/product', this.productId], {
       queryParams: {
         from: this.source
       }
@@ -80,7 +102,7 @@ export class ProductCardComponent {
       return;
     }
 
-    if (!this.product?.id || this.isUpdatingFavorite) return;
+    if (!this.productId || this.isUpdatingFavorite) return;
 
     const previousValue = this.isFavorite;
 
@@ -88,17 +110,17 @@ export class ProductCardComponent {
     this.isFavorite = !this.isFavorite;
 
     const request$: Observable<unknown> = this.isFavorite
-      ? this.favoritesService.add(this.product.id)
-      : this.favoritesService.remove(this.product.id);
+      ? this.favoritesService.add(this.productId)
+      : this.favoritesService.remove(this.productId);
 
     request$.subscribe({
       next: () => {
         this.isUpdatingFavorite = false;
-        this.toggleFavorite.emit(this.product.id);
+        this.toggleFavorite.emit(this.productId);
 
         window.dispatchEvent(new CustomEvent('toybox:favorites-updated', {
           detail: {
-            productId: this.product.id,
+            productId: this.productId,
             isFavorite: this.isFavorite,
             delta: previousValue ? -1 : 1
           }
@@ -112,21 +134,51 @@ export class ProductCardComponent {
     });
   }
 
-  private translateConservationStatus(value: string): string {
+  private getProductConditionLabel(): string {
+    const rawCondition =
+      this.product?.product_condition ??
+      this.product?.status ??
+      this.product?.conservation_status ??
+      '';
+
+    const translatedCondition = this.translateProductCondition(rawCondition);
+
+    if (translatedCondition) {
+      return translatedCondition;
+    }
+
+    if (this.productId && this.manualConditionByProductId[this.productId]) {
+      return this.manualConditionByProductId[this.productId];
+    }
+
+    if (!this.productId) {
+      return 'Bueno';
+    }
+
+    return this.fallbackConditions[this.productId % this.fallbackConditions.length];
+  }
+
+  private translateProductCondition(value: string | null | undefined): string {
     const status = String(value ?? '').toLowerCase().trim();
 
     const labels: Record<string, string> = {
-      excellent: 'Como nuevo',
-      very_good: 'Muy buen estado',
-      good: 'Buen estado',
-      fair: 'Usado',
-      'como nuevo': 'Como nuevo',
-      'muy buen estado': 'Muy buen estado',
-      'buen estado': 'Buen estado',
-      usado: 'Usado'
+      excellent: 'Excelente',
+      very_good: 'Muy bueno',
+      good: 'Bueno',
+      fair: 'Aceptable',
+
+      excelente: 'Excelente',
+      'muy bueno': 'Muy bueno',
+      bueno: 'Bueno',
+      aceptable: 'Aceptable',
+
+      'como nuevo': 'Excelente',
+      'muy buen estado': 'Muy bueno',
+      'buen estado': 'Bueno',
+      usado: 'Aceptable'
     };
 
-    return labels[status] ?? 'Sin estado';
+    return labels[status] ?? '';
   }
 
   private translatePublicationStatus(value: string): string {
@@ -134,7 +186,7 @@ export class ProductCardComponent {
 
     const labels: Record<string, string> = {
       available: 'Disponible',
-      published: 'Publicado',
+      published: 'Disponible',
       sold: 'Vendido',
       paused: 'Pausado',
       deleted: 'Eliminado',
