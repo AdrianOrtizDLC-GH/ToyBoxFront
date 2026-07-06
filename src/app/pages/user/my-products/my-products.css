@@ -215,6 +215,11 @@
   cursor: not-allowed;
 }
 
+.icon-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(216, 69, 101, 0.15);
+}
+
 .icon-btn .material-symbols-outlined {
   font-size: 22px;
   color: var(--color-white);
@@ -397,9 +402,23 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════ */
-/* MEDIA QUERIES - Orden descendente (mayor a menor) */
-/* ═══════════════════════════════════════════════════════════════ */
+.icon-btn.reserved {
+  background-color: var(--secondary-toybox);
+}
+
+.icon-btn.reserved:hover:not(:disabled) {
+  background-color: #6188c1;
+}
+
+.icon-btn .material-symbols-outlined {
+  font-size: 22px;
+  color: var(--color-white);
+  font-variation-settings: 'FILL' 0;
+}
+
+.icon-btn .material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
 
 @media (max-width: 1024px) {
   .product-item {
@@ -420,7 +439,6 @@
   }
 }
 
-/* ← NUEVO: Breakpoint intermedio 1058px */
 @media (max-width: 1058px) {
   .product-item {
     grid-template-columns: 130px 1fr auto;
@@ -448,7 +466,6 @@
   }
 }
 
-/* ← NUEVO: Breakpoint intermedio 700px */
 @media (max-width: 700px) {
   .product-item {
     grid-template-columns: 110px 1fr;

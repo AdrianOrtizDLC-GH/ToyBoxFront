@@ -106,8 +106,17 @@
 
                 <button
                   class="icon-btn"
-                  title="Marcar como vendido"
+                  [class.reserved]="product.conservation_status === 'reserved'"
+                  [title]="product.conservation_status === 'reserved' ? 'Desmarcar reserva' : 'Marcar como reservado'"
                   [disabled]="product.item_status === 'sold'"
+                  (click)="toggleReserved(product)">
+                  <span class="material-symbols-outlined" [class.filled]="product.conservation_status === 'reserved'">bookmark</span>
+                </button>
+
+                <button
+                  class="icon-btn"
+                  [title]="product.conservation_status !== 'reserved' ? 'Reserva el producto primero' : 'Marcar como vendido'"
+                  [disabled]="product.conservation_status !== 'reserved' || product.item_status === 'sold'"
                   (click)="markAsSold(product)">
                   <span class="material-symbols-outlined">check_circle</span>
                 </button>

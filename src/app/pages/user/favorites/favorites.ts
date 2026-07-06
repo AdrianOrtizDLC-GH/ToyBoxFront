@@ -14,6 +14,8 @@ import { ToastComponent } from '../../../shared/components/toast/toast';
 import { Item } from '../../../shared/interfaces/item.interface';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ConservationStatus } from '../../../shared/enums/conservation-status.enum';
+
 
 @Component({
   selector: 'app-favorites',
@@ -73,7 +75,7 @@ export class FavoritesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
 
-          this.favorites = response.map((item: any) => ({
+          const mappedItems = response.map((item: any) => ({
             id_items: item.id_items,
             title: item.title,
             price: item.price,
@@ -89,6 +91,8 @@ export class FavoritesComponent implements OnInit, OnDestroy {
             fk_categories_id: 0,
             item_update: null
           } as Item));
+
+          this.favorites = mappedItems.filter((item: Item) => item.conservation_status === ConservationStatus.Published);
 
           this.updatePagination();
           this.isLoading = false;

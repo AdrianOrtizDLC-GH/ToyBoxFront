@@ -9,6 +9,7 @@ export interface Chat {
 
   conservation_status?: string; // 'draft', 'published', 'sold', 'reserved', etc.
   item_status?: string; // 'available', 'sold', etc.
+  is_sold_in_this_conversation?: number; 
 
     // optionals
   item?: {

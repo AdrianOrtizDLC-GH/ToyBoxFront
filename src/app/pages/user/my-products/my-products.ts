@@ -105,7 +105,12 @@ export class MyProductsComponent implements OnInit, OnDestroy {
 
     forkJoin({
       published: this.productsService.getAll({
-        sellerId: this.currentUserId
+        sellerId: this.currentUserId,
+        conservation_status: 'published' as any  
+      }),
+      reserved: this.productsService.getAll({
+        sellerId: this.currentUserId,
+        conservation_status: 'reserved' as any
       }),
       drafts: this.productsService.getAll({
         sellerId: this.currentUserId,
@@ -118,11 +123,13 @@ export class MyProductsComponent implements OnInit, OnDestroy {
           const publishedItems = (results.published.items || []).map((card: any) =>
             this.mapItemCard(card)
           );
+          const reservedItems = (results.reserved.items || []).map((card: any) =>
+            this.mapItemCard(card)
+          );
           const draftItems = (results.drafts.items || []).map((card: any) =>
             this.mapItemCard(card)
           );
-
-          const allItems = [...publishedItems, ...draftItems];
+          const allItems = [...publishedItems, ...reservedItems, ...draftItems];
 
           const uniqueItems = Array.from(new Map(
             allItems.map(item => [item.id_items, item])
@@ -140,7 +147,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
   }
 
   get publishedProducts(): Item[] {
-    return this.allMyItems().filter(item => item.conservation_status === 'published');
+    return this.allMyItems().filter(item => item.conservation_status === ConservationStatus.Published || item.conservation_status === ConservationStatus.Reserved);
   }
 
   get draftProducts(): Item[] {
@@ -225,9 +232,41 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  toggleReserved(product: Item): void {
+    if (!product || product.item_status === 'sold') return;
+
+    this.productsService.toggleReserved(product.id_items)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (updatedProduct) => {
+          const updatedItems = this.allMyItems().map(p =>
+            p.id_items === product.id_items
+              ? { ...p, conservation_status: updatedProduct.conservation_status }
+              : p
+          );
+          this.allMyItems.set(updatedItems);
+
+          if (updatedProduct.conservation_status === ConservationStatus.Reserved) {
+            this.showToast('success', 'Reservado', 'Producto marcado como reservado. Ahora puedes marcar como vendido.');
+          } else {
+            this.showToast('info', 'Actualizado', 'Estado del producto actualizado.');
+          }
+        },
+        error: (err) => {
+          this.showToast('error', 'Error', 'No se pudo actualizar el estado del producto.');
+          console.error('Error toggling reserved:', err);
+        }
+      });
+  }
+
   markAsSold(product: Item): void {
     if (product.item_status === 'sold') {
       this.showToast('warning', 'Aviso', 'Este producto ya está marcado como vendido');
+      return;
+    }
+
+    if (product.conservation_status !== ConservationStatus.Reserved) {
+      this.showToast('warning', 'Aviso', 'Primero debes reservar el producto');
       return;
     }
 
@@ -266,7 +305,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       this.showToast('warning', 'Advertencia', 'El precio debe ser mayor a 0');
       return;
     }
-    this.productsService.markAsSold(this.productToSell.id_items, this.selectedConversation.fk_buyer_id)
+    this.productsService.markAsSold(this.productToSell.id_items, this.selectedConversation.fk_buyer_id, this.newPrice ?? undefined)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => {
