@@ -11,6 +11,13 @@ export interface BreadcrumbItem {
   icon?: string;
 }
 
+/**
+ * Reusable breadcrumb navigation bar shown at the top of feature pages
+ * (catalog, product detail, profile, admin, etc.).
+ * Can either receive a fixed list of items via the `items` input, or
+ * auto-generate the trail from the current activated route when `autoGenerate`
+ * is enabled, translating URL segments into human-readable Spanish labels/icons.
+ */
 @Component({
   selector: 'app-breadcrumb',
   standalone: true,
@@ -19,11 +26,15 @@ export interface BreadcrumbItem {
   styleUrl: './breadcrumb.css'
 })
 export class BreadcrumbComponent implements OnInit, OnDestroy {
+  // Explicit list of breadcrumb items to render; if empty and autoGenerate is true, it gets populated automatically.
   @Input() items: BreadcrumbItem[] = [];
+  // When true, the component builds the breadcrumb trail automatically from the current route on init and on navigation.
   @Input() autoGenerate: boolean = true;
 
   private destroy$ = new Subject<void>();
 
+  // Lookup table mapping known URL path segments to their display label and icon,
+  // used when auto-generating breadcrumbs from the current route.
   private routeLabels: { [key: string]: { label: string; icon?: string } } = {
   'catalog': { label: 'Catálogo', icon: 'shopping_bag' },
   'product': { label: 'Detalles del Producto', icon: 'info' },
@@ -59,6 +70,10 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     private authService: AuthService
   ) {}
 
+  /**
+   * Lifecycle hook: when auto-generation is enabled, builds the initial breadcrumb
+   * trail and re-generates it on every subsequent route navigation (NavigationEnd).
+   */
   ngOnInit(): void {
     if (this.autoGenerate) {
       this.generateBreadcrumbs();
@@ -74,11 +89,22 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Lifecycle hook: cleans up the router event subscription to avoid memory leaks
+   * when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /**
+   * Builds the breadcrumb trail from the current activated route tree.
+   * Always starts with a "Home" entry (pointing to catalog or landing page depending
+   * on login state), then walks each route segment, translating known segments into
+   * labeled breadcrumb items via `routeLabels`. Only assigns the generated trail to
+   * `items` if no explicit items were already provided.
+   */
   private generateBreadcrumbs(): void {
     const breadcrumbs: BreadcrumbItem[] = [];
 

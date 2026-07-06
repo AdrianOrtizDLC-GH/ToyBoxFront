@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 type ReportAction = 'resolve' | 'withdraw' | 'reactivate';
 
 // DEMO - use interface ReportDetail
+/** View model for a single moderation report, mapped from the API response. */
 interface ReportDetail {
   id: number;
   itemTitle: string;
@@ -21,6 +22,11 @@ interface ReportDetail {
   reportDate: string;
 }
 
+/**
+ * Moderator page for reviewing a single reported item/report.
+ * Loads the report by route id, and lets a moderator resolve, withdraw,
+ * or reactivate the reported item through a confirmation modal.
+ */
 @Component({
   selector: 'app-report-detail',
   standalone: true,
@@ -33,14 +39,23 @@ export class ReportDetailComponent implements OnInit {
   private readonly reportsService = inject(ReportsService);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // Currently loaded report, or null while loading/on error.
   report: ReportDetail | null = null;
+  // Id of the reported item (product), used for moderation actions.
   productId: number | null = null;
   isLoading = true;
   error = '';
 
+  // Action selected by the moderator, pending confirmation via the modal.
   pendingAction: ReportAction | null = null;
+  // State bound to the toast component to show success/error feedback.
   toast = { visible: false, type: 'success' as ToastType, title: '', message: '' };
 
+  /**
+   * Reads the report id from the route, fetches the report data,
+   * and maps it into the view model. Sets an error message if the
+   * id is invalid or the request fails.
+   */
   ngOnInit(): void {
     const reportId = Number(this.route.snapshot.paramMap.get('id'));
     if (!reportId) {
@@ -65,6 +80,7 @@ export class ReportDetailComponent implements OnInit {
     });
   }
 
+  /** Title shown in the confirmation modal, based on the pending action. */
   get modalTitle(): string {
     return this.pendingAction === 'withdraw'
       ? 'Retirar artículo'
@@ -73,6 +89,7 @@ export class ReportDetailComponent implements OnInit {
         : 'Resolver reporte';
   }
 
+  /** Confirmation message shown in the modal, based on the pending action. */
   get modalMessage(): string {
     return this.pendingAction === 'withdraw'
       ? 'El artículo reportado se retirará del catálogo.'
@@ -81,14 +98,24 @@ export class ReportDetailComponent implements OnInit {
         : 'El reporte se marcará como resuelto.';
   }
 
+  /** Human-readable label for the current report status. */
   get reportStatusLabel(): string {
     return this.report?.status === 'pending' ? 'Pendiente' : 'Resuelto';
   }
 
+  /**
+   * Opens the confirmation modal for the given moderation action.
+   * @param action The action to confirm (resolve, withdraw, or reactivate).
+   */
   openAction(action: ReportAction): void {
     this.pendingAction = action;
   }
 
+  /**
+   * Executes the pending moderation action (withdraw or approve/reactivate)
+   * against the reported item, updates local state, and shows a toast
+   * with the result.
+   */
   confirmAction(): void {
     if (!this.pendingAction || !this.productId || !this.report) {
       return;
@@ -131,6 +158,12 @@ export class ReportDetailComponent implements OnInit {
     });
   }
 
+  /**
+   * Maps the raw API report into the {@link ReportDetail} view model,
+   * falling back to placeholder labels when related data is missing.
+   * @param report Raw report payload returned by the API.
+   * @returns The mapped report ready for display.
+   */
   private mapReport(report: ReportApi): ReportDetail {
     return {
       id: report.id_reports,

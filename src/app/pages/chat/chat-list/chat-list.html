@@ -7,11 +7,13 @@
 <div class="relative-z-10">
 
     <div class="chat-list-page">
+        <!-- Page header with total conversation count -->
         <div class="chat-list-header">
             <h1 class="chat-title">Buzón</h1>
             <span class="chat-count">{{ conversations.length }} conversaciones</span>
         </div>
 
+        <!-- Client-side search box filtering conversations via filteredConversations -->
         <div class="chat-search">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" />
@@ -21,6 +23,7 @@
                 (input)="searchQuery = $any($event.target).value" />
         </div>
 
+        <!-- Conversation list, or an empty state when there are no matches -->
         <div class="conversations-list">
             @if (filteredConversations.length === 0) {
             <div class="empty-state">
@@ -42,6 +45,7 @@
                 <div class="conv-info">
                     <div class="conv-top">
                         <span class="conv-username">{{ conv.otherUserName }}</span>
+                        <!-- Relative timestamp: time only if today, "Ayer" if yesterday, else date + time -->
                         <span class="conv-time">
                           @if (conv.lastMessageAt) {
                             @if (isToday(conv.lastMessageAt)) {

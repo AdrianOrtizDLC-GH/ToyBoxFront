@@ -1,3 +1,4 @@
+<!-- Main avatar circle: shows the resolved image (finalSrc) or the initials fallback; size driven by sizePixels/fontSizePixels -->
 <div class="avatar-container">
   <div
     class="avatar"
@@ -6,9 +7,10 @@
     [style.height.px]="sizePixels"
     [style.fontSize.px]="fontSizePixels"
     (click)="openModal($event)"
-    [attr.role]="editable ? null : 'button'"  
+    [attr.role]="editable ? null : 'button'"
     [attr.tabindex]="editable ? -1 : 0">
 
+    <!-- Shows the profile image when finalSrc resolves to a URL, otherwise falls back to initials -->
     @if (finalSrc) {
       <img [src]="finalSrc" [alt]="'Avatar de ' + displayName" class="avatar__image" />
     } @else {
@@ -16,6 +18,7 @@
     }
   </div>
 
+  <!-- Edit overlay: only rendered when the `editable` input is true, offering upload and delete actions -->
   @if (editable) {
     <div class="avatar-edit-overlay">
       <input
@@ -29,6 +32,7 @@
         <span class="material-symbols-outlined">photo_camera</span>
       </button>
 
+      <!-- Delete button only shown when there is an existing image to remove -->
       @if (finalSrc) {
         <button type="button" class="avatar-action delete-btn" (click)="deleteImage()" title="Eliminar foto">
           <span class="material-symbols-outlined">delete</span>
@@ -38,9 +42,10 @@
   }
 </div>
 
+<!-- Full-size preview modal: shown only in read-only mode (not editable) when there is an image and showModal() is true -->
 @if (showModal() && finalSrc && !editable) {
-  <div 
-    class="avatar-modal-overlay" 
+  <div
+    class="avatar-modal-overlay"
     (click)="closeModal()"
     (keydown)="onKeyDown($event)"
     role="dialog"
@@ -58,6 +63,7 @@
   </div>
 }
 
+<!-- Confirmation dialog shown before deleting the profile picture; visibility bound to showDeleteConfirm() -->
 <app-modal-confirm
   [isOpen]="showDeleteConfirm()"
   title="Eliminar foto de perfil"

@@ -11,6 +11,7 @@ import { CategoriesService } from '../../core/services/categories.service';
 import { Category } from '../../shared/interfaces/category.interface';
 import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
 
+// View model used by the product card component, decoupled from the raw API item shape.
 interface CatalogProduct {
   id: number;
   title: string;
@@ -23,6 +24,7 @@ interface CatalogProduct {
   badge: string;
 }
 
+// Maps category IDs to their corresponding icon asset paths.
 const CATEGORY_ICONS: Record<number, string> = {
   1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
   2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
@@ -34,6 +36,7 @@ const CATEGORY_ICONS: Record<number, string> = {
   8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
+// Maps raw item condition values (from backend, in various formats) to display labels.
 const CONDITION_LABELS: Record<string, string> = {
   excellent: 'Como nuevo',
   very_good: 'Muy buen estado',
@@ -45,6 +48,7 @@ const CONDITION_LABELS: Record<string, string> = {
   usado: 'Usado',
 };
 
+// Maps raw publication/status values (from backend) to display labels shown as badges.
 const PUBLICATION_LABELS: Record<string, string> = {
   available: 'Disponible',
   published: 'Publicado',
@@ -68,11 +72,16 @@ const PUBLICATION_LABELS: Record<string, string> = {
   templateUrl: './catalog.html',
   styleUrl: './catalog.css'
 })
+/**
+ * Page component for browsing and filtering the product catalog.
+ * Loads categories and products, applies search/category/filter criteria,
+ * and maps raw API items into display-ready view models.
+ */
 export class CatalogComponent implements OnInit {
-  searchTerm = '';
-  activeFilters: Itemfilters = {};
+  searchTerm = ''; // Current free-text search query
+  activeFilters: Itemfilters = {}; // Active filters coming from the filter sidebar
 
-  selectedCategoryId = 0;
+  selectedCategoryId = 0; // 0 means "all categories"
 
   categories: Category[] = [];
   products: CatalogProduct[] = [];
@@ -86,11 +95,13 @@ export class CatalogComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /** Angular lifecycle hook: loads categories and products on component init. */
   ngOnInit(): void {
     this.loadCategories();
     this.loadProducts();
   }
 
+  /** Fetches all categories and prepends an "All" pseudo-category option. */
   loadCategories(): void {
     this.categoriesService.getAll().subscribe({
       next: (cats: Category[]) => {
@@ -116,6 +127,11 @@ export class CatalogComponent implements OnInit {
     });
   }
 
+  /**
+   * Fetches products applying the current search term, category and filters.
+   * Falls back to client-side category filtering as a safety net in case the
+   * backend does not filter by category on its own.
+   */
   loadProducts(): void {
     this.isLoading = true;
     this.error = '';
@@ -146,6 +162,11 @@ export class CatalogComponent implements OnInit {
     });
   }
 
+  /**
+   * Builds the filter payload sent to the products API by combining active
+   * filters, selected category (under multiple possible key names for
+   * backend compatibility) and the search term.
+   */
   private buildRequestFilters(): Itemfilters {
     const filters = {
       ...this.activeFilters
@@ -167,6 +188,11 @@ export class CatalogComponent implements OnInit {
     return filters as Itemfilters;
   }
 
+  /**
+   * Converts a raw API item into the {@link CatalogProduct} view model,
+   * normalizing condition/status fields that may arrive under different
+   * property names depending on the backend response shape.
+   */
   private toCardProduct(card: ItemCard): CatalogProduct {
     const rawCard = card as any;
 
@@ -198,6 +224,11 @@ export class CatalogComponent implements OnInit {
     };
   }
 
+  /**
+   * Resolves a human-readable condition label for a raw condition value.
+   * @param value Raw condition string from the API.
+   * @returns Display label, or the original value if unrecognized.
+   */
   private getConditionLabel(value: string): string {
     const key = String(value ?? '').toLowerCase().trim();
 
@@ -206,6 +237,11 @@ export class CatalogComponent implements OnInit {
     return CONDITION_LABELS[key] ?? value;
   }
 
+  /**
+   * Resolves a human-readable publication status label (used as a badge).
+   * @param value Raw publication status string from the API.
+   * @returns Display label, or the original value if unrecognized.
+   */
   private getPublicationLabel(value: string): string {
     const key = String(value ?? '').toLowerCase().trim();
 
@@ -214,11 +250,22 @@ export class CatalogComponent implements OnInit {
     return PUBLICATION_LABELS[key] ?? value;
   }
 
+  /**
+   * Handles the search bar's search event by updating the search term and
+   * reloading products.
+   * @param term Free-text search query entered by the user.
+   */
   onSearch(term: string): void {
     this.searchTerm = term;
     this.loadProducts();
   }
 
+  /**
+   * Handles category selection (from pills or the mobile select) by updating
+   * the selected category, syncing it into the active filters under several
+   * possible key names, and reloading products.
+   * @param categoryIdValue Selected category id (number or string from a select element).
+   */
   onCategorySelected(categoryIdValue: number | string): void {
     const categoryId = Number(categoryIdValue);
 
@@ -245,6 +292,11 @@ export class CatalogComponent implements OnInit {
     this.loadProducts();
   }
 
+  /**
+   * Handles filters applied from the filter sidebar, syncing the selected
+   * category (resolved by id or by name) and reloading products.
+   * @param filters Filter set emitted by the filter sidebar component.
+   */
   onFiltersApplied(filters: Itemfilters): void {
     this.activeFilters = filters;
 
@@ -272,6 +324,7 @@ export class CatalogComponent implements OnInit {
     this.loadProducts();
   }
 
+  /** Display name of the currently selected category ("Todas" if none). */
   get activeCategoryName(): string {
     const selectedCategory = this.categories.find(
       category => category.id_categories === this.selectedCategoryId

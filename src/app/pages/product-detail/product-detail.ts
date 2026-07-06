@@ -19,6 +19,7 @@ import {
   PRODUCT_CONDITION_LABELS
 } from '../../shared/enums/product-condition.enum';
 
+// Fallback labels for product condition values not covered by PRODUCT_CONDITION_LABELS.
 const CONDITION_LABELS: Record<string, string> = {
   excellent: 'Como nuevo',
   very_good: 'Muy buen estado',
@@ -26,6 +27,7 @@ const CONDITION_LABELS: Record<string, string> = {
   fair: 'Usado',
 };
 
+// Maps raw item/publication status codes to their user-facing badge text.
 const BADGE_LABELS: Record<string, string> = {
   available: 'Disponible',
   sold: 'Vendido',
@@ -37,6 +39,7 @@ const BADGE_LABELS: Record<string, string> = {
   removed: 'Retirado',
 };
 
+// Shape of the product data rendered on the detail page, including seller info and reviews.
 interface DetailProduct {
   id: number;
   id_items: number;
@@ -63,6 +66,7 @@ interface DetailProduct {
   reviews?: any[];
 }
 
+// Lightweight product shape used for the "related products" carousel/grid.
 interface RelatedProduct {
   id: number;
   title: string;
@@ -75,6 +79,12 @@ interface RelatedProduct {
   badge: string;
 }
 
+/**
+ * Product detail page component.
+ * Displays full information about a single product (images, price, seller, reviews),
+ * and allows the logged-in user to add it to favorites, contact the seller via chat,
+ * report the listing, and browse related products from the same category.
+ */
 @Component({
   selector: 'app-product-detail',
   standalone: true,
@@ -90,14 +100,17 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   isLoading = true;
   error = '';
 
+  // Favorite toggle state and user feedback messages.
   isFavorite = false;
   isUpdatingFavorite = false;
   favoriteMessage = '';
   favoriteError = '';
 
+  // State for starting a chat with the seller.
   isStartingChat = false;
   chatError = '';
 
+  // Selectable reasons shown in the report modal.
   reportReasons: string[] = [
     'Producto inapropiado',
     'Información falsa o engañosa',
@@ -107,6 +120,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     'Otro motivo'
   ];
 
+  // Report modal visibility and form state.
   showReportModal = false;
   selectedReportReason = '';
   customReportReason = '';
@@ -114,6 +128,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   reportSuccess = '';
   reportError = '';
 
+  // Emits on component destruction to unsubscribe all active observables via takeUntil.
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -128,6 +143,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Lifecycle hook: subscribes to route parameter changes and loads the
+   * corresponding product whenever the `id` route param changes.
+   */
   ngOnInit(): void {
     this.route.params
       .pipe(takeUntil(this.destroy$))
@@ -140,6 +159,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Fetches a product by id, maps it to the view model, resolves its gallery
+   * images, and triggers loading of seller reviews and related products.
+   * @param id Product identifier (id_items).
+   */
   loadProduct(id: number): void {
     this.isLoading = true;
     this.error = '';
@@ -188,6 +212,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Loads up to 4 other products from the same category (excluding the current one)
+   * to populate the "related products" section.
+   * @param categoryId Category id to filter by.
+   * @param excludeId Current product id to exclude from the results.
+   */
   private loadRelated(categoryId: number, excludeId: number): void {
     if (!categoryId) {
       this.relatedProducts = [];
@@ -232,6 +262,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Adds or removes the current product from the user's favorites.
+   * Requires authentication; dispatches a global `toybox:favorites-updated`
+   * event so other parts of the app (e.g. favorites counter) can react.
+   */
   onToggleFavorite(): void {
     if (!this.isUserLoggedIn()) {
       this.favoriteError = 'Debes iniciar sesión para añadir favoritos.';
@@ -293,6 +328,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Starts (or resumes) a chat conversation with the product's seller and
+   * navigates to the chat page. Requires authentication.
+   */
   contactSeller(): void {
     if (!this.isUserLoggedIn()) {
       this.chatError = 'Debes iniciar sesión para contactar con el vendedor.';
@@ -356,12 +395,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Navigates to the seller's public profile page. */
   goToSellerProfile(): void {
     if (!this.product.seller.id_users) return;
 
     this.router.navigate(['/user/profile', this.product.seller.id_users]);
   }
 
+  /**
+   * Loads the seller's reviews and computes their average rating.
+   * Wrapped in its own error handling so a missing reviews endpoint
+   * doesn't break the rest of the product detail page.
+   * @param sellerId Seller's user id.
+   */
   private loadSellerReviewsSafely(sellerId?: number): void {
     if (!sellerId) return;
 
@@ -416,6 +462,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Opens the report modal and resets its form state. */
   openReportModal(): void {
     this.reportError = '';
     this.reportSuccess = '';
@@ -424,6 +471,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.showReportModal = true;
   }
 
+  /** Closes the report modal, unless a report submission is in progress. */
   closeReportModal(): void {
     if (this.isSendingReport) return;
 
@@ -433,6 +481,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.reportError = '';
   }
 
+  /**
+   * Submits a moderation report for the current product with the selected
+   * (or custom) reason. Requires authentication and a non-empty reason.
+   */
   submitReport(): void {
     if (!this.isUserLoggedIn()) {
       this.reportError = 'Debes iniciar sesión para reportar un producto.';
@@ -486,6 +538,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Resolves a human-readable label for a product's condition value,
+   * falling back to the local CONDITION_LABELS map or a default string.
+   * @param product Object containing a `product_condition` field.
+   * @returns Localized condition label.
+   */
   getProductConditionLabel(product: Partial<DetailProduct> | any): string {
     const condition = product?.product_condition as ProductCondition | string | null | undefined;
 
@@ -496,6 +554,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       ?? 'Sin estado';
   }
 
+  /** Maps a raw API product payload into the DetailProduct view model. */
   private mapProduct(raw: any): DetailProduct {
     return {
       id: raw.id_items,
@@ -524,10 +583,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Convenience wrapper around AuthService to check authentication status. */
   private isUserLoggedIn(): boolean {
     return this.authService.isLoggedIn();
   }
 
+  /** Returns a default/empty DetailProduct used before data has loaded. */
   private emptyProduct(): DetailProduct {
     return {
       id: 0,
@@ -550,6 +611,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Lifecycle hook: completes the destroy$ subject to unsubscribe all active streams. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

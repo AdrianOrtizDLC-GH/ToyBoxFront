@@ -17,6 +17,11 @@ interface UserRow {
   registrationDate: string;
 }
 
+/**
+ * Admin page component for managing platform users: lists all users with
+ * search/status filtering and pagination, and allows blocking/unblocking
+ * a user account.
+ */
 @Component({
   selector: 'app-users-management',
   standalone: true,
@@ -33,6 +38,7 @@ export class UsersManagementComponent implements OnInit {
   statusFilter: 'all' | 'active' | 'blocked' = 'all';
   currentPage = 1;
   readonly pageSize = 10;
+  // User pending a status change (active/blocked), drives the confirm modal.
   selectedUser: UserRow | null = null;
   toast = { visible: false, type: 'success' as ToastType, title: '', message: '' };
 
@@ -41,10 +47,12 @@ export class UsersManagementComponent implements OnInit {
     private readonly cdr: ChangeDetectorRef
   ) {}
 
+  /** Angular lifecycle hook: triggers the initial users fetch. */
   ngOnInit(): void {
     this.loadUsers();
   }
 
+  /** Fetches all users from the backend and maps them into row view models. */
   loadUsers(): void {
     this.isLoading = true;
     this.error = '';
@@ -63,6 +71,7 @@ export class UsersManagementComponent implements OnInit {
     });
   }
 
+  /** Users list filtered by the current search term and status filter. */
   get filteredUsers(): UserRow[] {
     const term = this.searchTerm.trim().toLowerCase();
 
@@ -76,10 +85,12 @@ export class UsersManagementComponent implements OnInit {
     });
   }
 
+  /** Marks a user as pending a status change, opening the confirmation modal. */
   askStatusChange(user: UserRow): void {
     this.selectedUser = user;
   }
 
+  /** Toggles the selected user's status (active/blocked) and persists it via the backend. */
   confirmStatusChange(): void {
     if (!this.selectedUser) {
       return;
@@ -108,6 +119,7 @@ export class UsersManagementComponent implements OnInit {
     });
   }
 
+  /** Slice of filteredUsers for the current page. */
   get paginatedUsers(): UserRow[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredUsers.slice(start, start + this.pageSize);
@@ -117,6 +129,7 @@ export class UsersManagementComponent implements OnInit {
     return Math.max(1, Math.ceil(this.filteredUsers.length / this.pageSize));
   }
 
+  /** Resets pagination to the first page, used when search/filter criteria change. */
   resetPagination(): void {
     this.currentPage = 1;
   }
@@ -138,6 +151,7 @@ export class UsersManagementComponent implements OnInit {
     return status === 'active' ? 'Activo' : 'Bloqueado';
   }
 
+  /** Maps a backend User entity into the UserRow shape used by the view. */
   private mapUser(user: User): UserRow {
     return {
       id: user.id_users,

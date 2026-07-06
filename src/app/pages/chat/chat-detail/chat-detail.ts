@@ -21,19 +21,26 @@ import { SocketService } from '../../../core/services/socket.service';
   templateUrl: './chat-detail.html',
   styleUrls: ['./chat-detail.css']
 })
+/**
+ * Page component for a single chat conversation view (buyer/seller messaging).
+ * Loads the user's conversations, selects one based on the route param,
+ * joins its real-time socket room, and handles sending/receiving messages
+ * as well as marking messages as read.
+ */
 export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
 
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
 
-  selectedConversationId: number | null = null;
-  newMessage: string = '';
-  currentUserId: number | null = null;
+  selectedConversationId: number | null = null; // Currently open conversation, null if none selected
+  newMessage: string = ''; // Bound to the message input field
+  currentUserId: number | null = null; // Resolved reactively from AuthService (see effect below)
   breadcrumbItems: any[] = [];
-  conversations: ChatItem[] = [];
-  messages: ChatMessageWithSender[] = [];
+  conversations: ChatItem[] = []; // List of the user's conversations (for the sidebar)
+  messages: ChatMessageWithSender[] = []; // Messages of the currently selected conversation
 
+  // Emits once conversations have finished loading, used to defer route param handling until then
   private conversationsLoaded$ = new Subject<void>();
-  private socketSub: Subscription | null = null;
+  private socketSub: Subscription | null = null; // Subscription to incoming real-time messages
   private routeParamsSub: Subscription | null = null;
 
   get selectedConversation(): ChatItem | undefined {
@@ -55,6 +62,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /** Builds the breadcrumb trail, adapting the home route based on login state. */
   private initializeBreadcrumbs(): void {
     const isLoggedIn = this.authService.isLoggedIn();
     const homeRoute = isLoggedIn ? '/catalog' : '/home';
@@ -64,9 +72,18 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     ];
   }
 
+  /**
+   * Angular lifecycle hook. Establishes the socket connection, subscribes to
+   * incoming real-time messages (appending them to the open conversation and
+   * marking them as read), loads conversations, and wires up route params so
+   * navigating to /chat/:id selects the right conversation once conversations
+   * have loaded.
+   */
   ngOnInit(): void {
     this.socketService.connect();
 
+    // Real-time message handler: runs inside NgZone since socket callbacks
+    // execute outside Angular's zone by default and would not trigger change detection.
     this.socketSub = this.socketService.onNewMessage<ChatMessageWithSender>().subscribe((msg) => {
       this.ngZone.run(() => {
         if (
@@ -104,10 +121,12 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /** Angular lifecycle hook: keeps the message list scrolled to the latest message. */
   ngAfterViewChecked(): void {
     this.scrollToBottom();
   }
 
+  /** Angular lifecycle hook: leaves the socket room, unsubscribes and disconnects the socket. */
   ngOnDestroy(): void {
     if (this.selectedConversationId !== null) {
       this.socketService.leaveConversation(this.selectedConversationId);
@@ -117,6 +136,11 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     this.socketService.disconnect();
   }
 
+  /**
+   * Switches the active conversation: leaves the previous socket room, joins
+   * the new one, loads its messages, marks it as read, and updates breadcrumbs.
+   * @param id Conversation id to select.
+   */
   selectConversation(id: number): void {
     if (this.selectedConversationId !== null) {
       this.socketService.leaveConversation(this.selectedConversationId);
@@ -145,6 +169,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     }
   }
 
+  /** Fetches the user's conversation list and maps it into ChatItem view models. */
   loadConversations(): void {
     this.chatService.getMyChats().subscribe({
       next: (chats: any[]) => {
@@ -174,6 +199,10 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /**
+   * Fetches all messages for a given conversation.
+   * @param conversationId Conversation whose messages should be loaded.
+   */
   loadMessages(conversationId: number): void {
     this.chatService.getMessages(conversationId).subscribe({
       next: (messages) => {
@@ -187,6 +216,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /** Fetches conversation details (currently used only for debug logging). */
   private loadConversationData(conversationId: number): void {
     this.chatService.getChatById(conversationId).subscribe({
       next: (chat: any) => console.log('Conversación cargada:', chat),
@@ -194,6 +224,11 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /**
+   * Sends the current draft message via the chat service. Clears the input
+   * optimistically and restores it if sending fails. The message itself is
+   * not pushed locally here — it arrives back through the socket subscription.
+   */
   sendMessage(): void {
     if (!this.newMessage.trim() || !this.selectedConversationId) return;
 
@@ -209,6 +244,7 @@ export class ChatDetail implements OnInit, AfterViewChecked, OnDestroy {
     });
   }
 
+  /** Scrolls the messages container to its bottom to reveal the latest message. */
   scrollToBottom(): void {
     try {
       this.messagesContainer.nativeElement.scrollTop =

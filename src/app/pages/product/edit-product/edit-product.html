@@ -5,6 +5,7 @@
 </div>
 
 <main class="edit-product-page relative-z-10">
+  <!-- Loading state while the product is being fetched -->
   @if (isLoading) {
     <section class="edit-product-state card-toybox">
       <h1>Cargando producto...</h1>
@@ -13,6 +14,7 @@
       </p>
     </section>
   } @else if (errorMessage && !productId) {
+    <!-- Error state shown when the product failed to load (e.g. 404) -->
     <section class="edit-product-state card-toybox">
       <h1>No hemos podido cargar el producto</h1>
       <p class="error-message">
@@ -20,6 +22,7 @@
       </p>
     </section>
   } @else {
+    <!-- Page header: hero title/description and current publication status -->
     <section class="edit-product-hero">
       <div>
         <span class="edit-product-hero__eyebrow">Editar publicación</span>
@@ -46,7 +49,9 @@
       </aside>
     </section>
 
+    <!-- Main edit-product form; submitting triggers saveChanges() -->
     <form class="edit-product-layout" #editProductForm="ngForm" (ngSubmit)="saveChanges()">
+      <!-- Basic info panel: title, price, condition, location, description -->
       <section class="form-panel card-toybox">
         <div class="panel-heading">
           <span class="material-symbols-outlined">edit_square</span>
@@ -267,6 +272,7 @@
         </div>
       </section>
 
+      <!-- Category panel: mobile <select> plus icon-based category picker -->
       <section class="form-panel card-toybox">
         <div class="panel-heading">
           <span class="material-symbols-outlined">category</span>
@@ -338,6 +344,7 @@
         }
       </section>
 
+      <!-- Image management panel: current image, upload drop zone, and combined preview grid -->
       <section class="form-panel card-toybox">
         <div class="panel-heading">
           <span class="material-symbols-outlined">photo_library</span>
@@ -350,6 +357,7 @@
           </div>
         </div>
 
+        <!-- Highlight of the existing main photo, or an empty state if none -->
         @if (currentImages.length) {
           <div class="current-image-box">
             <img [src]="currentImages[0].url" [alt]="formData.title" />
@@ -414,6 +422,7 @@
           </p>
         }
 
+        <!-- Combined preview grid: existing images followed by newly added ones -->
         <div class="image-preview-grid">
           @for (image of currentImages; track image.url; let index = $index) {
             <div class="image-preview">
@@ -450,6 +459,7 @@
         </div>
       </section>
 
+      <!-- Save panel: checklist, feedback messages, save/cancel actions, and withdraw link -->
       <aside class="save-panel card-toybox">
         <h2>Guardar cambios</h2>
 
@@ -517,6 +527,7 @@
     </form>
   }
 
+  <!-- Confirmation modal for withdrawing (deleting) the product listing -->
   @if (showWithdrawModal) {
     <div class="withdraw-modal-backdrop" role="presentation" (click)="closeWithdrawModal()">
       <section

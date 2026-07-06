@@ -14,16 +14,19 @@ import { Category } from '../../../shared/interfaces/category.interface';
 import { ItemFormData } from '../../../shared/interfaces/item.interface';
 import { ProductCondition, PRODUCT_CONDITION_LABELS} from '../../../shared/enums/product-condition.enum';
 import { ConservationStatus } from '../../../shared/enums/conservation-status.enum';
+// Display option pairing a condition enum value with its localized label.
 interface ProductConditionOption {
   label: string;
   value: ProductCondition;
 }
 
+// An image picked by the user before upload: the raw File plus a local object-URL preview.
 interface SelectedImage {
   file: File;
   preview: string;
 }
 
+// Shape of the create-product form's bound data.
 interface CreateProductFormData {
   title: string;
   price: number | null;
@@ -34,6 +37,7 @@ interface CreateProductFormData {
   fk_categories_id: number | null;
 }
 
+// Union of form fields that support touched/validation tracking.
 type CreateProductField =
   | 'title'
   | 'price'
@@ -44,6 +48,7 @@ type CreateProductField =
   | 'fk_categories_id'
   | 'images';
 
+// Fallback category icon paths used when a category has no icon from the API.
 const CATEGORY_ICONS: Record<number, string> = {
   1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
   2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
@@ -55,6 +60,12 @@ const CATEGORY_ICONS: Record<number, string> = {
   8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
+/**
+ * Component for creating a new product listing.
+ * Handles the multi-section form (basic info, category, images), client-side
+ * validation, image upload with drag-and-drop, location auto-fill from the
+ * user's profile, local draft persistence, and publishing/saving as draft.
+ */
 @Component({
   selector: 'app-create-product',
   standalone: true,
@@ -89,6 +100,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   ];
 
+  // Reactive-ish plain object backing the template's [(ngModel)] bindings.
   formData: CreateProductFormData = {
     title: '',
     price: null,
@@ -102,6 +114,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   provincias: string[] = [];
   ciudadesDisponibles: string[] = [];
 
+  // Images selected by the user (not yet uploaded to the backend).
   selectedImages: SelectedImage[] = [];
 
   isSubmitting = false;
@@ -122,6 +135,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
   private readonly MAX_IMAGE_SIZE_BYTES = this.MAX_IMAGE_SIZE_MB * 1024 * 1024;
   private readonly DRAFT_STORAGE_KEY = 'toybox-create-product-draft';
 
+  // Tracks which fields the user has interacted with, to show validation errors only after blur/interaction.
   private touchedFields: Record<CreateProductField, boolean> = {
     title: false,
     price: false,
@@ -142,6 +156,10 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Lifecycle hook: loads categories, restores any locally saved draft,
+   * initializes province/city lists, and pre-fills location from the user's profile.
+   */
   ngOnInit(): void {
     this.loadCategories();
     this.loadLocalDraft();
@@ -149,6 +167,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.loadUserLocationFromProfile();
   }
 
+  /** Fetches all product categories and attaches a fallback icon to each. */
   private loadCategories(): void {
     this.isLoadingCategories = true;
 
@@ -167,6 +186,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Loads the list of available provinces and, if one is already set, its cities. */
   private async initializeLocations(): Promise<void> {
     this.isLoadingLocations = true;
     this.locationError = '';
@@ -186,6 +206,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Fetches the current user's profile to auto-fill province/city fields. */
   private loadUserLocationFromProfile(): void {
     this.isLoadingUserLocation = true;
 
@@ -202,6 +223,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Applies province/city values from a user profile object to the form and loads matching cities. */
   private async applyUserLocationFromProfile(user: any): Promise<void> {
     const profileProvince =
       user?.user_province ??
@@ -229,6 +251,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Loads the list of cities available for a given province. */
   private async loadCitiesForProvince(province: string): Promise<void> {
     this.isLoadingCities = true;
     this.locationError = '';
@@ -245,6 +268,11 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Handles a manual province change (only active when location is unlocked):
+   * resets the city selection and reloads the city list.
+   * @param province Newly selected province.
+   */
   async onProvinceChange(province: string): Promise<void> {
     if (this.isUserLocationLocked) return;
 
@@ -263,6 +291,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Handles a manual city change (only active when location is unlocked). */
   onCityChange(city: string): void {
     if (this.isUserLocationLocked) return;
 
@@ -272,12 +301,14 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Sets the selected category (used by the icon-based category picker). */
   selectCategory(categoryId: number): void {
     this.formData.fk_categories_id = categoryId;
     this.markTouched('fk_categories_id');
     this.errorMessage = '';
   }
 
+  /** Sets the selected category from the mobile <select> dropdown value. */
   selectCategoryFromSelect(categoryIdValue: string | number): void {
     const categoryId = Number(categoryIdValue);
 
@@ -290,10 +321,12 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.selectCategory(categoryId);
   }
 
+  /** Marks a field as touched so its validation error (if any) becomes visible. */
   markTouched(field: CreateProductField): void {
     this.touchedFields[field] = true;
   }
 
+  /** Handles image selection via the native file input. */
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
@@ -303,6 +336,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
+  /** Highlights the drop zone while a file is dragged over it. */
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -310,6 +344,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.isDragOver = true;
   }
 
+  /** Removes the drop zone highlight when the dragged file leaves it. */
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -317,6 +352,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.isDragOver = false;
   }
 
+  /** Handles files dropped onto the upload drop zone. */
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -327,6 +363,10 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.addImages(files);
   }
 
+  /**
+   * Removes a selected image, revoking its object URL to free memory.
+   * @param index Index of the image in `selectedImages`.
+   */
   removeImage(index: number): void {
     const image = this.selectedImages[index];
 
@@ -338,6 +378,10 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.markTouched('images');
   }
 
+  /**
+   * Saves the current form as a draft product (requires only a title and
+   * at least one image), then uploads the selected images.
+   */
   saveDraft(): void {
     this.successMessage = '';
     this.errorMessage = '';
@@ -395,10 +439,12 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Form submit handler: validates and publishes the product (delegates to submitProduct). */
   publishProduct(): void {
     this.submitProduct();
   }
 
+  /** Uploads the selected images for a freshly created draft product. */
   private uploadDraftImages(productId: number): void {
     const imagesFormData = new FormData();
 
@@ -425,6 +471,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Resets the form, selected images (revoking their object URLs), touched state, and local draft storage. */
   private clearForm(): void {
     this.formData = {
       title: '',
@@ -459,6 +506,12 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     this.showValidationErrors = false;
   }
 
+  /**
+   * Returns a validation error message for the given field, or an empty
+   * string if valid or not yet shown (not touched/submitted).
+   * @param field Form field to validate.
+   * @returns Localized error message, or '' if there is none to show.
+   */
   getFieldError(field: CreateProductField): string {
     const shouldShow = this.showValidationErrors || this.touchedFields[field];
 
@@ -525,10 +578,12 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** @returns Whether the given field currently has a visible validation error. */
   isFieldInvalid(field: CreateProductField): boolean {
     return Boolean(this.getFieldError(field));
   }
 
+  /** Name of the currently selected category, for display purposes. */
   get selectedCategoryName(): string {
     const selectedCategory = this.categories.find(
       category => category.id_categories === this.formData.fk_categories_id
@@ -537,10 +592,15 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     return selectedCategory?.name ?? 'Sin categoría seleccionada';
   }
 
+  /** Number of additional images the user can still add before hitting MAX_IMAGES. */
   get remainingImageSlots(): number {
     return Math.max(0, this.MAX_IMAGES - this.selectedImages.length);
   }
 
+  /**
+   * Validates and stages newly selected/dropped image files: filters non-images,
+   * enforces size and slot limits, skips duplicates, and creates preview object URLs.
+   */
   private addImages(files: File[]): void {
     this.successMessage = '';
     this.errorMessage = '';
@@ -592,6 +652,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Validates the full form, then creates the product and proceeds to image upload + publish. */
   private submitProduct(): void {
     this.successMessage = '';
     this.errorMessage = '';
@@ -644,6 +705,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Uploads selected images for a newly created product, then publishes it. */
   private uploadImagesAndPublish(productId: number): void {
     const imagesFormData = new FormData();
 
@@ -663,6 +725,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Marks a created product as published and navigates to its detail page. */
   private publishCreatedProduct(productId: number): void {
     this.productsService.publish(productId).subscribe({
       next: () => {
@@ -681,6 +744,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** @returns Whether all required fields pass validation; sets errorMessage on the first failure. */
   private isFormValid(): boolean {
     const fields: CreateProductField[] = [
       'title',
@@ -705,6 +769,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  /** Restores a previously saved draft from localStorage, if present. */
   private loadLocalDraft(): void {
     const savedDraft = localStorage.getItem(this.DRAFT_STORAGE_KEY);
 
@@ -733,6 +798,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Ensures a category has a usable icon, falling back to CATEGORY_ICONS or a default. */
   private withCategoryIcon(category: Category): Category {
     const categoryIcon = String((category as any).icon ?? '').trim();
 
@@ -742,6 +808,7 @@ export class CreateProductComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Lifecycle hook: revokes all pending image object URLs to avoid memory leaks. */
   ngOnDestroy(): void {
     this.selectedImages.forEach(image => {
       URL.revokeObjectURL(image.preview);

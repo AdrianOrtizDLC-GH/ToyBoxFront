@@ -7,6 +7,7 @@
 
   <div class="relative-z-10 profile-content">
 
+    <!-- Toast notification for success/error feedback -->
     <app-toast
       [visible]="toastVisible"
       [type]="toastType"
@@ -15,12 +16,14 @@
       (dismissed)="onToastDismissed()">
     </app-toast>
 
+    <!-- Loading state shown while profile data is being fetched -->
     @if (isLoading) {
       <div class="loading-spinner">
         <div class="spinner-border"></div>
       </div>
     }
 
+    <!-- Error banner shown if loading the profile failed -->
     @if (errorMessage && !isLoading) {
       <div class="alert alert-danger">
         {{ errorMessage }}
@@ -31,6 +34,7 @@
 
       <div class="profile-top-grid">
 
+        <!-- Main card: name, username, location, rating summary, and own-profile actions -->
         <div class="profile-card profile-card--main">
           <div class="profile-main-content">
             <div class="profile-header">
@@ -65,6 +69,7 @@
             </div>
           </div>
 
+          <!-- Own-profile actions: only visible when viewing your own profile -->
           @if (isCurrentUser) {
             <div class="profile-main-actions">
               <button class="btn btn-edit-profile mb-2 w-100" (click)="goToEditProfile()">
@@ -83,6 +88,7 @@
           }
         </div>
 
+        <!-- Avatar card: click opens the full-size avatar preview modal -->
         <div class="profile-card">
           <div style="text-align: center;">
             <app-user-avatar
@@ -94,6 +100,7 @@
           </div>
         </div>
 
+        <!-- Own profile: read-only personal data fields; public profile: seller's products for sale -->
         @if (isCurrentUser) {
           <div class="profile-card">
             <h2 class="section-title">Información Personal</h2>
@@ -153,6 +160,7 @@
           </div>
         }
 
+        <!-- Location map preview; click opens the full-size map modal -->
         @if (user.user_city && user.user_province) {
           <div class="profile-card profile-card--map">
             <h2 class="section-title">Ubicación</h2>
@@ -173,6 +181,7 @@
         }
       </div>
 
+      <!-- Full list of reviews received by this user, with reviewer, rating, product, and comment -->
       @if (reviews.length > 0) {
         <div class="profile-card">
           <h2 class="section-title">Valoraciones ({{ reviews.length }})</h2>
@@ -207,6 +216,7 @@
         </div>
       }
 
+      <!-- Moderator/Admin quick-access panels, only shown for the user's own profile with those roles -->
       @if (isCurrentUser && (isModerator || isAdmin)) {
         <div class="panels-row">
           @if (isModerator) {
@@ -239,6 +249,7 @@
   </div>
 </div>
 
+<!-- Full-size avatar preview modal -->
 @if (showAvatarModal && user?.profile_picture) {
   <div class="modal-backdrop" (click)="toggleAvatarModal()"></div>
   <div class="modal-dialog modal-avatar">
@@ -254,6 +265,7 @@
   </div>
 }
 
+<!-- Full-size location map modal -->
 @if (showMapModal && user && userLatitude !== null && userLongitude !== null) {
   <div class="modal-backdrop" (click)="toggleMapModal()"></div>
   <div class="modal-dialog modal-map">
@@ -269,6 +281,7 @@
   </div>
 }
 
+<!-- Confirmation modal for deactivating (soft-deleting) the account -->
 <app-modal-confirm
   [isOpen]="showDeleteModal"
   title="Dar de baja tu cuenta"
@@ -280,6 +293,7 @@
   (cancelled)="closeDeleteModal()">
 </app-modal-confirm>
 
+<!-- Confirmation modal for logging out -->
 <app-modal-confirm
   [isOpen]="showLogoutModal"
   title="Cerrar sesión"

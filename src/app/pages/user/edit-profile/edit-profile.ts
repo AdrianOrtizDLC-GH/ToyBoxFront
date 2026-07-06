@@ -14,6 +14,11 @@ import { ModalConfirmComponent } from '../../../shared/components/modal-confirm/
 import { User, UpdateUserProfileRequest } from '../../../shared/interfaces/user.interface';
 
 
+/**
+ * Page component that lets an authenticated user edit their profile data:
+ * personal information, location (province/city/zip with map preview),
+ * password change, and profile picture upload/removal.
+ */
 @Component({
   selector: 'app-edit-profile',
   standalone: true,
@@ -31,12 +36,15 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   profilePicturePreview: string | null = null;
   selectedFile: File | null = null;
 
+  // Tracks explicit removal of the profile picture (independent from selecting a new file).
   removeProfilePicture = false;
 
+  // Cascading location option lists populated from LocationsService.
   provinces: string[] = [];
   cities: string[] = [];
   codigosPostales: string[] = [];
 
+  // Coordinates used to render the map preview for the selected province/city.
   previewLatitude: number | null = null;
   previewLongitude: number | null = null;
 
@@ -44,8 +52,10 @@ export class EditProfileComponent implements OnInit, OnDestroy {
   showSuccessModal = false;
   private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
+  // Emits on component destruction to unsubscribe all pending observables.
   private destroy$ = new Subject<void>();
 
+  // Maps required-field validation errors to user-facing Spanish messages.
   private readonly requiredMessages: Record<string, string> = {
     first_name: 'El nombre es obligatorio',
     last_name: 'El apellido es obligatorio',
@@ -66,6 +76,10 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Angular lifecycle hook. Sets up breadcrumbs, builds the reactive form,
+   * loads location reference data, and fetches the current user's data.
+   */
   ngOnInit(): void {
     this.initializeBreadcrumbs();
     this.initializeForm();
@@ -90,6 +104,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return `${fn} ${ln}`.trim();
   }
 
+  /** Loads the list of available provinces used to populate the location dropdown. */
   async loadLocationData(): Promise<void> {
     try {
       this.provinces = await this.locationsService.getProvincias();
@@ -99,6 +114,10 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Builds the reactive form with validators and wires up cascading
+   * province -> city -> zipcode value change listeners.
+   */
   initializeForm(): void {
     this.editProfileForm = this.fb.group({
       first_name: ['', [Validators.required, Validators.minLength(2)]],
@@ -125,6 +144,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Fetches the authenticated user's profile and patches it into the form. */
   loadUserData(): void {
     this.isLoading = true;
     const currentUser = this.authService.currentUser();
@@ -180,6 +200,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Resolves postal codes and map coordinates for a province/city already set on load. */
   private async populateLocationOnLoad(province: string, city: string): Promise<void> {
     try {
       this.codigosPostales = await this.locationsService.getCodigosPostalesByCity(province, city);
@@ -196,6 +217,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Handles province selection changes: reloads the cities list and resets
+   * dependent fields (city, zipcode) and the map preview.
+   * @param province - Selected province name.
+   */
   async onProvinceChange(province: string): Promise<void> {
     if (province) {
       try {
@@ -217,6 +243,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Handles city selection changes: loads postal codes for the city and
+   * updates the map preview coordinates.
+   * @param city - Selected city name.
+   */
   async onCityChange(city: string): Promise<void> {
     const province = this.editProfileForm.get('user_province')?.value;
 
@@ -249,6 +280,12 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Creates a validator that requires the control's date value to represent
+   * an age of at least `minAge` years.
+   * @param minAge - Minimum required age in years.
+   * @returns A validator function producing a `minAge` error when the age requirement is not met.
+   */
   minAgeValidator(minAge: number): (control: AbstractControl) => ValidationErrors | null {
     return (control: AbstractControl): ValidationErrors | null => {
       if (!control.value) {
@@ -280,6 +317,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return /[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/.test(control.value || '') ? null : { special: true };
   }
 
+  /**
+   * Handles a new avatar file selection: stores the file and generates
+   * a local preview via FileReader.
+   * @param file - The selected image file.
+   */
   onAvatarFileChanged(file: File): void {
     this.selectedFile = file;
     this.removeProfilePicture = false;
@@ -292,11 +334,13 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
+  /** Displays an error message raised by the avatar upload component. */
   onAvatarError(errorMessage: string): void {
     this.errorMessage = errorMessage;
     this.cdr.markForCheck();
   }
 
+  /** Clears the selected file/preview and flags the profile picture for removal on save. */
   onAvatarImageDeleted(): void {
     this.selectedFile = null;
     this.profilePicturePreview = null;
@@ -308,6 +352,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return this.editProfileForm.dirty || this.selectedFile !== null || this.removeProfilePicture;
   }
 
+  /** Toggles visibility of the change-password fields and applies/clears password validators accordingly. */
   togglePasswordField(): void {
     this.showPasswordField = !this.showPasswordField;
     const passwordControl = this.editProfileForm.get('password');
@@ -330,6 +375,12 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.showPassword = !this.showPassword;
   }
 
+  /**
+   * Form submit handler. Validates the form, builds the update payload
+   * (including optional password and profile picture removal flag), and
+   * saves the profile. If a new avatar file was selected, it is uploaded
+   * in a follow-up request after the profile data is saved.
+   */
   onSaveProfile(): void {
     if (this.editProfileForm.invalid) {
       this.markFormGroupTouched(this.editProfileForm);
@@ -405,6 +456,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Shows the success modal and schedules an automatic redirect to the profile page. */
   private showSuccessAndRedirect(): void {
     this.showSuccessModal = true;
     this.cdr.markForCheck();
@@ -413,6 +465,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     }, 1800);
   }
 
+  /** Cancels any pending auto-redirect timeout and navigates to the profile page immediately. */
   goToProfileNow(): void {
     if (this.successTimeoutId) {
       clearTimeout(this.successTimeoutId);
@@ -422,6 +475,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     this.router.navigate(['/user/profile']);
   }
 
+  /** Recursively marks all controls in the form group as touched, to trigger validation messages. */
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
       const control = formGroup.get(key);
@@ -433,6 +487,11 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Returns a human-readable validation error message for a given form field,
+   * or null if the field has no active error or hasn't been touched.
+   * @param fieldName - Name of the form control to check.
+   */
   getErrorMessage(fieldName: string): string | null {
     const control = this.editProfileForm.get(fieldName);
     if (!control || !control.errors || !control.touched) {
@@ -471,6 +530,7 @@ export class EditProfileComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  /** Angular lifecycle hook. Clears pending timeouts and completes the destroy subject to unsubscribe observables. */
   ngOnDestroy(): void {
     if (this.successTimeoutId) {
       clearTimeout(this.successTimeoutId);

@@ -5,6 +5,7 @@
 <div class="pattern-bg"></div>
 
 <main class="product-detail-page relative-z-10">
+  <!-- Loading state while the product is being fetched -->
   @if (isLoading) {
     <section class="product-detail-state card-toybox">
       <h1>Cargando producto...</h1>
@@ -13,6 +14,7 @@
       </p>
     </section>
   } @else if (error) {
+    <!-- Error state shown when the product failed to load (e.g. 404) -->
     <section class="product-detail-state card-toybox">
       <h1>No hemos podido cargar el producto</h1>
       <p class="error-message">
@@ -20,6 +22,7 @@
       </p>
     </section>
   } @else {
+    <!-- Main product layout: image gallery + product info panel -->
     <section class="product-detail-layout">
       <app-image-gallery
         [images]="galleryImages"
@@ -52,6 +55,7 @@
           {{ product.description }}
         </p>
 
+        <!-- Primary actions: contact seller, toggle favorite, report product -->
         <div class="product-actions">
           <button
             class="btn-toybox-primary"
@@ -90,6 +94,7 @@
           </button>
         </div>
 
+        <!-- Inline feedback messages for chat, favorite and report actions -->
         @if (chatError) {
           <p class="error-message product-report-message">
             {{ chatError }}
@@ -116,6 +121,7 @@
       </section>
     </section>
 
+    <!-- Seller card (clickable, navigates to seller profile) and trust/safety notice -->
     <section class="detail-extra-layout">
       @if (product.seller) {
         <button
@@ -159,6 +165,7 @@
       </article>
     </section>
 
+    <!-- Related products grid: other items from the same category -->
     <section class="related-section">
       <div class="related-section__heading">
         <h2>También te puede interesar</h2>
@@ -176,6 +183,7 @@
     </section>
   }
 
+  <!-- Report product modal: reason selection + optional custom reason -->
   @if (showReportModal) {
     <div
       class="report-modal-backdrop"
@@ -210,6 +218,7 @@
           Nuestro equipo de moderación lo revisará.
         </p>
 
+        <!-- Radio list of predefined report reasons -->
         <div class="report-reasons">
           @for (reason of reportReasons; track reason) {
             <label class="report-reason">
@@ -226,6 +235,7 @@
           }
         </div>
 
+        <!-- Free-text field shown only when "Otro motivo" (other) is selected -->
         @if (selectedReportReason === 'Otro motivo') {
           <label class="report-custom-reason">
             <span>Cuéntanos el motivo</span>

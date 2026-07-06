@@ -8,6 +8,7 @@ import { Category } from '../../shared/interfaces/category.interface';
 import { ItemCard, Itemfilters } from '../../shared/interfaces/item.interface';
 import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb';
 
+// View model used by the product card component on the home page.
 interface HomeProduct {
   id: number;
   title: string;
@@ -20,6 +21,7 @@ interface HomeProduct {
   badge: string;
 }
 
+// Maps category IDs to their corresponding icon asset paths.
 const CATEGORY_ICONS: Record<number, string> = {
   1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
   2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
@@ -31,6 +33,7 @@ const CATEGORY_ICONS: Record<number, string> = {
   8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
+// Maps raw item condition values to display labels.
 const CONDITION_LABELS: Record<string, string> = {
   excellent: 'Como nuevo',
   very_good: 'Muy buen estado',
@@ -38,6 +41,7 @@ const CONDITION_LABELS: Record<string, string> = {
   fair: 'Usado',
 };
 
+// Maps raw publication status values to display labels shown as badges.
 const BADGE_LABELS: Record<string, string> = {
   available: 'Disponible',
   sold: 'Vendido',
@@ -52,10 +56,15 @@ const BADGE_LABELS: Record<string, string> = {
   templateUrl: './home.html',
   styleUrls: ['./home.css']
 })
+/**
+ * Landing page component showcasing the product catalog with search,
+ * category selection and filters, similarly to the catalog page but
+ * used as the app's entry point.
+ */
 export class Home implements OnInit {
-  searchTerm = '';
-  activeFilters: Itemfilters = {};
-  selectedCategoryId = 0;
+  searchTerm = ''; // Current free-text search query
+  activeFilters: Itemfilters = {}; // Active filters coming from the filter sidebar
+  selectedCategoryId = 0; // 0 means "all categories"
   categories: Category[] = [];
   products: HomeProduct[] = [];
   isLoading = false;
@@ -67,11 +76,13 @@ export class Home implements OnInit {
     private cdr: ChangeDetectorRef
   ) { }
 
+  /** Angular lifecycle hook: loads categories and products on component init. */
   ngOnInit(): void {
     this.loadCategories();
     this.loadProducts();
   }
 
+  /** Fetches all categories and prepends an "All" pseudo-category option. */
   loadCategories(): void {
     this.categoriesService.getAll().subscribe({
       next: (cats: Category[]) => {
@@ -88,6 +99,11 @@ export class Home implements OnInit {
     });
   }
 
+  /**
+   * Fetches products applying the current search term, category and filters.
+   * Falls back to client-side category filtering as a safety net in case the
+   * backend does not filter by category on its own.
+   */
   loadProducts(): void {
     this.isLoading = true;
     this.error = '';
@@ -115,6 +131,11 @@ export class Home implements OnInit {
     });
   }
 
+  /**
+   * Builds the filter payload sent to the products API by combining active
+   * filters, selected category (under multiple possible key names for
+   * backend compatibility) and the search term.
+   */
   private buildRequestFilters(): Itemfilters {
     const filters = { ...this.activeFilters } as Record<string, unknown>;
     delete filters['category'];
@@ -133,6 +154,7 @@ export class Home implements OnInit {
     return filters as Itemfilters;
   }
 
+  /** Converts a raw API item into the {@link HomeProduct} view model. */
   private toCardProduct(card: ItemCard): HomeProduct {
     return {
       id: card.id_items,
@@ -147,11 +169,22 @@ export class Home implements OnInit {
     };
   }
 
+  /**
+   * Handles the search bar's search event by updating the search term and
+   * reloading products.
+   * @param term Free-text search query entered by the user.
+   */
   onSearch(term: string): void {
     this.searchTerm = term;
     this.loadProducts();
   }
 
+  /**
+   * Handles category selection by updating the selected category, syncing
+   * it into the active filters under several possible key names, and
+   * reloading products.
+   * @param categoryIdValue Selected category id (number or string).
+   */
   onCategorySelected(categoryIdValue: number | string): void {
     const categoryId = Number(categoryIdValue);
     this.selectedCategoryId = categoryId;
@@ -174,6 +207,11 @@ export class Home implements OnInit {
     this.loadProducts();
   }
 
+  /**
+   * Handles filters applied from the filter sidebar, syncing the selected
+   * category and reloading products.
+   * @param filters Filter set emitted by the filter sidebar component.
+   */
   onFiltersApplied(filters: Itemfilters): void {
     this.activeFilters = filters;
 
@@ -193,6 +231,7 @@ export class Home implements OnInit {
     this.loadProducts();
   }
 
+  /** Display name of the currently selected category ("Todas" if none). */
   get activeCategoryName(): string {
     return this.categories.find(c => c.id_categories === this.selectedCategoryId)?.name ?? 'Todas';
   }

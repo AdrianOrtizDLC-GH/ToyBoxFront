@@ -3,6 +3,16 @@ import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { NotificationsComponent } from './pages/notifications/notifications';
 
+/**
+ * Application route table (standalone components, lazy-loaded via
+ * dynamic import for all feature pages). Routes are grouped by access
+ * level:
+ * - Public routes: no guard.
+ * - Authenticated routes: protected by authGuard.
+ * - Role-restricted routes (moderator/admin): protected by authGuard + roleGuard,
+ *   with allowed roles passed through route `data.roles`.
+ * A catch-all wildcard route renders the 404 page.
+ */
 export const routes: Routes = [
   // Public
   {
@@ -26,7 +36,8 @@ export const routes: Routes = [
     path: 'contact',
     loadComponent: () => import('./pages/contact/contact').then(m => m.ContactComponent),
   },
-  // Product management (auth required) — debe ir ANTES de product/:id para que /product/create no sea capturado como id
+  // Product management (auth required) — must come BEFORE product/:id so that
+  // /product/create is not captured as an :id param.
   {
     path: 'product',
     canActivate: [authGuard],

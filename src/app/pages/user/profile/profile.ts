@@ -20,6 +20,7 @@ import { ItemCard } from '../../../shared/interfaces/item.interface';
 import { UserRole } from '../../../shared/enums/user-role.enum';
 import { UserAvatarComponent } from '../../../shared/components/user-avatar/user-avatar';
 
+/** Simplified product card shape used to display a seller's items on their public profile. */
 interface SellerProductCard {
   id: number;
   title: string;
@@ -31,6 +32,12 @@ interface SellerProductCard {
   badge: string;
 }
 
+/**
+ * Component that displays a user's profile page. Shows either the current
+ * user's own private profile (with personal data and admin/moderator panels)
+ * or another user's public profile (with their reviews and products for sale),
+ * depending on whether a route `id` param is present.
+ */
 @Component({
   selector: 'app-profile',
   standalone: true,
@@ -42,6 +49,7 @@ interface SellerProductCard {
 export class ProfileComponent implements OnInit, OnDestroy {
   user: User | null = null;
   reviews: Review[] = [];
+  // Whether the profile being viewed belongs to the logged-in user (enables edit/admin actions).
   isCurrentUser = false;
   isAdmin = false;
   isModerator = false;
@@ -53,9 +61,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   showDeleteModal = false;
   showLogoutModal = false;
 
+  // Coordinates used to render the user's location map preview.
   userLatitude: number | null = null;
   userLongitude: number | null = null;
 
+  // Products for sale by this user, shown when viewing another user's public profile.
   sellerProducts: SellerProductCard[] = [];
 
   toastVisible = false;
@@ -63,6 +73,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   toastTitle = '';
   toastMessage = '';
 
+  // Emits on component destruction to unsubscribe all pending observables.
   private destroy$ = new Subject<void>();
 
   breadcrumbItems: BreadcrumbItem[] = [
@@ -81,10 +92,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /** Angular lifecycle hook. Kicks off loading of the appropriate profile (own or public). */
   ngOnInit(): void {
     this.loadUserProfile();
   }
 
+  /**
+   * Determines which profile to load based on the route's `id` param:
+   * a specific user's public profile, the logged-in user's own profile,
+   * or a fallback public profile if not authenticated.
+   */
   loadUserProfile(): void {
     this.route.params
       .pipe(takeUntil(this.destroy$))
@@ -101,6 +118,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Loads another user's public profile data, their reviews, and products for sale. */
   loadPublicProfile(userId: number): void {
     this.isLoading = true;
     this.isCurrentUser = false;
@@ -125,6 +143,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Loads the logged-in user's own profile data, role flags, and reviews. */
   loadPrivateProfile(): void {
     this.isLoading = true;
     this.isCurrentUser = true;
@@ -157,6 +176,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Fetches the reviews received by a user in their role as seller. */
   loadReviews(userId: number): void {
     this.reviewsService.getBySeller(userId)
       .pipe(takeUntil(this.destroy$))
@@ -173,6 +193,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Fetches up to 4 products currently for sale by the given user, for public profile display. */
   loadSellerProducts(userId: number): void {
     this.productsService.getAll({ sellerId: userId, limit: 4 })
       .pipe(takeUntil(this.destroy$))
@@ -188,6 +209,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Maps a raw API item card into the simplified SellerProductCard shape. */
   private toSellerCard(item: ItemCard): SellerProductCard {
     return {
       id: item.id_items,
@@ -201,6 +223,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Resolves map coordinates for the profile user's city/province, if available. */
   async loadCoordinates(): Promise<void> {
     if (!this.user || !this.user.user_city || !this.user.user_province) return;
 
@@ -223,6 +246,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Updates the breadcrumb trail to include the profile owner's full name. */
   updateBreadcrumb(): void {
     if (this.user) {
       this.breadcrumbItems = [
@@ -232,12 +256,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Computes the average rating across all reviews received by the profile user. */
   getAverageRating(): number {
     if (this.reviews.length === 0) return 0;
     const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
     return sum / this.reviews.length;
   }
 
+  /** Returns the profile user's full display name. */
   getFullName(): string {
     if (!this.user) return '';
     return `${this.user.first_name} ${this.user.last_name}`;
@@ -248,55 +274,71 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return String(this.user.user_birthday).substring(0, 10);
   }
 
+  /** Toggles the full-size avatar preview modal. */
   toggleAvatarModal(): void {
     this.showAvatarModal = !this.showAvatarModal;
   }
 
+  /** Toggles the full-size location map modal. */
   toggleMapModal(): void {
     this.showMapModal = !this.showMapModal;
   }
 
+  /** Navigates to the edit-profile page. */
   goToEditProfile(): void {
     this.router.navigate(['/user/edit-profile']);
   }
 
+  /** Navigates to the admin categories management page. */
   goToCategoriesManagement(): void {
     this.router.navigate(['/admin/categories']);
   }
 
+  /** Navigates to the admin users management page. */
   goToUsersManagement(): void {
     this.router.navigate(['/admin/users']);
   }
 
+  /** Navigates to the admin dashboard. */
   goToDashboard(): void {
     this.router.navigate(['/admin/dashboard']);
   }
 
+  /** Navigates to the moderator reports page. */
   goToReports(): void {
     this.router.navigate(['/moderator/reports']);
   }
 
+  /** Opens the logout confirmation modal. */
   logout(): void {
     this.showLogoutModal = true;
   }
 
+  /** Closes the logout confirmation modal without logging out. */
   closeLogoutModal(): void {
     this.showLogoutModal = false;
   }
 
+  /** Confirms logout and delegates to AuthService. */
   confirmLogout(): void {
     this.showLogoutModal = false;
-    this.authService.logout(); 
+    this.authService.logout();
   }
 
+  /** Opens the account deactivation confirmation modal. */
   openDeleteModal(): void {
     this.showDeleteModal = true;
   }
 
+  /** Closes the account deactivation confirmation modal without deactivating. */
   closeDeleteModal(): void {
     this.showDeleteModal = false;
   }
 
+  /**
+   * Deactivates (soft-deletes) the current user's account, then logs the
+   * user out automatically after showing a success toast.
+   */
   confirmDeactivateAccount(): void {
     if (!this.user) return;
 
@@ -317,6 +359,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Displays a toast notification and auto-hides it after 3 seconds. */
   private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
     this.toastType = type;
     this.toastTitle = title;
@@ -325,10 +368,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
     setTimeout(() => { this.toastVisible = false; }, 3000);
   }
 
+  /** Hides the toast when dismissed by the user or its timer. */
   onToastDismissed(): void {
     this.toastVisible = false;
   }
 
+  /** Angular lifecycle hook. Completes the destroy subject to unsubscribe observables. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();

@@ -1,9 +1,11 @@
 <nav class="navbar">
 
+    <!-- Brand logo, always visible, links back to home -->
     <a class="navbar-logo" routerLink="/">
         <img src="assets/images/Logos/toybox_logoprincipal.svg" alt="Toybox" class="logo-img" />
     </a>
 
+    <!-- Anonymous state: sign-in/register buttons, shown when the user is not logged in -->
     @if (!isLoggedIn) {
     <div class="navbar-auth">
         <button class="btn-signin" (click)="goToLogin()">Sign in</button>
@@ -11,13 +13,16 @@
     </div>
     }
 
+    <!-- Authenticated state: hamburger toggle + full navigation menu, shown when isLoggedIn is true -->
     @if (isLoggedIn) {
+    <!-- Mobile menu toggle button, reflects open/closed state via menuOpen -->
     <button class="hamburger-btn" (click)="toggleMenu()" [class.active]="menuOpen">
         <span></span>
         <span></span>
         <span></span>
     </button>
 
+    <!-- Navigation links; "open" class driven by menuOpen for mobile collapse behavior -->
     <div class="navbar-actions" [class.open]="menuOpen">
         <a class="nav-item" routerLink="/catalog" (click)="closeMenu()">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -35,6 +40,7 @@
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
+                <!-- Unread notifications badge, shown only when notificationsService reports a count above 0 -->
                 @if (notificationsService.unreadCount() > 0) {
                 <span class="badge-count">{{ notificationsService.unreadCount() > 9 ? '9+' :
                     notificationsService.unreadCount() }}</span>
@@ -57,6 +63,7 @@
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                 </svg>
+                <!-- Unread chat messages badge, driven by the component's unreadMessagesCount field -->
                 @if (unreadMessagesCount > 0) {
                 <span class="badge-count">{{ unreadMessagesCount > 9 ? '9+' : unreadMessagesCount }}</span>
                 }
@@ -82,6 +89,7 @@
             <span>Compras</span>
         </a>
 
+        <!-- Reports link, visible only to moderators and administrators -->
         @if (isModerator || isAdministrator) {
         <a class="nav-item" routerLink="/moderator/reports" (click)="closeMenu()">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -93,6 +101,7 @@
         </a>
         }
 
+        <!-- Admin dashboard link, visible only to administrators -->
         @if (isAdministrator) {
         <a class="nav-item" routerLink="/admin/dashboard" (click)="closeMenu()">
             <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -117,6 +126,7 @@
         </button>
     </div>
 
+    <!-- Dimming overlay behind the mobile menu, active state tied to menuOpen; clicking it closes the menu -->
     <div class="navbar-overlay" [class.active]="menuOpen" (click)="closeMenu()"></div>
     }
 </nav>

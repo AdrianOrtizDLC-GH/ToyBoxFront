@@ -23,6 +23,11 @@ import { Chat } from '../../../shared/interfaces/chat.interface';
 import { ItemStatus } from '../../../shared/enums/item-status.enum';
 import { ConservationStatus } from '../../../shared/enums/conservation-status.enum';
 
+/**
+ * Component for managing the seller's own products: lists published items
+ * and drafts, and supports publishing drafts, editing, deleting, and
+ * marking items as sold (linking a sale to a chat conversation/buyer).
+ */
 @Component({
   selector: 'app-my-products',
   standalone: true,
@@ -31,24 +36,28 @@ import { ConservationStatus } from '../../../shared/enums/conservation-status.en
   templateUrl: './my-products.html',
   styleUrl: './my-products.css',
 })
-export class MyProductsComponent implements OnInit, OnDestroy {  
+export class MyProductsComponent implements OnInit, OnDestroy {
   private readonly productsService = inject(ProductsService);
   private readonly chatService = inject(ChatService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  // Emits on component destruction to unsubscribe all pending observables.
   private destroy$ = new Subject<void>();
 
+  // Currently selected tab: published products vs draft products.
   activeTab = signal<'published' | 'drafts'>('published');
+  // Combined list of the seller's published items and drafts.
   allMyItems = signal<Item[]>([]);
   isLoadingProducts = signal(false);
   productsError = signal('');
   currentPage = signal(1);
   totalPages = signal(1);
 
+  // Chat conversations relevant to the product currently being marked as sold.
   conversations = signal<Chat[]>([]);
-  isLoadingConversations = signal(false); 
+  isLoadingConversations = signal(false);
   showSaleModal = signal(false);
 
   toastVisible = signal(false);
@@ -56,6 +65,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
   toastTitle = signal('');
   toastMessage = signal('');
 
+  // State for the "mark as sold" modal flow.
   productToSell: Item | null = null;
   selectedConversation: Chat | null = null;
   newPrice: number | null = null;
@@ -65,21 +75,25 @@ export class MyProductsComponent implements OnInit, OnDestroy {
   currentUserId: number | undefined;
 
   constructor() {
+    // Reset to the first page whenever the active tab changes.
     effect(() => {
       const tab = this.activeTab();
       this.currentPage.set(1);
     });
   }
 
+  /** Angular lifecycle hook. Loads the current user and their products. */
   ngOnInit(): void {
     this.loadCurrentUser();
   }
 
+  /** Angular lifecycle hook. Completes the destroy subject to unsubscribe observables. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /** Retrieves the authenticated user and triggers loading their product data. */
   private loadCurrentUser(): void {
     const user = this.authService.currentUser();
     if (user) {
@@ -94,6 +108,10 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     this.loadAllMyItems();
   }
 
+  /**
+   * Fetches both published and draft items for the seller in parallel,
+   * merges them into a deduplicated list, and updates pagination.
+   */
   private loadAllMyItems(): void {
     this.isLoadingProducts.set(true);
     this.productsError.set('');
@@ -154,6 +172,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     return this.allMyItems().filter(item => item.conservation_status === 'draft');
   }
 
+  /** Normalizes a raw API product card into the Item shape used by the UI. */
   private mapItemCard(card: any): Item {
     return {
       id_items: card.id_items,
@@ -176,6 +195,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     } as Item;
   }
 
+  /** Translates a conservation status code into a human-readable Spanish label. */
   getStatusLabel(status: string): string {
     const labels: { [key: string]: string } = {
       'draft': 'Borrador',
@@ -188,14 +208,20 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     return labels[status] || status;
   }
 
+  /** Navigates to the public product detail page. */
   viewProduct(id: number): void {
     this.router.navigate(['/product', id]);
   }
 
+  /** Navigates to the product edit page. */
   editProduct(id: number): void {
     this.router.navigate(['/product/edit', id]);
   }
 
+  /**
+   * Publishes a draft product, optimistically updates its status locally,
+   * then re-fetches the full list shortly after to sync with the server.
+   */
   publishDraft(product: Item): void {
     if (!product) return;
 
@@ -232,6 +258,10 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Toggles a product's reserved state and refreshes its status in the
+   * local list to reflect the change.
+   */
   toggleReserved(product: Item): void {
     if (!product || product.item_status === 'sold') return;
 
@@ -259,6 +289,10 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Opens the "mark as sold" modal for a product and loads the chat
+   * conversations relevant to it so the seller can pick the buyer.
+   */
   markAsSold(product: Item): void {
     if (product.item_status === 'sold') {
       this.showToast('warning', 'Aviso', 'Este producto ya está marcado como vendido');
@@ -295,6 +329,10 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Validates the selected conversation and price, then submits the sale,
+   * updating the product's status/price locally and refreshing the list.
+   */
   confirmSale(): void {
     if (!this.productToSell || !this.selectedConversation || !this.newPrice) {
       this.showToast('warning', 'Advertencia', 'Debes seleccionar una conversación y precio');
@@ -332,6 +370,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Closes the "mark as sold" modal and resets its associated state. */
   cancelSale(): void {
     this.showSaleModal.set(false);
     this.productToSell = null;
@@ -339,21 +378,25 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     this.newPrice = null;
   }
 
+  /** Switches between the "published" and "drafts" tabs, resetting pagination. */
   switchTab(tab: 'published' | 'drafts'): void {
     this.activeTab.set(tab);
     this.currentPage.set(1);
   }
 
+  /** Opens the delete confirmation modal for a product. */
   confirmDelete(product: Item): void {
     this.productToDelete = product;
     this.showDeleteModal.set(true);
   }
 
+  /** Cancels the pending delete and closes the confirmation modal. */
   cancelDelete(): void {
     this.showDeleteModal.set(false);
     this.productToDelete = null;
   }
 
+  /** Deletes the product pending confirmation and removes it from the local list. */
   deleteProductConfirmed(): void {
     if (!this.productToDelete) return;
 
@@ -375,6 +418,7 @@ export class MyProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Displays a toast notification and auto-hides it after 3 seconds. */
   private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
     this.toastType.set(type);
     this.toastTitle.set(title);
@@ -386,14 +430,17 @@ export class MyProductsComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  /** Returns the buyer's username for a chat, falling back to a default label. */
   getBuyerUsername(chat: Chat): string {
     return (chat as any).buyer_username || 'Comprador desconocido';
   }
 
+  /** Hides the toast when dismissed by the user or its timer. */
   onToastDismissed(): void {
     this.toastVisible.set(false);
   }
 
+  /** Handles pagination component page-change events. */
   onPageChange(page: number): void {
     this.currentPage.set(page);
   }

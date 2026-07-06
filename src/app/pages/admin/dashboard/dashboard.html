@@ -15,6 +15,7 @@
     <span class="date-label">Resumen de hoy</span>
   </header>
 
+  <!-- Summary metric cards (users, reservations, categories, reports) -->
   <section class="metrics-grid" aria-label="Resumen de administración">
     @for (metric of metrics; track metric.label) {
       <article class="metric-card" [class]="metric.tone">
@@ -25,6 +26,7 @@
     }
   </section>
 
+  <!-- Priority task list derived from pending reports/reservations/blocked users -->
   <section class="panel">
     <div class="panel-heading">
       <h2>Tareas prioritarias</h2>
@@ -44,6 +46,7 @@
     </div>
   </section>
 
+  <!-- Simple horizontal bar chart summarizing platform activity; bar width is item.percent -->
   <section class="panel chart-panel" aria-label="Actividad de la plataforma">
     <div class="panel-heading">
       <h2>Actividad de la plataforma</h2>

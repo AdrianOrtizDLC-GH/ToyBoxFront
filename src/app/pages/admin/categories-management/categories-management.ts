@@ -17,8 +17,14 @@ interface CategoryRow {
   icon: string;
 }
 
+// Default icon used for categories that don't have a custom icon assigned.
 const DEFAULT_CATEGORY_ICON = '/assets/images/Iconos%20categorias/icono_educativo.svg';
 
+/**
+ * Admin page component for managing product categories: lists, creates,
+ * edits, and deletes categories, including uploading a custom icon per
+ * category. Used within the admin panel section of the app.
+ */
 @Component({
   selector: 'app-categories-management',
   standalone: true,
@@ -29,22 +35,29 @@ const DEFAULT_CATEGORY_ICON = '/assets/images/Iconos%20categorias/icono_educativ
 export class CategoriesManagementComponent implements OnInit {
   private readonly categoriesService = inject(CategoriesService);
 
+  // Full list of categories loaded from the backend (unfiltered).
   private readonly categories = signal<CategoryRow[]>([]);
   readonly isLoading = signal(false);
 
   readonly searchTerm = signal('');
   readonly currentPage = signal(1);
   readonly pageSize = 8;
+  // Id of the category currently being edited, or null when creating a new one.
   readonly editingId = signal<number | null>(null);
+  // Category pending deletion confirmation (drives the confirm modal visibility).
   readonly categoryToDelete = signal<CategoryRow | null>(null);
+  // State for the inline toast notification (success/warning/error feedback).
   readonly toast = signal({ visible: false, type: 'success' as ToastType, title: '', message: '' });
 
+  // Reactive form model bound to the create/edit category form.
   form: { name: string; description: string; icon: string } = {
     name: '',
     description: '',
     icon: '',
   };
+  // Icon file selected by the user, pending upload on save.
   selectedIconFile: File | null = null;
+  // Data URL used to preview the selected icon before it is uploaded.
   readonly iconPreview = signal('');
 
   readonly filteredCategories = computed(() => {
@@ -67,10 +80,12 @@ export class CategoriesManagementComponent implements OnInit {
     return this.filteredCategories().slice(start, start + this.pageSize);
   });
 
+  /** Angular lifecycle hook: triggers the initial categories fetch. */
   ngOnInit(): void {
     this.loadCategories();
   }
 
+  /** Fetches all categories from the backend and maps them into row view models. */
   loadCategories(): void {
     this.isLoading.set(true);
 
@@ -86,6 +101,10 @@ export class CategoriesManagementComponent implements OnInit {
     });
   }
 
+  /**
+   * Validates the form and either creates a new category or updates the
+   * category currently being edited, showing a toast with the result.
+   */
   saveCategory(): void {
     const name = this.form.name.trim();
     const description = this.form.description.trim();
@@ -115,6 +134,7 @@ export class CategoriesManagementComponent implements OnInit {
     });
   }
 
+  /** Populates the form with an existing category's data to start editing it. */
   editCategory(category: CategoryRow): void {
     this.editingId.set(category.id);
     this.form = {
@@ -126,6 +146,11 @@ export class CategoriesManagementComponent implements OnInit {
     this.iconPreview.set(category.icon);
   }
 
+  /**
+   * Handles the icon file input change: validates type/size (image, max 5MB)
+   * and generates a data URL preview of the selected icon.
+   * @param event Change event from the file input.
+   */
   onIconSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -145,10 +170,12 @@ export class CategoriesManagementComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  /** Marks a category as pending deletion, opening the confirmation modal. */
   askDelete(category: CategoryRow): void {
     this.categoryToDelete.set(category);
   }
 
+  /** Confirms and executes deletion of the category selected via {@link askDelete}. */
   confirmDelete(): void {
     const deletedCategory = this.categoryToDelete();
     if (!deletedCategory) {
@@ -165,6 +192,7 @@ export class CategoriesManagementComponent implements OnInit {
     });
   }
 
+  /** Clears the form and exits edit mode, discarding any pending icon selection. */
   resetForm(): void {
     this.editingId.set(null);
     this.form = { name: '', description: '', icon: '' };
@@ -181,6 +209,7 @@ export class CategoriesManagementComponent implements OnInit {
     this.currentPage.set(page);
   }
 
+  /** Maps a backend Category entity into the CategoryRow shape used by the view. */
   private mapCategory(category: Category & { id?: number; total_items?: number | string }): CategoryRow {
     return {
       id: category.id_categories ?? category.id ?? 0,
@@ -195,6 +224,11 @@ export class CategoriesManagementComponent implements OnInit {
     this.toast.set({ visible: true, type, title, message });
   }
 
+  /**
+   * Completes the save flow after create/update: uploads the selected icon
+   * (if any), applies the saved category to local state, shows a success
+   * toast, and resets the form.
+   */
   private finishSave(category: Category, title: string, message: string): void {
     if (!this.selectedIconFile) {
       this.applySavedCategory(category);
@@ -215,6 +249,7 @@ export class CategoriesManagementComponent implements OnInit {
     });
   }
 
+  /** Inserts or updates the saved category in local state, preserving the item count. */
   private applySavedCategory(category: Category): void {
     const saved = this.mapCategory(category);
     this.categories.update(categories => {
@@ -225,6 +260,7 @@ export class CategoriesManagementComponent implements OnInit {
     });
   }
 
+  /** Shows an appropriate error toast, distinguishing auth (401/403) errors from generic ones. */
   private showCategoryError(error: unknown, title: string): void {
     if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
       this.showToast('warning', title, 'Inicia sesión con una cuenta administradora para gestionar categorías.');

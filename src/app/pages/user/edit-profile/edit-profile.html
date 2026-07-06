@@ -6,6 +6,7 @@
 
 <div class="edit-profile-container">
 
+  <!-- Loading state shown while the user's profile data is being fetched -->
   @if (isLoading) {
     <div class="loading-spinner">
       <div class="spinner-border text-primary" role="status">
@@ -18,6 +19,7 @@
     <div class="edit-profile-content">
       <h1 class="page-title">Editar Perfil</h1>
 
+      <!-- Confirmation modal shown after a successful profile update -->
       <app-modal-confirm
         [isOpen]="showSuccessModal"
         title="¡Perfil actualizado! ✅"
@@ -29,15 +31,18 @@
         (cancelled)="goToProfileNow()">
       </app-modal-confirm>
 
+      <!-- General error banner (e.g. failed load or save) -->
       @if (errorMessage) {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
           {{ errorMessage }}
         </div>
       }
 
+      <!-- Reactive form bound to editProfileForm; submit triggers onSaveProfile() -->
       <form [formGroup]="editProfileForm" (ngSubmit)="onSaveProfile()" class="edit-form">
 
 
+        <!-- Profile picture upload/preview section -->
         <div class="form-section">
             <h2 class="section-title">Foto de Perfil</h2>
 
@@ -66,6 +71,7 @@
           </div>
 
 
+        <!-- Personal information fields: name, email, phone, birthday -->
         <div class="form-section">
           <h2 class="section-title">Información Personal</h2>
 
@@ -165,6 +171,7 @@
           </div>
         </div>
 
+        <!-- Location section: cascading province/city/zipcode selects plus map preview -->
         <div class="form-section">
           <h2 class="section-title">Ubicación</h2>
 
@@ -233,6 +240,7 @@
             </div>
           </div>
 
+          <!-- Map preview: rendered once coordinates are resolved for the selected province/city -->
           <div class="map-preview-section">
             <h3 class="small-title">Vista previa de ubicación</h3>
             @if (editProfileForm.get('user_province')?.value && editProfileForm.get('user_city')?.value && previewLatitude !== null && previewLongitude !== null) {
@@ -252,6 +260,7 @@
           </div>
         </div>
 
+        <!-- Optional password change section, toggled via togglePasswordField() -->
         <div class="form-section">
           <div class="password-header">
             <h2 class="section-title">Contraseña</h2>
@@ -300,6 +309,7 @@
           }
         </div>
 
+        <!-- Submit button: disabled while saving, invalid, or when there are no unsaved changes -->
         <div class="form-actions">
           <button
             type="submit"

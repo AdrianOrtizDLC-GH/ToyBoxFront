@@ -12,6 +12,11 @@ interface LocationOption {
   value: string;
 }
 
+/**
+ * Reusable sidebar for filtering item/product listings by category, max price,
+ * location, and conservation status. Meant to be used alongside catalog/listing
+ * pages; emits the selected filters so the parent can re-query/filter the results.
+ */
 @Component({
   selector: 'app-filter-sidebar',
   standalone: true,
@@ -20,9 +25,12 @@ interface LocationOption {
   styleUrl: './filter-sidebar.css'
 })
 export class FilterSidebarComponent {
+  // List of categories to populate the category filter dropdown.
   @Input() categories: Category[] = [];
+  // ID of the category that should be pre-selected in the dropdown.
   @Input() selectedCategoryId = 0;
 
+  // Emits the collected filter values whenever the user applies or clears the filters.
   @Output() filtersApplied = new EventEmitter<Itemfilters>();
 
   errorMessage = '';
@@ -56,6 +64,14 @@ export class FilterSidebarComponent {
     { label: 'Comunidad Valenciana', value: 'valencia' },
   ];
 
+  /**
+   * Reads the raw form field values, validates/normalizes them, resolves the
+   * selected category, and emits the resulting filter object via filtersApplied.
+   * @param categoryIdValue raw value from the category select (numeric id as string).
+   * @param maxPriceValue raw value from the max price input.
+   * @param locationValue raw value from the location select.
+   * @param statusValue raw value from the conservation status select.
+   */
   onApplyFilters(
     categoryIdValue: string,
     maxPriceValue: string,
@@ -86,6 +102,10 @@ export class FilterSidebarComponent {
     this.filtersApplied.emit(filters);
   }
 
+  /**
+   * Resets any error state and emits an empty filters object, effectively
+   * clearing all active filters for the parent listing view.
+   */
   onClearFilters(): void {
     this.errorMessage = '';
     this.filtersApplied.emit({});

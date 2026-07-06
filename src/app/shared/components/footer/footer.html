@@ -1,6 +1,7 @@
 <footer class="footer">
     <div class="footer-content">
 
+        <!-- Brand logo and social media links -->
         <div class="footer-brand">
             <a routerLink="/" class="footer-logo">
                 <img src="assets/images/Logos/toybox_logoprincipal.svg" alt="Toybox" class="logo-img" />
@@ -35,10 +36,12 @@
             </div>
         </div>
 
+        <!-- Navigation link columns -->
         <div class="footer-links">
             <div class="footer-col">
                 <h4>Toybox</h4>
                 <a routerLink="/">Inicio</a>
+                <!-- Catalog/sell links differ depending on isLoggedIn: direct access when authenticated, redirect to login otherwise -->
                 @if (isLoggedIn) {
                 <a routerLink="/catalog">Catálogo</a>
                 <a routerLink="/product/create">Vender</a>
@@ -48,6 +51,7 @@
                 }
             </div>
 
+            <!-- Account-related links, only rendered for authenticated users -->
             @if (isLoggedIn) {
             <div class="footer-col">
                 <h4>Mi cuenta</h4>
@@ -57,6 +61,7 @@
             </div>
             }
 
+            <!-- Static help/legal links, always visible -->
             <div class="footer-col">
                 <h4>Ayuda</h4>
                 <a routerLink="/contact">Contacto</a>
@@ -66,6 +71,7 @@
         </div>
     </div>
 
+    <!-- Copyright notice with dynamically computed current year -->
     <div class="footer-bottom">
         <p>© {{ currentYear }} Toybox. Todos los derechos reservados.</p>
     </div>

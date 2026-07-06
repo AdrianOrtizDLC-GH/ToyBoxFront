@@ -13,13 +13,19 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './chat-list.html',
   styleUrls: ['./chat-list.css']
 })
+/**
+ * Page component listing all of the user's chat conversations (inbox view).
+ * Supports client-side search/filtering and navigates to the chat detail
+ * page when a conversation is opened.
+ */
 export class ChatList implements OnInit {
 
-  searchQuery: string = '';
+  searchQuery: string = ''; // Free-text filter applied to conversations
   selectedConversationId: number | null = null;
   breadcrumbItems: any[] = [];
-  conversations: ChatItem[] = [];
+  conversations: ChatItem[] = []; // Full list of the user's conversations
 
+  /** Conversations matching the current search query (by user name, item title or last message). */
   get filteredConversations(): ChatItem[] {
     if (!this.searchQuery) return this.conversations;
     const q = this.searchQuery.toLowerCase();
@@ -39,11 +45,13 @@ export class ChatList implements OnInit {
     private cdr: ChangeDetectorRef 
   ) { }
 
+  /** Angular lifecycle hook: builds breadcrumbs and loads the conversation list. */
   ngOnInit(): void {
     this.initializeBreadcrumbs();
     this.loadConversations();
   }
 
+  /** Builds the breadcrumb trail, adapting the home route based on login state. */
   private initializeBreadcrumbs(): void {
     const isLoggedIn = this.authService.isLoggedIn();
     const homeRoute = isLoggedIn ? '/catalog' : '/home';
@@ -54,6 +62,11 @@ export class ChatList implements OnInit {
     ];
   }
 
+  /**
+   * Fetches the user's conversations and maps them into ChatItem view models.
+   * Runs the mapping inside NgZone since this may be triggered from contexts
+   * outside Angular's zone, ensuring change detection picks up the update.
+   */
   loadConversations(): void {
     this.chatService.getMyChats().subscribe({
       next: (chats: any[]) => {
@@ -86,17 +99,26 @@ export class ChatList implements OnInit {
     });
   }
 
+    /**
+     * Navigates to the chat detail page for the selected conversation.
+     * @param conversationId Conversation id to open.
+     */
     openConversation(conversationId: number): void {
       this.selectedConversationId = conversationId;
       this.router.navigate(['/chat', conversationId]);
   }
 
+  /**
+   * Checks whether a given date string falls on today's date.
+   * Used to format the last-message timestamp in the conversation list.
+   */
   isToday(dateString: string): boolean {
     const msgDate = new Date(dateString);
     const today = new Date();
     return msgDate.toDateString() === today.toDateString();
   }
 
+  /** Checks whether a given date string falls on yesterday's date. */
   isYesterday(dateString: string): boolean {
     const msgDate = new Date(dateString);
     const yesterday = new Date();

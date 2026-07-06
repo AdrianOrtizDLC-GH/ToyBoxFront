@@ -9,6 +9,13 @@ import { SocketService } from '../../../core/services/socket.service';
 import { UserAvatarComponent } from '../../components/user-avatar/user-avatar';
 import { UserRole } from '../../enums/user-role.enum';
 
+/**
+ * Main application navigation bar. Rendered once at the top-level shell
+ * layout and shown on every page. Displays sign-in/register buttons for
+ * anonymous users, or the full navigation menu (catalog, notifications,
+ * chat, favorites, profile, moderator/admin links) plus unread badges
+ * for authenticated users.
+ */
 @Component({
   selector: 'app-navbar',
   standalone: true,
@@ -55,6 +62,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Starts a polling interval that periodically refreshes the unread
+   * messages count while the user is logged in.
+   */
   ngOnInit(): void {
     setInterval(() => {
       if (this.isLoggedIn) {
@@ -63,6 +74,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  /**
+   * Opens the real-time socket connection and subscribes to new message
+   * events so the unread messages count stays up to date live.
+   */
   connectSocket(): void {
     this.socketService.connect();
 
@@ -77,11 +92,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
     );
   }
 
+  /**
+   * Unsubscribes from the chat socket and clears the subscription,
+   * called on logout and component destruction.
+   */
   disconnectSocket(): void {
     this.socketSub?.unsubscribe();
     this.socketSub = null;
   }
 
+  /**
+   * Fetches the current user's chats and recomputes the total unread
+   * messages count shown as a badge in the navbar.
+   */
   loadUnreadMessages(): void {
     this.chatService.getMyChats().subscribe({
       next: (chats) => {
@@ -93,36 +116,61 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Navigates to the login page.
+   */
   goToLogin(): void {
     this.router.navigate(['/auth/login']);
   }
 
+  /**
+   * Navigates to the registration page.
+   */
   goToRegister(): void {
     this.router.navigate(['/auth/register']);
   }
 
+  /**
+   * Navigates to the create-product page.
+   */
   goToCreateProduct(): void {
     this.router.navigate(['/product/create']);
   }
 
+  /**
+   * Navigates to the moderator reports page.
+   */
   goToReports(): void {
     this.router.navigate(['/moderator/reports']);
   }
 
+  /**
+   * Navigates to the admin dashboard page.
+   */
   goToDashboard(): void {
     this.router.navigate(['/admin/dashboard']);
   }
 
+  /**
+   * Cleans up the socket subscription when the component is destroyed.
+   */
   ngOnDestroy(): void {
     this.disconnectSocket();
   }
 
+  // Whether the mobile/collapsible navigation menu is currently expanded.
   menuOpen: boolean = false;
 
+  /**
+   * Toggles the mobile navigation menu open/closed state.
+   */
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
   }
 
+  /**
+   * Closes the mobile navigation menu (e.g. after a nav item is clicked).
+   */
   closeMenu(): void {
     this.menuOpen = false;
   }

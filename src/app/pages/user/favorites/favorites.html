@@ -7,6 +7,7 @@
 
 <div class="relative-z-10 container py-5">
 
+  <!-- Page header: title plus total favorites count -->
   <header class="d-flex justify-content-between align-items-end mb-4">
     <div>
       <h1 class="favorites-title">Mis favoritos</h1>
@@ -18,6 +19,7 @@
     </span>
   </header>
 
+  <!-- Toast notification for success/error feedback (e.g. after removing a favorite) -->
   <app-toast
     [visible]="toastVisible"
     [type]="toastType"
@@ -26,9 +28,11 @@
     (dismissed)="onToastDismissed()">
   </app-toast>
 
+  <!-- Loading state while favorites are being fetched -->
   @if (isLoading) {
     <app-loading-spinner text="Cargando tus favoritos..."></app-loading-spinner>
   } @else {
+    <!-- Grid of favorite products, paginated client-side via paginatedFavorites -->
     @if (totalFavorites > 0) {
       <div class="favorites-grid">
         @for (item of paginatedFavorites; track item.id_items) {
@@ -49,6 +53,7 @@
         }
       </div>
 
+      <!-- Pagination control for the favorites grid -->
       <div class="mt-4">
         <app-pagination
           [currentPage]="currentPage"
@@ -57,7 +62,7 @@
         </app-pagination>
       </div>
     } @else {
-
+      <!-- Empty state shown when the user has no favorites yet -->
       <app-empty-state
         icon="🧸"
         title="Aún sin favoritos"
@@ -70,6 +75,7 @@
 
 </div>
 
+<!-- Confirmation modal for removing a product from favorites -->
 <app-modal-confirm
   [isOpen]="modalConfirmOpen"
   title="¿Quitar de favoritos?"

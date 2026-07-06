@@ -9,12 +9,14 @@
 
   <a routerLink="/moderator/reports" class="back-link">Volver a reportes</a>
 
+  <!-- Loading / error / loaded states for the report detail -->
   @if (isLoading) {
     <section class="panel"><p>Cargando reporte...</p></section>
   } @else if (error) {
     <section class="panel"><p>{{ error }}</p></section>
   } @else if (report) {
 
+  <!-- Report id and current status pill -->
   <header class="page-header">
     <div>
       <p class="eyebrow">Moderación</p>
@@ -23,7 +25,9 @@
     <span class="status-pill" [class.resolved]="report.status === 'resolved'">{{ reportStatusLabel }}</span>
   </header>
 
+  <!-- Reported item details and moderation decision panel -->
   <section class="detail-grid">
+    <!-- Reported item info: title, description, reporter/reported users, date -->
     <article class="panel item-panel">
       <h2>{{ report.itemTitle }}</h2>
       <p>{{ report.itemDescription }}</p>
@@ -43,6 +47,7 @@
       </dl>
     </article>
 
+    <!-- Moderation actions: only available while the report is pending -->
     <aside class="panel decision-panel">
       <h2>Decisión</h2>
       <p>{{ report.reason }}</p>
@@ -60,6 +65,7 @@
   }
 </main>
 
+<!-- Confirmation modal for the pending moderation action -->
 <app-modal-confirm
   [isOpen]="!!pendingAction"
   [title]="modalTitle"
@@ -70,6 +76,7 @@
   (cancelled)="pendingAction = null"
 />
 
+<!-- Feedback toast for the outcome of the moderation action -->
 <app-toast
   [visible]="toast.visible"
   [type]="toast.type"

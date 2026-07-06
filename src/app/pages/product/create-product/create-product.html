@@ -5,6 +5,7 @@
 </div>
 
 <main class="create-product-page relative-z-10">
+  <!-- Page header: hero title/description and a helpful tip card -->
   <section class="create-product-hero">
     <div>
       <span class="create-product-hero__eyebrow">Publicar juguete</span>
@@ -30,7 +31,9 @@
     </aside>
   </section>
 
+  <!-- Main create-product form; submitting triggers publishProduct() -->
   <form class="create-product-layout" #createProductForm="ngForm" (ngSubmit)="publishProduct()">
+    <!-- Basic info panel: title, price, condition, location, description -->
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">edit_square</span>
@@ -254,6 +257,7 @@
       </div>
     </section>
 
+    <!-- Category panel: mobile <select> plus icon-based category picker -->
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">category</span>
@@ -325,6 +329,7 @@
       }
     </section>
 
+    <!-- Image upload panel: drag-and-drop zone, file input and preview grid -->
     <section class="form-panel card-toybox">
       <div class="panel-heading">
         <span class="material-symbols-outlined">add_photo_alternate</span>
@@ -377,6 +382,7 @@
         </p>
       }
 
+      <!-- Selected image previews, with the first one marked as the main photo -->
       <div class="image-preview-grid">
         @for (image of selectedImages; track image.preview; let index = $index) {
           <div class="image-preview">
@@ -405,6 +411,7 @@
       </div>
     </section>
 
+    <!-- Publish summary panel: checklist, feedback messages, and submit/draft actions -->
     <aside class="publish-panel card-toybox">
       <h2>Resumen de publicación</h2>
 

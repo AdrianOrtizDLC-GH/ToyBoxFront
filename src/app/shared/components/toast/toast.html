@@ -1,3 +1,4 @@
+<!-- Toast is only rendered when the `visible` input is true; style/type comes from `type`, layout from `placement` -->
 @if (visible) {
   <aside
     class="toast-message"
@@ -6,10 +7,12 @@
     role="status"
     aria-live="polite"
   >
+    <!-- Toast content: title and message text bound to their respective inputs -->
     <div class="toast-body">
       <strong>{{ title }}</strong>
       <span>{{ message }}</span>
     </div>
+    <!-- Close button: triggers dismiss(), which emits the `dismissed` output -->
     <button type="button" aria-label="Close notification" (click)="dismiss()">x</button>
   </aside>
 }

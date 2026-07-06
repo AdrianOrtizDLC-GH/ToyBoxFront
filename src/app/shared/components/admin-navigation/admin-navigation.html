@@ -1,8 +1,11 @@
+<!-- Navigation bar for admin/moderator sections -->
 <nav class="section-navigation" aria-label="Navegación de administración y moderación">
+  <!-- Admin-only links: rendered only when isAdministrator() computed signal is true -->
   @if (isAdministrator()) {
     <a routerLink="/admin/dashboard" routerLinkActive="active">Panel</a>
     <a routerLink="/admin/users" routerLinkActive="active">Usuarios</a>
     <a routerLink="/admin/categories" routerLinkActive="active">Categorías</a>
   }
+  <!-- Moderator link: visible to all users who can access this navigation component -->
   <a routerLink="/moderator/reports" routerLinkActive="active">Reportes</a>
 </nav>

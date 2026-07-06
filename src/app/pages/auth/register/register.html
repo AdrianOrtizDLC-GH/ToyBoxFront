@@ -11,7 +11,8 @@
       </p>
     </div>
 
-    <app-toast 
+    <!-- Toast notification for registration success/error feedback -->
+    <app-toast
       [visible]="toastVisible"
       [type]="toastType"
       [title]="toastTitle"
@@ -19,6 +20,7 @@
       (dismissed)="toastVisible = false">
     </app-toast>
 
+    <!-- Registration form: personal info, credentials, and location fields -->
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
       <div class="row">
@@ -61,6 +63,7 @@
         }
       </div>
 
+      <!-- Password field with show/hide toggle and strength validation messages -->
       <div class="mb-3">
         <label>Contraseña*</label>
         <div class="input-group-wrapper">
@@ -91,6 +94,7 @@
         }
       </div>
 
+      <!-- Confirm-password field; cross-field mismatch error comes from the form group validator -->
       <div class="mb-3">
         <label>Confirmar Contraseña*</label>
         <div class="input-group-wrapper">
@@ -134,6 +138,7 @@
         }
       </div>
 
+      <!-- Cascading location selectors: province -> city -> postal code, validated against LocationsService -->
       <div class="ubicacion-section mb-4 p-3 rounded-3">
         <h5 class="mb-3">📍 Ubicación*</h5>
 
@@ -197,6 +202,7 @@
 
     </form>
 
+    <!-- Link to the login page -->
     <div class="mt-4 pt-4 border-top text-center">
       <small>*Campos obligatorios</small>
       <p class="text-on-surface-variant mb-0">
@@ -209,6 +215,7 @@
 
 </div>
 
+<!-- Success confirmation modal shown after a successful registration, before redirecting to the catalog -->
 <app-modal-confirm
   [isOpen]="showSuccessModal"
   title="¡Bienvenido a ToyBox! 🧸"

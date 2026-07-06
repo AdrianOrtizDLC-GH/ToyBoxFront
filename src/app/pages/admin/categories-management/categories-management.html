@@ -7,6 +7,7 @@
 <main class="management-page relative-z-10">
   <app-admin-navigation />
 
+  <!-- Page header with title and a search box bound to searchTerm/updateSearch -->
   <header class="page-header">
     <div>
       <p class="eyebrow">Administración</p>
@@ -20,6 +21,7 @@
     />
   </header>
 
+  <!-- Create/edit category form; label switches based on editingId() -->
   <section class="form-panel" aria-label="Formulario de categoría">
     <h2>{{ editingId() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
     <form (ngSubmit)="saveCategory()">
@@ -37,6 +39,7 @@
         ></textarea>
         <small class="form-help">Esta descripción se mostrará asociada a la categoría.</small>
       </label>
+      <!-- Icon uploader: shows preview when available and triggers onIconSelected on file change -->
       <fieldset class="icon-uploader">
         <legend>Icono</legend>
         <div class="icon-upload-control">
@@ -59,6 +62,7 @@
       </div>
     </form>
 
+    <!-- Inline toast notification for save/error feedback -->
     <app-toast
       placement="inline"
       [visible]="toast().visible"
@@ -69,6 +73,7 @@
     />
   </section>
 
+  <!-- Categories table: shows loading state, paginated rows, or an empty-state row -->
   <section class="table-panel">
     <table>
       <thead>
@@ -106,9 +111,11 @@
       </tbody>
     </table>
   </section>
+  <!-- Pagination control for the filtered categories list -->
   <app-pagination [currentPage]="currentPage()" [totalPages]="totalPages()" (pageChange)="changePage($event)" />
 </main>
 
+<!-- Delete confirmation modal, shown when a category is marked for deletion -->
 <app-modal-confirm
   [isOpen]="!!categoryToDelete()"
   title="Eliminar categoría"

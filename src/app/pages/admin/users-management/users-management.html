@@ -12,6 +12,7 @@
       <p class="eyebrow">Administración</p>
       <h1>Gestión de usuarios</h1>
     </div>
+    <!-- Search box and status filter; both reset pagination to page 1 on change -->
     <div class="filters">
       <input type="search" placeholder="Buscar usuarios" [(ngModel)]="searchTerm" (ngModelChange)="resetPagination()" />
       <select [(ngModel)]="statusFilter" (ngModelChange)="resetPagination()" aria-label="Filtrar por estado">
@@ -22,6 +23,7 @@
     </div>
   </header>
 
+  <!-- Users table: loading, error, paginated rows, or empty state -->
   <section class="table-panel">
     <table>
       <thead>
@@ -63,9 +65,11 @@
       </tbody>
     </table>
   </section>
+  <!-- Pagination control for the filtered users list -->
   <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" (pageChange)="changePage($event)" />
 </main>
 
+<!-- Confirmation modal for blocking/unblocking the selected user -->
 <app-modal-confirm
   [isOpen]="!!selectedUser"
   [title]="selectedUser?.status === 'active' ? 'Bloquear usuario' : 'Desbloquear usuario'"
@@ -76,6 +80,7 @@
   (cancelled)="selectedUser = null"
 />
 
+<!-- Toast notification for status-change feedback -->
 <app-toast
   [visible]="toast.visible"
   [type]="toast.type"

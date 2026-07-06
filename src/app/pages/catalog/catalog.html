@@ -1,8 +1,10 @@
+<!-- Breadcrumb navigation -->
 <div class="breadcrumb-wrapper">
   <app-breadcrumb></app-breadcrumb>
 </div><div class="pattern-bg"></div>
 
 <main class="catalog-page relative-z-10">
+  <!-- Hero section: page intro and main search bar -->
   <section class="catalog-hero">
     <div class="catalog-hero__text">
       <span class="catalog-hero__eyebrow">Catálogo Toybox</span>
@@ -26,6 +28,7 @@
     </div>
   </section>
 
+  <!-- Category selector: pill buttons for desktop, dropdown for mobile -->
   <section class="catalog-categories">
     <div class="catalog-section-heading">
       <h2>Categorías</h2>
@@ -35,6 +38,7 @@
       </p>
     </div>
 
+    <!-- Category pills (desktop): highlights the active category and triggers onCategorySelected -->
     <div class="category-row" aria-label="Categorías del catálogo">
       @for (category of categories; track category.id_categories) {
         <button
@@ -60,6 +64,7 @@
       }
     </div>
 
+    <!-- Category select (mobile fallback), same behavior as the pill row -->
     <div class="category-mobile">
       <label for="mobile-category">Categoría</label>
 
@@ -81,6 +86,7 @@
     </div>
   </section>
 
+  <!-- Main layout: filter sidebar plus results (loading/error/empty/list states) -->
   <section class="catalog-layout">
     <app-filter-sidebar
       [categories]="categories"
@@ -109,6 +115,7 @@
         </select>
       </div>
 
+      <!-- Loading / error / empty / results states, mutually exclusive -->
       @if (isLoading) {
         <div class="catalog-state card-toybox">
           <h3>Cargando juguetes...</h3>
@@ -129,6 +136,7 @@
           </p>
         </div>
       } @else {
+        <!-- Product grid: renders one card per loaded product -->
         <div class="products-grid">
           @for (product of products; track product.id) {
             <app-product-card [product]="product"></app-product-card>

@@ -6,6 +6,7 @@
 
 <div class="container py-5">
 
+  <!-- Toast notification for success/error feedback -->
   <app-toast
     [visible]="toastVisible()"
     [type]="toastType()"
@@ -14,6 +15,7 @@
     (dismissed)="onToastDismissed()">
   </app-toast>
 
+  <!-- Tab switcher between purchases (as buyer) and sales (as seller) -->
   <div class="tabs-wrapper mb-4">
     <button
       class="tab-btn"
@@ -34,6 +36,7 @@
     </button>
   </div>
 
+  <!-- "Purchases" tab: transactions where the user is the buyer; allows leaving a review -->
   @if (activeTab() === 'purchases') {
     <h2 class="page-title mb-3">Mis compras - Dejar reseña</h2>
 
@@ -52,6 +55,7 @@
           message="Explora el catálogo y compra productos">
         </app-empty-state>
       } @else {
+        <!-- List of completed purchases, each with a review or a "leave review" action -->
         <div class="purchase-list">
           @for (chat of paginatedPurchases; track chat.id_conversations) {
             <div class="purchase-item">
@@ -107,6 +111,7 @@
     }
   }
 
+  <!-- "Sales" tab: transactions where the user is the seller; shows buyer reviews, read-only -->
   @if (activeTab() === 'sales') {
     <h2 class="page-title mb-3">Mis ventas - Reseñas del comprador</h2>
 
@@ -125,6 +130,7 @@
           message="Aún no has vendido ningún producto">
         </app-empty-state>
       } @else {
+        <!-- List of completed sales, showing whether the buyer has left a review -->
         <div class="purchase-list">
           @for (chat of paginatedSales; track chat.id_conversations) {
             <div class="purchase-item">
@@ -178,6 +184,7 @@
 
 </div>
 
+<!-- Modal for submitting a rating and comment review for a transaction -->
 @if (showReviewModal() && selectedConversation) {
   <div class="review-modal-backdrop" (click)="cancelReview()">
     <div class="review-modal" (click)="$event.stopPropagation()">

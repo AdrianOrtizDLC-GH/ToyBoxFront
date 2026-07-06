@@ -8,6 +8,7 @@
 
   <div class="chat-detail-page">
 
+    <!-- Conversation list sidebar: clicking an item selects it via selectConversation() -->
     <div class="sidebar">
       <div class="sidebar-header">
         <h2 class="sidebar-title">Buzón</h2>
@@ -33,10 +34,12 @@
       </div>
     </div>
 
+    <!-- Main chat panel: shows the selected conversation, or a placeholder if none is selected -->
     <div class="chat-main">
 
       @if (selectedConversationId) {
 
+      <!-- Header with the item and counterpart info for the open conversation -->
       <div class="chat-header">
         <div class="chat-header-product">
           <img [src]="selectedConversation?.itemImage || 'assets/images/placeholder.png'"
@@ -53,6 +56,7 @@
         </div>
       </div>
 
+      <!-- Message list: real-time messages pushed via socket appear here; auto-scrolled by ngAfterViewChecked -->
       <div class="messages-container" #messagesContainer>
         @if (messages.length > 0) {
         @for (msg of messages; track msg.id_messages) {
@@ -67,6 +71,7 @@
       </div>
 
 
+      <!-- Message composer: Enter key or send button triggers sendMessage() -->
       <div class="chat-input-bar">
         <input type="text" class="chat-input" placeholder="Escribe un mensaje..." [value]="newMessage"
           (input)="newMessage = $any($event.target).value" (keyup.enter)="sendMessage()" />
@@ -79,6 +84,7 @@
       </div>
 
       } @else {
+      <!-- Empty state shown when no conversation is currently selected -->
       <div class="no-conversation">
         <svg width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

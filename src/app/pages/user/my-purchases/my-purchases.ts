@@ -20,6 +20,11 @@ import { Chat } from '../../../shared/interfaces/chat.interface';
 import { Review } from '../../../shared/interfaces/review.interface';
 import { HttpErrorResponse } from '@angular/common/http';
 
+/**
+ * Component that lists the user's completed transactions as both a buyer
+ * ("purchases") and a seller ("sales"), based on sold chat conversations,
+ * and lets the user leave/view reviews for the other party in each deal.
+ */
 @Component({
   selector: 'app-my-purchases',
   standalone: true,
@@ -33,8 +38,10 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
   private readonly reviewsService = inject(ReviewsService);
   private readonly chatService = inject(ChatService);
 
+  // Emits on component destruction to unsubscribe all pending observables.
   private destroy$ = new Subject<void>();
 
+  // Currently selected tab: purchases (as buyer) vs sales (as seller).
   activeTab = signal<'purchases' | 'sales'>('purchases');
   currentPage = signal(1);
   pageSize = 8;
@@ -42,11 +49,13 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
   myPurchasesConversations = signal<Chat[]>([]);
   mySalesConversations = signal<Chat[]>([]);
 
+  // Cache of reviews keyed by "<buyerId>_<itemId>" to quickly check if a review already exists.
   reviewsMap = signal<Map<string, Review | null>>(new Map());
 
   isLoading = signal(false);
   errorMessage = signal('');
 
+  // State for the "leave a review" modal flow.
   showReviewModal = signal(false);
   selectedConversation: Chat | null = null;
   reviewerRole: 'seller' | 'buyer' = 'seller';
@@ -61,21 +70,25 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
   currentUserId: number | undefined;
 
   constructor() {
+    // Reset to the first page whenever the active tab changes.
     effect(() => {
       const tab = this.activeTab();
       this.currentPage.set(1);
     });
   }
 
+  /** Angular lifecycle hook. Loads the current user and their transaction data. */
   ngOnInit(): void {
     this.loadCurrentUser();
   }
 
+  /** Angular lifecycle hook. Completes the destroy subject to unsubscribe observables. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
+  /** Retrieves the authenticated user and triggers loading their transaction data. */
   private loadCurrentUser(): void {
     const user = this.authService.currentUser();
     if (user) {
@@ -86,6 +99,10 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Fetches all of the user's chats and splits them into completed purchases
+   * (as buyer) and completed sales (as seller), then loads related reviews.
+   */
   private loadAllData(): void {
     if (!this.currentUserId) return;
 
@@ -127,6 +144,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Loads and caches the buyer's review (if any) for each conversation's product. */
   private loadReviewsForConversations(chats: Chat[]): void {
     if (!this.currentUserId) return;
 
@@ -155,6 +173,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Maps common HTTP error statuses to user-facing Spanish error messages. */
   private handleError(err: HttpErrorResponse): void {
     if (err.status === 0) {
       this.errorMessage.set('No hay conexión con el servidor');
@@ -165,6 +184,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Switches between the "purchases" and "sales" tabs, resetting pagination. */
   switchTab(tab: 'purchases' | 'sales'): void {
     this.activeTab.set(tab);
     this.currentPage.set(1);
@@ -189,6 +209,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     return Math.ceil(list.length / this.pageSize);
   }
 
+  /** Returns the cached review for a conversation's buyer/item pair, if one exists. */
   getReviewForConversation(chat: Chat): Review | null {
     const key = `${chat.fk_buyer_id}_${chat.fk_items_id}`;
     return this.reviewsMap().get(key) || null;
@@ -228,6 +249,11 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     return (this.selectedConversation as any).buyer_username || 'Comprador';
   }
 
+  /**
+   * Opens the review modal for a given conversation.
+   * @param conversation - The chat/transaction being reviewed.
+   * @param role - Role of the current user in this transaction ('seller' or 'buyer').
+   */
   openReviewModal(conversation: Chat, role: 'seller' | 'buyer'): void {
     this.selectedConversation = conversation;
     this.reviewerRole = role;
@@ -236,12 +262,14 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     this.showReviewModal.set(true);
   }
 
+  /** Validates the review form: rating must be 1-5 and comment at least 10 characters. */
   isReviewValid(): boolean {
     const rating = this.newRating();
     const comment = this.newComment().trim();
     return rating >= 1 && rating <= 5 && comment.length >= 10;
   }
 
+  /** Form submit handler: creates the review for the selected conversation and refreshes data. */
   submitReview(): void {
     if (!this.isReviewValid() || !this.selectedConversation || !this.currentUserId) return;
 
@@ -269,6 +297,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Closes the review modal and resets its form state. */
   cancelReview(): void {
     this.showReviewModal.set(false);
     this.newRating.set(0);
@@ -276,6 +305,7 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     this.selectedConversation = null;
   }
 
+  /** Displays a toast notification and auto-hides it after 3 seconds. */
   private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
     this.toastType.set(type);
     this.toastTitle.set(title);
@@ -284,10 +314,12 @@ export class MyPurchasesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.toastVisible.set(false), 3000);
   }
 
+  /** Hides the toast when dismissed by the user or its timer. */
   onToastDismissed(): void {
     this.toastVisible.set(false);
   }
 
+  /** Handles pagination component page-change events. */
   onPageChange(page: number): void {
     this.currentPage.set(page);
   }

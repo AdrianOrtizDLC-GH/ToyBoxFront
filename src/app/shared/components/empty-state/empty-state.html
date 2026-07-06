@@ -1,3 +1,4 @@
+<!-- Empty-state placeholder: icon, title, and message are all driven by @Input properties -->
 <div class="empty-state">
 
     <div class="empty-icon">
@@ -7,6 +8,7 @@
     <p class="text-on-surface-variant">
         {{ message }}
     </p>
+    <!-- Optional call-to-action button, only rendered when buttonText @Input is non-empty -->
     @if(buttonText){
     <a
         [routerLink]="buttonLink"

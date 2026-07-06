@@ -17,6 +17,11 @@ import { takeUntil } from 'rxjs/operators';
 import { ConservationStatus } from '../../../shared/enums/conservation-status.enum';
 
 
+/**
+ * Component for viewing and managing the user's saved favorite products.
+ * Displays a paginated grid of favorites and allows removing items with
+ * a confirmation modal.
+ */
 @Component({
   selector: 'app-favorites',
   standalone: true,
@@ -24,20 +29,22 @@ import { ConservationStatus } from '../../../shared/enums/conservation-status.en
   templateUrl: './favorites.html',
   styleUrl: './favorites.css',
 })
-export class FavoritesComponent implements OnInit, OnDestroy {  
+export class FavoritesComponent implements OnInit, OnDestroy {
   private favoritesService = inject(FavoritesService);
   private cdr = inject(ChangeDetectorRef);
-  private authService = inject(AuthService); 
+  private authService = inject(AuthService);
 
+  // Emits on component destruction to unsubscribe all pending observables.
   private destroy$ = new Subject<void>();
 
-  favorites: Item[] = []; 
+  favorites: Item[] = [];
   currentPage = 1;
   pageSize = 8;
   totalPages = 1;
-  breadcrumbItems: any[] = []; 
+  breadcrumbItems: any[] = [];
   modalConfirmOpen = false;
 
+  // Id of the product pending removal confirmation, if any.
   productToDeleteId: number | null = null;
 
   isLoading = false;
@@ -47,11 +54,13 @@ export class FavoritesComponent implements OnInit, OnDestroy {
   toastMessage = '';
 
 
+  /** Angular lifecycle hook. Sets up breadcrumbs and loads the user's favorites. */
   ngOnInit(): void {
     this.initializeBreadcrumbs();
     this.loadFavorites();
   }
 
+  /** Angular lifecycle hook. Completes the destroy subject to unsubscribe observables. */
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -67,6 +76,7 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     ];
   }
 
+  /** Fetches the current user's favorite items and maps them into the Item shape used by the UI. */
   loadFavorites(): void {
     this.isLoading = true;
 
@@ -106,6 +116,10 @@ export class FavoritesComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Translates a conservation status code into a human-readable Spanish label.
+   * @param conservationStatus - Raw status value (e.g. 'draft', 'published').
+   */
   public getStatusText(conservationStatus: string): string {
 
     const statusMap: { [key: string]: string } = {
@@ -119,6 +133,7 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     return statusMap[conservationStatus] || conservationStatus || 'Publicado';
   }
 
+  /** Maps common HTTP error statuses to user-facing toast messages. */
   private handleError(err: HttpErrorResponse, defaultMessage: string): void {
     if (err.status === 401) {
       this.showToast('error', 'Error', 'Debes iniciar sesión para ver tus favoritos');
@@ -129,6 +144,7 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Displays a toast notification and auto-hides it after 3 seconds. */
   private showToast(type: 'success' | 'error' | 'warning' | 'info', title: string, message: string): void {
     this.toastType = type;
     this.toastTitle = title;
@@ -149,21 +165,25 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     return this.favorites.slice(start, start + this.pageSize);
   }
 
+  /** Recalculates total pages from the favorites count and clamps the current page. */
   updatePagination(): void {
     this.totalPages = Math.max(1, Math.ceil(this.favorites.length / this.pageSize));
     if (this.currentPage > this.totalPages) this.currentPage = this.totalPages;
   }
 
+  /** Opens the confirmation modal for removing a product from favorites. */
   requestRemoveFavorite(productId: number): void {
     this.productToDeleteId = productId;
     this.modalConfirmOpen = true;
   }
 
+  /** Cancels the pending favorite removal and closes the confirmation modal. */
   cancelRemove(): void {
     this.modalConfirmOpen = false;
     this.productToDeleteId = null;
   }
 
+  /** Confirms removal of the selected product from favorites and updates local state/pagination. */
   confirmRemove(): void {
     if (!this.productToDeleteId) return;
 
@@ -184,10 +204,12 @@ export class FavoritesComponent implements OnInit, OnDestroy {
       });
   }
 
+  /** Handles pagination component page-change events. */
   onPageChange(page: number): void {
     this.currentPage = page;
   }
-  
+
+  /** Hides the toast when dismissed by the user or its timer. */
   onToastDismissed(): void {
     this.toastVisible = false;
   }

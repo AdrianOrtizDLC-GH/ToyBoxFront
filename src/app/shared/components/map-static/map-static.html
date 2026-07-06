@@ -1,10 +1,12 @@
 
+<!-- Error state: shown when there are no valid coordinates and no location text (showError) -->
 @if (showError()) {
   <div class="map-error">
     <span class="material-symbols-outlined">location_off</span>
     <span>Ubicación no disponible</span>
   </div>
 } @else {
+  <!-- Map state: renders the OpenStreetMap embed built from latitude/longitude inputs -->
   <div class="map-container">
     <iframe
       [src]="mapUrl()"

@@ -4,10 +4,12 @@
     <h2>Filtros</h2>
   </div>
 
+  <!-- Filter form: on submit, reads template-referenced field values and calls onApplyFilters(), which emits filtersApplied -->
   <form class="filter-sidebar__form"
     (submit)="$event.preventDefault(); onApplyFilters(category.value, price.value, location.value, status.value)">
     <div class="filter-group">
       <label for="filter-category">Categoría</label>
+      <!-- Category dropdown, populated from the categories @Input; pre-selected using selectedCategoryId @Input -->
       <select id="filter-category" class="form-control" #category [value]="selectedCategoryId">
         <option value="0">Todas las categorías</option>
         @for (categoryItem of categories; track categoryItem.id_categories) {
@@ -27,6 +29,7 @@
 
     <div class="filter-group">
       <label for="filter-location">Ubicación</label>
+      <!-- Location dropdown, populated from the component's static `locations` list -->
       <select id="filter-location" class="form-control" #location>
         <option value="">Cualquier lugar</option>
         @for (loc of locations; track loc.value) {
@@ -37,6 +40,7 @@
 
     <div class="filter-group">
       <label for="filter-status">Estado</label>
+      <!-- Conservation status dropdown, populated from the component's static `productStates` list -->
       <select id="filter-status" class="form-control" #status>
         <option value="">Cualquier estado</option>
         @for (state of productStates; track state.value) {
@@ -45,6 +49,7 @@
       </select>
     </div>
 
+    <!-- Action buttons: submit applies filters, reset button clears them via onClearFilters() -->
     <div class="filter-sidebar__actions">
       <button class="btn-toybox-secondary" type="submit">
         Aplicar filtros

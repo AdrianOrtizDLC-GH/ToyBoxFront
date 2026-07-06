@@ -1,11 +1,15 @@
+<!-- Product card: image with badge/favorite overlay, plus summarized info and detail link -->
 <article class="product-card card-toybox">
+  <!-- Image section: product photo, publication status badge, and favorite toggle button -->
   <div class="product-card__image">
     <img [src]="product.image" [alt]="product.title" />
 
+    <!-- Publication status badge (e.g. Published/Sold), derived from product.badge -->
     <span class="product-card__badge">
       {{ displayBadge }}
     </span>
 
+    <!-- Favorite toggle: reflects isFavorite input and is disabled while the request is in flight -->
     <button
       class="product-card__favorite"
       [class.product-card__favorite--active]="isFavorite"
@@ -20,6 +24,7 @@
     </button>
   </div>
 
+  <!-- Content section: category, title, conservation status, price, location and detail link -->
   <div class="product-card__content">
     <span class="product-card__category">
       {{ product.category }}
@@ -27,6 +32,7 @@
 
     <h3>{{ product.title }}</h3>
 
+    <!-- Conservation status label (e.g. "Buen estado"), derived from product.status -->
     <p class="product-card__status">
       {{ displayStatus }}
     </p>
@@ -40,6 +46,7 @@
       </span>
     </div>
 
+    <!-- Navigates to the product detail page, honoring requiresAuth/source inputs -->
     <a
       class="btn-toybox-primary product-card__button"
       href="#"

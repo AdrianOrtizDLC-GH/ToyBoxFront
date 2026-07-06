@@ -7,6 +7,7 @@
 <main class="moderator-page relative-z-10">
   <app-admin-navigation />
 
+  <!-- Page title plus search input and status filter (two-way bound) -->
   <header class="page-header">
     <div>
       <p class="eyebrow">Moderación</p>
@@ -22,12 +23,14 @@
     </div>
   </header>
 
+  <!-- Loading / error / list states for the filtered reports -->
   <section class="reports-list">
     @if (isLoading) {
       <article class="report-card"><p>Cargando reportes...</p></article>
     } @else if (error) {
       <article class="report-card"><p>{{ error }}</p></article>
     } @else {
+    <!-- Iterates the reports matching the current filters; shows empty state otherwise -->
     @for (report of filteredReports; track report.id) {
       <article class="report-card">
         <div class="report-main">

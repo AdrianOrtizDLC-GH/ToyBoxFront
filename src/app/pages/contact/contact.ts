@@ -9,4 +9,8 @@ import { BreadcrumbComponent } from "../../shared/components/breadcrumb/breadcru
     templateUrl: './contact.html',
     styleUrl: './contact.css'
 })
+/**
+ * Static page component displaying the contact form and contact information.
+ * Currently holds no logic; the form has no submit handler wired up yet.
+ */
 export class ContactComponent { }

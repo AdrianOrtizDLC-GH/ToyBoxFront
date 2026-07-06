@@ -1,4 +1,6 @@
+<!-- Star rating widget: renders 5 stars (filled/half/empty based on the rating input) plus optional info text -->
 <div class="stars-wrapper">
+  <!-- Star icons: one per entry in `stars` (1-5); clickable only when readonly is false -->
   <div class="stars" role="img" [attr.aria-label]="'Calificación: ' + displayRating + ' de 5 estrellas'">
     @for (star of stars; track star) {
       <span
@@ -15,6 +17,7 @@
     }
   </div>
 
+  <!-- Rating info: shown only when there is a rating (rating > 0); review count shown when showReviewCount is enabled -->
   @if (rating > 0) {
     <div class="rating-info">
       <span class="rating-value">{{ displayRating }}</span>

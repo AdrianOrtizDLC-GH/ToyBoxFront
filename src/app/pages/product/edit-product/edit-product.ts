@@ -19,21 +19,25 @@ import {
   PRODUCT_CONDITION_LABELS
 } from '../../../shared/enums/product-condition.enum';
 
+// Display option pairing a condition enum value with its localized label.
 interface ProductConditionOption {
   label: string;
   value: ProductCondition;
 }
 
+// A newly picked image awaiting upload: the raw File plus a local object-URL preview.
 interface SelectedImage {
   file: File;
   preview: string;
 }
 
+// An image already stored on the backend for this product.
 interface CurrentImage {
   url: string;
   label?: string;
 }
 
+// Shape of the edit-product form's bound data.
 interface EditProductFormData {
   title: string;
   price: number | null;
@@ -44,6 +48,7 @@ interface EditProductFormData {
   fk_categories_id: number | null;
 }
 
+// Union of form fields that support touched/validation tracking.
 type EditProductField =
   | 'title'
   | 'price'
@@ -54,6 +59,7 @@ type EditProductField =
   | 'fk_categories_id'
   | 'images';
 
+// Fallback category icon paths used when a category has no icon from the API.
 const CATEGORY_ICONS: Record<number, string> = {
   1: '/assets/images/Iconos%20categorias/icono_videojuegos.svg',
   2: '/assets/images/Iconos%20categorias/icono_construccion.svg',
@@ -65,6 +71,13 @@ const CATEGORY_ICONS: Record<number, string> = {
   8: '/assets/images/Iconos%20categorias/icono_airelibre.svg',
 };
 
+/**
+ * Component for editing an existing product listing owned by the current user.
+ * Loads the product by route id, pre-fills the form (including normalizing
+ * condition/location values from the raw API payload), supports adding new
+ * images alongside existing ones, saving changes, and withdrawing (deleting)
+ * the listing via a confirmation modal.
+ */
 @Component({
   selector: 'app-edit-product',
   standalone: true,
@@ -100,8 +113,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   ];
 
+  // Id of the product being edited, resolved from the route params.
   productId: number | null = null;
 
+  // Reactive-ish plain object backing the template's [(ngModel)] bindings.
   formData: EditProductFormData = {
     title: '',
     price: null,
@@ -115,9 +130,11 @@ export class EditProductComponent implements OnInit, OnDestroy {
   provincias: string[] = [];
   ciudadesDisponibles: string[] = [];
 
+  // Images already saved on the backend vs. new ones staged for upload.
   currentImages: CurrentImage[] = [];
   selectedImages: SelectedImage[] = [];
 
+  // Human-readable publication status badge (e.g. "Publicado", "Borrador").
   currentBadge = 'Publicado';
 
   isLoading = true;
@@ -131,6 +148,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
   isLoadingUserLocation = false;
   isUserLocationLocked = true;
 
+  // Controls the confirmation modal for withdrawing (deleting) the listing.
   showWithdrawModal = false;
 
   successMessage = '';
@@ -141,6 +159,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
   private readonly MAX_IMAGE_SIZE_MB = 5;
   private readonly MAX_IMAGE_SIZE_BYTES = this.MAX_IMAGE_SIZE_MB * 1024 * 1024;
 
+  // Tracks which fields the user has interacted with, to show validation errors only after blur/interaction.
   private touchedFields: Record<EditProductField, boolean> = {
     title: false,
     price: false,
@@ -163,6 +182,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef
   ) {}
 
+  /**
+   * Lifecycle hook: loads categories, initializes location lists, and
+   * resolves the product id from route params to load the product to edit.
+   */
   ngOnInit(): void {
     this.loadCategories();
     void this.initializeLocations();
@@ -182,10 +205,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** @returns Whether the app is running in a browser context with localStorage available (SSR safety). */
   private isBrowser(): boolean {
     return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
   }
 
+  /** Fetches all product categories and attaches a fallback icon to each. */
   private loadCategories(): void {
     this.isLoadingCategories = true;
 
@@ -204,6 +229,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Loads the list of available provinces and, if one is already set, its cities. */
   private async initializeLocations(): Promise<void> {
     this.isLoadingLocations = true;
     this.locationError = '';
@@ -223,6 +249,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Resolves the current user's location (from AuthService state or by fetching
+   * their profile) and applies it to the form, unlocking manual edits if needed.
+   */
   private async loadUserLocationFromProfile(): Promise<void> {
     this.isLoadingUserLocation = true;
     this.locationError = '';
@@ -254,6 +284,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Attempts to retrieve the current user object from AuthService, falling back to localStorage. */
   private getCurrentUserFromAuth(): any {
     const authService = this.authService as any;
 
@@ -279,6 +310,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return this.getCurrentUserFromLocalStorage();
   }
 
+  /** Attempts to read a stored user object from any of several known localStorage keys. */
   private getCurrentUserFromLocalStorage(): any {
     if (!this.isBrowser()) return null;
 
@@ -306,6 +338,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return this.getUserFromStoredToken();
   }
 
+  /** Last-resort fallback: decodes a stored JWT token's payload to recover user info. */
   private getUserFromStoredToken(): any {
     if (!this.isBrowser()) return null;
 
@@ -330,6 +363,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  /** Decodes the payload segment of a JWT token into a plain object, or null on failure. */
   private decodeJwtPayload(token: string | null): any {
     if (!token || !this.isBrowser()) return null;
 
@@ -347,6 +381,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Extracts a numeric user id from various possible user object shapes. */
   private getCurrentUserId(user: any): number | null {
     const rawId =
       user?.id_users ??
@@ -362,6 +397,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return Number.isFinite(userId) && userId > 0 ? userId : null;
   }
 
+  /** @returns Whether the given user object already has both province and city set. */
   private hasUserLocation(user: any): boolean {
     const province =
       user?.user_province ??
@@ -376,6 +412,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return Boolean(province && city);
   }
 
+  /** Applies province/city from a user profile object to the form and loads matching cities. */
   private async applyUserLocationFromProfile(user: any): Promise<void> {
     const profileProvince =
       user?.user_province ??
@@ -407,6 +444,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Loads the list of cities available for a given province. */
   private async loadCitiesForProvince(province: string): Promise<void> {
     this.isLoadingCities = true;
     this.locationError = '';
@@ -423,6 +461,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Fetches the product to edit, normalizes its condition/category/location
+   * fields into the form model, resolves the user's location, and loads
+   * the product's current images and status badge.
+   * @param id Product identifier (id_items).
+   */
   loadProduct(id: number): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -485,6 +529,11 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Handles a manual province change (only active when location is unlocked):
+   * resets the city selection and reloads the city list.
+   * @param province Newly selected province.
+   */
   async onProvinceChange(province: string): Promise<void> {
     if (this.isUserLocationLocked) return;
 
@@ -503,6 +552,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Handles a manual city change (only active when location is unlocked). */
   onCityChange(city: string): void {
     if (this.isUserLocationLocked) return;
 
@@ -512,12 +562,14 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Sets the selected category (used by the icon-based category picker). */
   selectCategory(categoryId: number): void {
     this.formData.fk_categories_id = categoryId;
     this.markTouched('fk_categories_id');
     this.errorMessage = '';
   }
 
+  /** Sets the selected category from the mobile <select> dropdown value. */
   selectCategoryFromSelect(categoryIdValue: string | number): void {
     const categoryId = Number(categoryIdValue);
 
@@ -530,10 +582,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.selectCategory(categoryId);
   }
 
+  /** Marks a field as touched so its validation error (if any) becomes visible. */
   markTouched(field: EditProductField): void {
     this.touchedFields[field] = true;
   }
 
+  /** Handles image selection via the native file input. */
   onImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
@@ -543,6 +597,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
+  /** Highlights the drop zone while a file is dragged over it. */
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -550,6 +605,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.isDragOver = true;
   }
 
+  /** Removes the drop zone highlight when the dragged file leaves it. */
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -557,6 +613,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.isDragOver = false;
   }
 
+  /** Handles files dropped onto the upload drop zone. */
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
@@ -567,6 +624,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.addImages(files);
   }
 
+  /**
+   * Removes a newly added (not-yet-uploaded) image, revoking its object URL.
+   * @param index Index of the image in `selectedImages`.
+   */
   removeNewImage(index: number): void {
     const image = this.selectedImages[index];
 
@@ -578,6 +639,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.markTouched('images');
   }
 
+  /** Navigates back to the product detail page (or catalog) without saving changes. */
   cancelEdit(): void {
     if (this.productId) {
       this.router.navigate(['/product', this.productId]);
@@ -587,6 +649,10 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.router.navigate(['/catalog']);
   }
 
+  /**
+   * Form submit handler: validates the form, then updates the product and
+   * uploads any newly added images.
+   */
   saveChanges(): void {
     this.successMessage = '';
     this.errorMessage = '';
@@ -630,17 +696,20 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Opens the withdraw (delete listing) confirmation modal. */
   openWithdrawModal(): void {
     this.showWithdrawModal = true;
     this.errorMessage = '';
   }
 
+  /** Closes the withdraw confirmation modal, unless a withdrawal is in progress. */
   closeWithdrawModal(): void {
     if (this.isWithdrawing) return;
 
     this.showWithdrawModal = false;
   }
 
+  /** Deletes the product listing after user confirmation, then redirects to the catalog. */
   confirmWithdraw(): void {
     if (!this.productId || this.isWithdrawing) return;
 
@@ -667,6 +736,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Returns a validation error message for the given field, or an empty
+   * string if valid or not yet shown (not touched/submitted).
+   * @param field Form field to validate.
+   * @returns Localized error message, or '' if there is none to show.
+   */
   getFieldError(field: EditProductField): string {
     const shouldShow = this.showValidationErrors || this.touchedFields[field];
 
@@ -736,10 +811,12 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** @returns Whether the given field currently has a visible validation error. */
   isFieldInvalid(field: EditProductField): boolean {
     return Boolean(this.getFieldError(field));
   }
 
+  /** Name of the currently selected category, for display purposes. */
   get selectedCategoryName(): string {
     const selected = this.categories.find(
       category => category.id_categories === this.formData.fk_categories_id
@@ -748,6 +825,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return selected?.name ?? 'Sin categoría seleccionada';
   }
 
+  /** Label of the currently selected product condition, for display purposes. */
   get selectedConditionLabel(): string {
     const selected = this.productConditions.find(
       condition => condition.value === this.formData.product_condition
@@ -756,11 +834,16 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return selected?.label ?? 'Sin estado seleccionado';
   }
 
+  /** Number of additional images that can still be added, counting both current and new images. */
   get remainingImageSlots(): number {
     const totalImages = this.currentImages.length + this.selectedImages.length;
     return Math.max(0, this.MAX_IMAGES - totalImages);
   }
 
+  /**
+   * Validates and stages newly selected/dropped image files: filters non-images,
+   * enforces size and slot limits, skips duplicates, and creates preview object URLs.
+   */
   private addImages(files: File[]): void {
     this.successMessage = '';
     this.errorMessage = '';
@@ -812,6 +895,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** Uploads any newly added images (if any) for the edited product, then finalizes the save. */
   private uploadImagesAndFinish(): void {
     if (!this.productId) return;
 
@@ -838,6 +922,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Marks submission as complete, shows a success message, and navigates to the product detail page. */
   private finishSave(): void {
     if (!this.productId) return;
 
@@ -846,6 +931,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     this.router.navigate(['/product', this.productId]);
   }
 
+  /** @returns Whether all required fields pass validation; sets errorMessage on the first failure. */
   private isFormValid(): boolean {
     const fields: EditProductField[] = [
       'title',
@@ -870,6 +956,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  /** Extracts and normalizes the product's existing images from various possible API response shapes. */
   private mapCurrentImages(raw: any): CurrentImage[] {
     const imageSources = [
       ...(Array.isArray(raw.photos) ? raw.photos : []),
@@ -911,6 +998,11 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return [];
   }
 
+  /**
+   * Maps a raw condition/status string from the API (which may actually be a
+   * publication status rather than a condition) to a valid ProductCondition,
+   * or '' if it can't be resolved.
+   */
   private normalizeProductCondition(value: unknown): ProductCondition | '' {
     const key = String(value ?? '').toLowerCase().trim();
 
@@ -948,6 +1040,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return labels[key] ?? '';
   }
 
+  /** Maps a raw publication status code to its localized badge label. */
   private getBadgeLabel(status: string): string {
     const key = String(status ?? '').toLowerCase().trim();
 
@@ -965,18 +1058,21 @@ export class EditProductComponent implements OnInit, OnDestroy {
     return labels[key] ?? status ?? 'Publicado';
   }
 
+  /** Extracts the city part from a combined "city, province" location string. */
   private extractCity(location?: string): string {
     if (!location) return '';
 
     return location.split(',')[0]?.trim() ?? '';
   }
 
+  /** Extracts the province part from a combined "city, province" location string. */
   private extractProvince(location?: string): string {
     if (!location) return '';
 
     return location.split(',')[1]?.trim() ?? '';
   }
 
+  /** Ensures a category has a usable icon, falling back to CATEGORY_ICONS or a default. */
   private withCategoryIcon(category: Category): Category {
     const categoryIcon = String((category as any).icon ?? '').trim();
 
@@ -986,6 +1082,7 @@ export class EditProductComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** Lifecycle hook: revokes all pending image object URLs to avoid memory leaks. */
   ngOnDestroy(): void {
     this.selectedImages.forEach(image => {
       URL.revokeObjectURL(image.preview);

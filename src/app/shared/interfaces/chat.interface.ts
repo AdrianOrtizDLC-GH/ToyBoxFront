@@ -1,5 +1,10 @@
 import { DateString, UserSummary } from './user.interface';
 
+/**
+ * Models a chat conversation between a product's buyer and seller,
+ * as returned by the backend (ChatService). Combines core relational
+ * fields with optional denormalized/computed data used for display.
+ */
 export interface Chat {
   id_conversations: number;
   started_date: DateString;
@@ -7,11 +12,11 @@ export interface Chat {
   fk_seller_id: number;
   fk_buyer_id: number;
 
-  conservation_status?: string; // 'draft', 'published', 'sold', 'reserved', etc.
-  item_status?: string; // 'available', 'sold', etc.
-  is_sold_in_this_conversation?: number; 
+  conservation_status?: string; // e.g. 'draft', 'published', 'sold', 'reserved'.
+  item_status?: string; // e.g. 'available', 'sold'.
+  is_sold_in_this_conversation?: number; // Flags whether this conversation was the one that led to the sale.
 
-    // optionals
+    // Optional fields, populated depending on the endpoint/join used.
   item?: {
     id_items: number;
     title: string;
@@ -21,13 +26,17 @@ export interface Chat {
   seller?: UserSummary;
   buyer?: UserSummary;
 
-  // Datos calculados
-  otherUser?: UserSummary; // El otro participante
+  // Computed/derived data for UI convenience.
+  otherUser?: UserSummary; // The other participant relative to the current user.
   lastMessage?: string;
   lastMessageAt?: DateString;
   unreadCount?: number;
 }
 
+/**
+ * Flattened view model of a chat used for list rendering (e.g. chat-list page),
+ * exposing only the fields needed to render a conversation row.
+ */
 export interface ChatItem {
   id_conversations: number;
   otherUserName: string;
@@ -39,6 +48,7 @@ export interface ChatItem {
   unreadCount: number;
 }
 
+// Payload used to create a new chat/conversation.
 export interface ChatFormData {
   fk_items_id: number;
   fk_buyer_id: number;

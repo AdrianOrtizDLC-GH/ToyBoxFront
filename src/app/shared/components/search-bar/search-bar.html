@@ -1,9 +1,11 @@
+<!-- Search bar: label, text input, and submit button, driven by the label/placeholder/buttonText inputs -->
 <div class="search-bar">
   <label class="search-bar__label" for="toybox-search">
     {{ label }}
   </label>
 
   <div class="search-bar__box">
+    <!-- Search input; pressing Enter triggers the same search as clicking the button -->
     <input
       #searchInput
       id="toybox-search"
@@ -13,6 +15,7 @@
       (keyup.enter)="onSearch(searchInput.value)"
     />
 
+    <!-- Submit button: emits the current input value via the search output -->
     <button
       class="btn-toybox-primary search-bar__button"
       type="button"

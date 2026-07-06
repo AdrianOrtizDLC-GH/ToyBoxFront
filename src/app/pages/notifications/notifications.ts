@@ -6,6 +6,7 @@ import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcru
 import { PaginationComponent } from '../../shared/components/pagination/pagination';
 import { NotificationsService } from '../../core/services/notifications.service';
 
+/** View model for a notification, combining raw API fields with derived display fields. */
 interface NotificationItem {
   id_notifications: number;
   message: string;
@@ -14,11 +15,17 @@ interface NotificationItem {
   fk_users_id: number;
 
   // campos calculados para la vista
+  // Fields derived from the message for display purposes (title, type, formatted date).
   title: string;
   type: string;
   date: string;
 }
 
+/**
+ * Page that lists the current user's notifications with pagination,
+ * supports marking individual or all notifications as read, and keeps
+ * the shared unread count in sync via NotificationsService.
+ */
 @Component({
   selector: 'app-notifications',
   standalone: true,
@@ -34,6 +41,7 @@ export class NotificationsComponent implements OnInit {
   private notificationsService = inject(NotificationsService);
   private cdr = inject(ChangeDetectorRef);
 
+  // Full list of notifications loaded from the API (unpaginated).
   notifications: NotificationItem[] = [];
 
   unreadCount = 0;
@@ -48,6 +56,11 @@ export class NotificationsComponent implements OnInit {
     this.loadNotifications();
   }
 
+  /**
+   * Fetches the current user's notifications, maps them into the view
+   * model (deriving title/type/date), recomputes the unread count and
+   * pagination, and updates the shared unread count signal.
+   */
   loadNotifications(): void {
     this.isLoading = true;
     this.backendError = '';
@@ -82,6 +95,11 @@ export class NotificationsComponent implements OnInit {
     });
   }
 
+  /**
+   * Marks a single notification as read (if not already) and decrements
+   * the shared unread counter.
+   * @param notification The notification to mark as read.
+   */
   markAsRead(notification: NotificationItem): void {
     if (notification.read) return;
 
@@ -98,11 +116,13 @@ export class NotificationsComponent implements OnInit {
     });
   }
 
+  /** Slice of notifications to display for the current page. */
   get paginatedNotifications(): NotificationItem[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.notifications.slice(start, start + this.pageSize);
   }
 
+  /** Recomputes total pages from the notification count and clamps the current page. */
   updatePagination(): void {
     this.totalPages = Math.max(1, Math.ceil(this.notifications.length / this.pageSize));
     if (this.currentPage > this.totalPages) {
@@ -110,10 +130,18 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
+  /**
+   * Handles page change events emitted by the pagination component.
+   * @param page The new current page number.
+   */
   onPageChange(page: number): void {
     this.currentPage = page;
   }
 
+  /**
+   * Maps a notification type to its Material Symbols icon name.
+   * @param type The notification type (sale, message, favorite, system).
+   */
   getIcon(type: string): string {
     switch (type) {
       case 'sale':
@@ -129,6 +157,11 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
+  /**
+   * Infers a notification type by keyword-matching the message text,
+   * since the API does not provide an explicit type field.
+   * @param message The raw notification message.
+   */
   private detectType(message: string): string {
     const text = message.toLowerCase();
 
@@ -147,6 +180,10 @@ export class NotificationsComponent implements OnInit {
     return 'system';
   }
 
+  /**
+   * Derives a display title for a notification based on its detected type.
+   * @param message The raw notification message.
+   */
   private extractTitle(message: string): string {
     const type = this.detectType(message);
 
@@ -162,6 +199,10 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
+  /**
+   * Formats an ISO date string into a localized (es-ES) short date/time.
+   * @param dateString The raw ISO date string from the API.
+   */
   private formatDate(dateString: string): string {
     const date = new Date(dateString);
 
@@ -174,6 +215,12 @@ export class NotificationsComponent implements OnInit {
     });
   }
 
+  /**
+   * Translates an HTTP error into a user-facing message, covering common
+   * cases (unauthenticated, not found, network error) with a fallback.
+   * @param err The HTTP error response.
+   * @param defaultMessage Fallback message for unhandled error cases.
+   */
   private handleError(err: HttpErrorResponse, defaultMessage: string): void {
     if (err.status === 401) {
       this.backendError = 'Debes iniciar sesión para ver tus notificaciones';
@@ -186,6 +233,7 @@ export class NotificationsComponent implements OnInit {
     }
   }
 
+  /** Marks all unread notifications as read and resets the unread counter. */
   markAllAsRead(): void {
   const unreadNotifications = this.notifications.filter(n => !n.read);
 

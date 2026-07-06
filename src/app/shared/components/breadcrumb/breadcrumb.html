@@ -1,8 +1,11 @@
+<!-- Only render the breadcrumb bar when there are items to show (either passed via @Input items or auto-generated) -->
 @if (items && items.length > 0) {
   <nav class="tb-breadcrumb" aria-label="Ruta de navegación">
     <ol class="tb-breadcrumb__list">
+      <!-- Iterate over the breadcrumb trail; `last` flags the current/active page (no link) -->
       @for (item of items; track item.label; let last = $last) {
         <li class="tb-breadcrumb__item" [class.tb-breadcrumb__item--active]="last">
+          <!-- Non-final items with a route render as clickable links -->
           @if (!last && item.route) {
             <a
               [routerLink]="item.route"
@@ -18,6 +21,7 @@
               <span class="tb-breadcrumb__link-text">{{ item.label }}</span>
             </a>
           } @else {
+            <!-- Final item (current page) or items without a route render as plain, non-clickable text -->
             <span
               class="tb-breadcrumb__current"
               [attr.aria-current]="last ? 'page' : null"
@@ -30,6 +34,7 @@
               <span class="tb-breadcrumb__current-text">{{ item.label }}</span>
             </span>
           }
+          <!-- Separator icon between items, omitted after the last item -->
           @if (!last) {
             <span class="tb-breadcrumb__separator material-symbols-outlined" aria-hidden="true">
               chevron_right

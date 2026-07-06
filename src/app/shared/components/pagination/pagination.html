@@ -1,7 +1,9 @@
+<!-- Entire control is hidden when there is only one page (totalPages input) -->
 @if(totalPages > 1){
 
 <nav class="pagination">
 
+    <!-- Previous page button, disabled when already on the first page -->
     <button
         class="btn-page"
         [disabled]="currentPage === 1"
@@ -9,6 +11,7 @@
         ←
     </button>
 
+    <!-- One button per page number, generated from the "pages" getter (derived from totalPages) -->
     @for(page of pages; track page){
     <button
         class="btn-page"
@@ -18,6 +21,7 @@
     </button>
     }
 
+    <!-- Next page button, disabled when already on the last page -->
     <button
         class="btn-page"
         [disabled]="currentPage === totalPages"

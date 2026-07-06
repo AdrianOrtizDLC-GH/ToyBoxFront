@@ -6,6 +6,7 @@
 
 <div class="notifications-wrapper relative-z-10 container py-5">
 
+  <!-- Page title, unread count, and "mark all as read" action -->
   <header class="notifications-header">
     <div>
       <h1 class="notifications-title">
@@ -30,12 +31,14 @@
     </div>
   </header>
 
+  <!-- Backend error message, shown when loading notifications fails -->
   @if (backendError) {
     <div class="error-message text-center mb-4">
       {{ backendError }}
     </div>
   }
 
+  <!-- Loading state -->
   @if (isLoading) {
     <div class="loading-state text-center py-5">
       <div class="spinner-border" role="status">
@@ -44,8 +47,10 @@
       <p class="text-on-surface-variant mt-3">Cargando tus notificaciones...</p>
     </div>
   } @else {
+    <!-- Notification list (paginated) or empty state -->
     @if (notifications.length > 0) {
       <div class="notifications-list">
+        <!-- Clicking a card marks it as read; icon/read-state vary per notification -->
         @for (notification of paginatedNotifications; track notification.id_notifications) {
           <div
             class="notification-card"
@@ -79,6 +84,7 @@
         }
       </div>
 
+      <!-- Pagination control for the notifications list -->
       <div class="mt-4">
         <app-pagination
           [currentPage]="currentPage"
@@ -87,6 +93,7 @@
         ></app-pagination>
       </div>
     } @else {
+      <!-- Empty state when the user has no notifications -->
       <div class="empty-state text-center mt-5">
         <span class="material-symbols-outlined empty-icon">notifications_off</span>
         <p>Aún no tienes notificaciones.</p>

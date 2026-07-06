@@ -20,6 +20,12 @@ interface DemoProduct {
   badge: string;
 }
 
+/**
+ * Reusable product card component used to display a summarized product preview
+ * (image, category, title, status, price, location) across listing views such as
+ * the catalog and the home page. Handles navigation to the product detail page
+ * and toggling the favorite state for the current user.
+ */
 @Component({
   selector: 'app-product-card',
   standalone: true,
@@ -32,12 +38,17 @@ export class ProductCardComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
+  // Emits the product id whenever the favorite state has been successfully toggled
   @Output() toggleFavorite = new EventEmitter<number>();
 
+  // Whether the current product is marked as a favorite by the logged-in user
   @Input() isFavorite = false;
+  // Whether interacting with this card (e.g. viewing detail) requires the user to be authenticated
   @Input() requiresAuth = false;
+  // Origin view of the card, used to build the "from" query param when navigating to detail
   @Input() source: 'catalog' | 'home' = 'catalog';
 
+  // Product data to render in the card; defaults to a placeholder demo product
   @Input() product: DemoProduct = {
     id: 0,
     title: 'Juguete Toybox',
@@ -70,6 +81,7 @@ export class ProductCardComponent {
     return this.getProductConditionLabel();
   }
 
+  /** Human-readable, translated version of the product's publication status badge. */
   get displayBadge(): string {
     return this.translatePublicationStatus(this.product.badge);
   }
@@ -93,6 +105,14 @@ export class ProductCardComponent {
     });
   }
 
+  /**
+   * Handles the favorite toggle button click. Requires authentication (redirects
+   * to login otherwise), optimistically updates the local favorite state, and
+   * calls the favorites service to persist the change. Reverts the state and
+   * logs an error if the request fails. Emits `toggleFavorite` and dispatches a
+   * global DOM event on success so other parts of the app can react.
+   * @param event Mouse click event, prevented and stopped from propagating.
+   */
   onToggleFavorite(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();

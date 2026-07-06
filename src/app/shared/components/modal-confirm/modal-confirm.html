@@ -1,6 +1,10 @@
+<!-- Entire modal is only rendered when "isOpen" input is true -->
 @if (isOpen) {
+  <!-- Backdrop click acts as a cancel action -->
   <div class="modal-backdrop" (click)="onCancel()">
+    <!-- Dialog content; click propagation is stopped so clicking inside doesn't trigger cancel -->
     <section class="confirm-modal" role="dialog" aria-modal="true" [attr.aria-labelledby]="'modal-confirm-title'" (click)="$event.stopPropagation()">
+      <!-- Icon reflects the "variant" input: danger (!), warning (?), or info (i) -->
       <div class="modal-icon" [class]="variant">
         @if (variant === 'danger') {
           <span>!</span>
@@ -11,11 +15,13 @@
         }
       </div>
 
+      <!-- Title and message text, driven by the "title" and "message" inputs -->
       <div class="modal-content">
         <h2 id="modal-confirm-title">{{ title }}</h2>
         <p>{{ message }}</p>
       </div>
 
+      <!-- Action buttons: cancel emits "cancelled", confirm emits "confirmed" -->
       <div class="modal-actions">
         <button type="button" class="btn btn--ghost" (click)="onCancel()">
           {{ cancelText }}

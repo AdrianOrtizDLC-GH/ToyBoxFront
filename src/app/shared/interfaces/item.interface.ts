@@ -7,6 +7,12 @@ import { Review } from "./review.interface";
 import { ProductCondition } from '../enums/product-condition.enum';
 
 
+/**
+ * Models a product listing ("item"), the core entity of the ToyBox
+ * marketplace. Represents the full backend record, with optional
+ * relations populated depending on the endpoint (seller, category,
+ * images, reviews).
+ */
 export interface Item {
   id_items: number;
   title: string;
@@ -19,45 +25,57 @@ export interface Item {
   publication_date: DateString;
   fk_seller_id: number;
   fk_categories_id: number;
-  item_update: DateString | null;
+  item_update: DateString | null; // Last update timestamp, null if never updated.
 
-  seller?: UserSummary; 
-  category?: Category; 
-  images?: ItemPhoto[]; 
-  reviews?: Review[]; 
+  seller?: UserSummary;
+  category?: Category;
+  images?: ItemPhoto[];
+  reviews?: Review[];
   main_photo?: string;
 }
 
+/**
+ * Lightweight view model of an Item used for catalog/grid card rendering
+ * (e.g. search results). Produced by ProductsService.getAll() by mapping
+ * the raw API response.
+ */
 export interface ItemCard {
   id_items: number;
   title: string;
   price: number;
   location: string;
-  category: Category; 
+  category: Category;
   conservation_status: ConservationStatus;
   product_condition?: ProductCondition;
   item_status: ItemStatus;
   publication_date: DateString;
   image: string;
-  badge: string; 
-  rating?: number; 
+  badge: string;
+  rating?: number;
 }
 
 
+/**
+ * Full detail view model of an Item, used on the product detail page.
+ * Requires the seller and reviews relations to be populated (non-optional),
+ * and adds aggregated view/rating stats.
+ */
 export interface ItemDetail extends Item {
-  seller: User; 
+  seller: User;
   reviews: Review[];
-  totalViews: number; 
-  averageRating: number; 
+  totalViews: number;
+  averageRating: number;
 }
 
+// Models a single photo attached to an item listing.
 export interface ItemPhoto {
   id_photos: number;
   photo_url: string;
-  order: number | null;
+  order: number | null; // Display order among the item's photos; null if unspecified.
   fk_items_id: number;
 }
 
+// Aggregated view-count stats for an item.
 export interface ItemView {
   id_items: number;
   view_count: number;
@@ -65,6 +83,7 @@ export interface ItemView {
   last_viewed_date: DateString;
 }
 
+// Payload used to create/update a product listing (create/edit product forms).
 export interface ItemFormData {
   title: string;
   description?: string | null;
@@ -77,6 +96,7 @@ export interface ItemFormData {
   images?: ItemPhoto[];
 }
 
+// Query filter options accepted by ProductsService.getAll() for catalog search/filtering.
 export interface Itemfilters {
   search?: string;
   category?: string;
@@ -92,6 +112,7 @@ export interface Itemfilters {
   sortBy?: 'date_desc' | 'price_asc' | 'price_desc' | 'rating_desc';
 }
 
+// Paginated catalog response: a page of ItemCards plus pagination metadata.
 export interface PaginatedItems {
   items: ItemCard[];
   total: number;

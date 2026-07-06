@@ -14,6 +14,7 @@
       <p class="login-subtitle">Bienvenido de nuevo a ToyBox</p>
     </div>
 
+    <!-- Login form: email + password fields with inline validation messages -->
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
 
       <div class="mb-3">
@@ -38,6 +39,7 @@
         }
       </div>
 
+      <!-- Password field with a show/hide toggle button -->
       <div class="mb-3">
         <label class="form-label">Contraseña</label>
 
@@ -71,12 +73,14 @@
         }
       </div>
 
+      <!-- Backend authentication error (invalid credentials, blocked account, etc.) -->
       @if (loginError) {
         <p class="error-message text-center mb-3" role="alert">
           {{ loginError }}
         </p>
       }
 
+      <!-- Submit button toggles between spinner (loading) and default label -->
       <button
         class="btn-toybox-primary w-100 mb-3"
         type="submit"
@@ -105,6 +109,7 @@
 
     </form>
 
+    <!-- Link to the registration page -->
     <div class="border-top pt-4 text-center">
       <p class="text-on-surface-variant mb-0">
         ¿No tienes una cuenta?

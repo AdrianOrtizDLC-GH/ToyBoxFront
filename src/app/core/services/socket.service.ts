@@ -4,13 +4,26 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
+/**
+ * Service managing the real-time WebSocket connection (socket.io-client)
+ * used for live chat features: connecting/disconnecting the socket,
+ * joining/leaving per-conversation rooms, and exposing Observables for
+ * incoming events (new messages and other named events).
+ * Complements ChatService (REST history/persistence) by providing
+ * real-time push updates once a chat conversation is open.
+ */
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
+  // Underlying socket.io client instance, null until connect() succeeds.
   private socket: Socket | null = null;
 
   constructor(private authService: AuthService) { }
 
-  /** Conecta al servidor WebSocket usando el JWT del usuario actual. */
+  /**
+   * Connects to the WebSocket server, authenticating with the current
+   * user's JWT (obtained from AuthService). No-ops if already connected
+   * or if there is no token (user not logged in).
+   */
   connect(): void {
     if (this.socket?.connected) return;
 
@@ -27,23 +40,38 @@ export class SocketService implements OnDestroy {
     });
   }
 
-  /** Desconecta el socket (se llama al hacer logout). */
+  /**
+   * Disconnects the socket and clears the internal reference.
+   * Called on logout and on service destruction.
+   */
   disconnect(): void {
     this.socket?.disconnect();
     this.socket = null;
   }
 
-  /** Se une a la sala de una conversación para recibir sus mensajes en tiempo real. */
+  /**
+   * Joins the server-side room for a given conversation, so the client
+   * starts receiving real-time events (e.g. new messages) for it.
+   * @param conversationId Identifier of the chat/conversation to join.
+   */
   joinConversation(conversationId: number): void {
     this.socket?.emit('join_conversation', conversationId);
   }
 
-  /** Abandona la sala de una conversación. */
+  /**
+   * Leaves the server-side room for a given conversation, stopping
+   * real-time updates for it.
+   * @param conversationId Identifier of the chat/conversation to leave.
+   */
   leaveConversation(conversationId: number): void {
     this.socket?.emit('leave_conversation', conversationId);
   }
 
-  /** Observable que emite cada vez que llega un nuevo mensaje en la sala actual. */
+  /**
+   * Returns an Observable that emits every time a new message arrives on
+   * the currently joined conversation room.
+   * @returns Observable emitting the new message payload.
+   */
   onNewMessage<T = any>(): Observable<T> {
     return new Observable((observer) => {
       this.socket?.on('new_message', (msg: T) => observer.next(msg));
@@ -51,6 +79,13 @@ export class SocketService implements OnDestroy {
     });
   }
 
+  /**
+   * Returns an Observable that emits every time the given named socket
+   * event is received. Generic helper for any event not covered by a
+   * dedicated method (e.g. typing indicators, read receipts).
+   * @param event Name of the socket.io event to listen for.
+   * @returns Observable emitting the event payload.
+   */
   onEvent<T = any>(event: string): Observable<T> {
     return new Observable((observer) => {
       this.socket?.on(event, (data: T) => observer.next(data));
@@ -58,6 +93,10 @@ export class SocketService implements OnDestroy {
     });
   }
 
+  /**
+   * Angular lifecycle hook: ensures the socket is disconnected when this
+   * (root-provided, effectively app-lifetime) service is destroyed.
+   */
   ngOnDestroy(): void {
     this.disconnect();
   }

@@ -6,6 +6,7 @@
 
 <div class="container py-5 position-relative" style="z-index: 2;">
 
+  <!-- Toast notification for success/error feedback -->
   <app-toast
     [visible]="toastVisible()"
     [type]="toastType()"
@@ -16,6 +17,7 @@
 
   <section class="products-section">
 
+    <!-- Tab switcher between published products and drafts -->
     <div class="tabs-wrapper mb-4">
       <button
         class="tab-btn"
@@ -36,6 +38,7 @@
       </button>
     </div>
 
+    <!-- "Published" tab: loading, error, empty, and product-list states -->
     @if (activeTab() === 'published') {
       @if (isLoadingProducts()) {
         <app-loading-spinner text="Cargando tus productos..."></app-loading-spinner>
@@ -54,6 +57,7 @@
           [buttonLink]="'/product/create'">
         </app-empty-state>
       } @else {
+        <!-- List of published products with view/sell/edit/delete actions -->
         <div class="product-list">
           @for (product of publishedProducts; track product.id_items) {
             <div class="product-item">
@@ -144,6 +148,7 @@
       }
     }
 
+    <!-- "Drafts" tab: loading, error, empty, and draft-list states -->
     @if (activeTab() === 'drafts') {
       @if (isLoadingProducts()) {
         <app-loading-spinner text="Cargando borradores..."></app-loading-spinner>
@@ -162,6 +167,7 @@
           [buttonLink]="'/product/create'">
         </app-empty-state>
       } @else {
+        <!-- List of draft products with publish/delete actions -->
         <div class="product-list">
           @for (product of draftProducts; track product.id_items) {
             <div class="product-item">
@@ -236,6 +242,7 @@
 
 </div>
 
+<!-- "Mark as sold" modal: pick buyer conversation and final price -->
 @if (showSaleModal() && productToSell) {
   <div class="sale-modal-backdrop" (click)="cancelSale()">
     <div class="sale-modal" (click)="$event.stopPropagation()">
@@ -298,6 +305,7 @@
   </div>
 }
 
+<!-- Confirmation modal for deleting a product -->
 <app-modal-confirm
   [isOpen]="showDeleteModal()"
   title="¿Eliminar producto?"
