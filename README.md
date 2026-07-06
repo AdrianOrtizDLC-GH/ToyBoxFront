@@ -1,59 +1,157 @@
-# ToyBoxFront
+# ToyBox Frontend – Angular 21
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.14.
+A modern web application for the ToyBox platform, a second-hand toy marketplace. Full-featured interface for browsing catalog, buying, selling, real-time chat, ratings, and user profile management with role-based access control.
 
-## Development server
+## Features
 
-To start a local development server, run:
+* Angular 21.2 with standalone components
+* TypeScript 5.9 with strict typing
+* Bootstrap 5.3 responsive design
+* RxJS + Signals for reactive state management
+* Real-time chat with Socket.io
+* Authentication guards and role-based access
+* HTTP interceptors for JWT and error handling
+* 40+ reusable components
+* Server-side rendering (SSR) compatible
+* Modern control-flow syntax (@if, @for)
+* CORS enabled
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+- Node.js 22+
+- npm 10+
+- Angular CLI 21+
+- ToyBox Backend running on `http://localhost:3000`
+
+You can download Node.js from the [Node.js official website](https://nodejs.org/).
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url> toybox-frontend
+cd toybox-frontend
+```
+
+2. Navigate to the project directory and install dependencies:
+
+```bash
+npm install
+```
+
+## Environment Configuration
+
+The frontend is configured in `src/environments/environment.ts`. The default configuration points to `http://localhost:3000` for the backend.
+
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api',
+  socketUrl: 'http://localhost:3000'
+};
+```
+
+For production, update `src/environments/environment.prod.ts` with your production URLs.
+
+## Running the Application
+
+### Start the development server
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+The application will automatically open at `http://localhost:4200`.
 
-## Code scaffolding
+**Note:** Ensure the backend is running on `http://localhost:3000` before starting the frontend.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### Development mode with auto-reload
 
 ```bash
-ng generate --help
+ng serve -o
 ```
 
-## Building
+This opens the browser automatically and enables hot reloading on file changes.
 
-To build the project run:
+### Build for production
 
 ```bash
-ng build
+ng build --configuration production
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+The compiled files will be generated in the `dist/` directory.
 
-## Running unit tests
+## Project Structure
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```
+frontend/
+├── src/
+│   ├── app/
+│   │   ├── core/                # Guards, interceptors, services (18)
+│   │   ├── pages/               # Page components (20+)
+│   │   ├── shared/              # Reusable components (20+)
+│   │   │   ├── components/
+│   │   │   ├── enums/           # 9 enumerations
+│   │   │   └── interfaces/      # 11 interfaces
+│   │   ├── app.routes.ts        # Route definitions
+│   │   ├── app.config.ts        # Angular configuration
+│   │   └── environments/        # Environment configs
+│   ├── styles.css               # Global styles
+│   └── main.ts                  # Bootstrap
+├── angular.json
+├── tsconfig.json
+└── package.json
 ```
 
-## Running end-to-end tests
+## Documentation
 
-For end-to-end (e2e) testing, run:
+- **GUIA_INSTALACION.md** - Complete installation guide (backend + frontend)
+- **USUARIOS_PRUEBA.md** - Test user credentials
+- **ARQUITECTURA.md** - System architecture and design
+- **docs/DOCUMENTACION_API.md** - API endpoints reference (40+)
+- **docs/GUIA_ROLES_Y_PERMISOS.md** - Role-based access control
+- **docs/GUIA_DESARROLLO.md** - Development guidelines
+- **docs/GUIA_DEPLOYMENT.md** - Production deployment
 
-```bash
-ng e2e
-```
+## Authentication
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+The application uses JWT-based authentication. Guards protect routes based on:
+- Authentication status (`authGuard`)
+- User roles (`roleGuard`)
 
-## Additional Resources
+Protected routes:
+- `/user/*` - Requires authentication
+- `/moderator/*` - Requires moderator or admin role
+- `/admin/*` - Requires admin role
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Main Pages
+
+- **Login / Register** - User authentication
+- **Catalog** - Product list with filters
+- **Product Detail** - Gallery, reviews, chat
+- **My Profile** - Edit profile and avatar
+- **My Products** - Manage sales
+- **My Purchases** - Purchase history
+- **Favorites** - Saved products
+- **Chat** - Private messaging
+- **Notifications** - Notification center
+- **Admin Dashboard** - User and category management (admin only)
+- **Moderation Panel** - Report review (moderator only)
+
+
+## Authors
+
+This project was developed by:
+
+- Adrian Ortiz
+- Heimer Martinez
+- Jaime Colás
+- Jesus Maria Trillo-Figueroa
+- Julian Diaz
+- Luna Lopez de la Fuente
+
+Master  Full Stack  - UNIR (2026)
